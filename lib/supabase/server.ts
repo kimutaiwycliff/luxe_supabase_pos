@@ -32,3 +32,5 @@ export async function createClient() {
     },
   );
 }
+
+export const getSupabaseServer = createClient;
