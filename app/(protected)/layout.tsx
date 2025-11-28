@@ -3,14 +3,15 @@ import { LayoutSkeleton } from "@/components/layout/layout-skeleton";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { cookies } from "next/headers";
+import { getCurrentUser } from "@/lib/actions/auth";
 
 export async function SidebarWrapper({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies()
+  const [cookieStore, user] = await Promise.all([cookies(), getCurrentUser()])
   const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false"
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar />
+      <AppSidebar user={user} />
       <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
   )

@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -15,6 +17,8 @@ import {
   Store,
   ClipboardList,
   ChevronUp,
+  LogOut,
+  UserCircle,
 } from "lucide-react"
 
 import {
@@ -30,12 +34,23 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ThemeSwitcher } from "../theme-switcher"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { cn } from "@/lib/utils"
+import { AuthUser, signOut } from "@/lib/actions/auth"
+
+interface AppSidebarProps {
+  user: AuthUser | null
+}
 
 const mainNavigation = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Dashboard", href: "/", icon: LayoutDashboard },
   { title: "POS", href: "/pos", icon: ShoppingCart },
 ]
 
@@ -57,30 +72,54 @@ const analyticsNavigation = [
   { title: "Settings", href: "/settings", icon: Settings },
 ]
 
-export function AppSidebar() {
+function NavItem({
+  item,
+  isActive,
+}: { item: { title: string; href: string; icon: React.ComponentType<{ className?: string }> }; isActive: boolean }) {
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        isActive={isActive}
+        tooltip={item.title}
+        className={cn("relative", isActive && "bg-sidebar-accent text-sidebar-accent-foreground font-medium")}
+      >
+        <Link href={item.href}>
+          {/* Active indicator bar */}
+          {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full" />}
+          <item.icon className={cn("ml-1", isActive && "text-primary")} />
+          <span>{item.title}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  )
+}
+
+export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
 
-  const isActive = (href: string) => pathname === href || (href !== "/" && pathname.startsWith(href))
+  const checkIsActive = (href: string) => pathname === href || (href !== "/" && pathname.startsWith(href))
+
+  const handleSignOut = async () => {
+    await signOut()
+  }
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center justify-between w-full">
-              <SidebarMenuButton size="lg" asChild>
-                <Link href="/">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Store className="size-4" />
-                  </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Boutique</span>
-                    <span className="truncate text-xs text-muted-foreground">Store Manager</span>
-                  </div>
-                </Link>
-              </SidebarMenuButton>
-              <ThemeSwitcher />
-            </div>
+            <SidebarMenuButton size="lg" asChild>
+              <Link href="/">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <Store className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Boutique</span>
+                  <span className="truncate text-xs text-muted-foreground">Store Manager</span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -91,14 +130,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavigation.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.href)} tooltip={item.title}>
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <NavItem key={item.title} item={item} isActive={checkIsActive(item.href)} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -109,14 +141,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {inventoryNavigation.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.href)} tooltip={item.title}>
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <NavItem key={item.title} item={item} isActive={checkIsActive(item.href)} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -127,14 +152,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {operationsNavigation.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.href)} tooltip={item.title}>
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <NavItem key={item.title} item={item} isActive={checkIsActive(item.href)} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -145,14 +163,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {analyticsNavigation.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.href)} tooltip={item.title}>
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <NavItem key={item.title} item={item} isActive={checkIsActive(item.href)} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -169,11 +180,14 @@ export function AppSidebar() {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarFallback className="rounded-lg">SM</AvatarFallback>
+                    {user?.avatarUrl && (
+                      <AvatarImage src={user.avatarUrl || "/placeholder.svg"} alt={user.fullName || user.email} />
+                    )}
+                    <AvatarFallback className="rounded-lg">{user?.initials || "?"}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Store Manager</span>
-                    <span className="truncate text-xs">admin@boutique.com</span>
+                    <span className="truncate font-semibold">{user?.fullName || "Guest"}</span>
+                    <span className="truncate text-xs text-muted-foreground">{user?.email || "Not signed in"}</span>
                   </div>
                   <ChevronUp className="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -184,12 +198,31 @@ export function AppSidebar() {
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem>
-                  <span>Account Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Sign out</span>
-                </DropdownMenuItem>
+                {user ? (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings" className="cursor-pointer">
+                        <UserCircle className="mr-2 h-4 w-4" />
+                        <span>Account Settings</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleSignOut}
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign out</span>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem asChild>
+                    <Link href="/login" className="cursor-pointer">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign in</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
