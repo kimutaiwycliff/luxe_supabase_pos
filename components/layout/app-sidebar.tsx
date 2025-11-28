@@ -58,7 +58,7 @@ const inventoryNavigation = [
   { title: "Products", href: "/products", icon: Package },
   { title: "Categories", href: "/categories", icon: Tags },
   { title: "Inventory", href: "/inventory", icon: Store },
-  { title: "Low Stock Alerts", href: "/reorder", icon: AlertTriangle },
+  { title: "Low Stock Alerts", href: "/low-stock", icon: AlertTriangle },
 ]
 
 const operationsNavigation = [
