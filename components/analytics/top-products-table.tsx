@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table"
 import { formatCurrency, formatNumber } from "@/lib/format"
-import type { TopProduct } from "@/app/actions/analytics"
+import type { TopProduct } from "@/lib/actions/analytics"
 
 interface TopProductsTableProps {
   products: TopProduct[]

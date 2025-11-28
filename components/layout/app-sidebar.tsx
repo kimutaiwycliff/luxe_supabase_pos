@@ -63,6 +63,7 @@ const inventoryNavigation = [
 
 const operationsNavigation = [
   { title: "Suppliers", href: "/suppliers", icon: Truck },
+  { title: "Reorder Alerts", href: "/reorder", icon: AlertTriangle },
   { title: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
   { title: "Customers", href: "/customers", icon: Users },
 ]
