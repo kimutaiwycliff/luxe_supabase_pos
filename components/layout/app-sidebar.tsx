@@ -35,7 +35,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ThemeSwitcher } from "../theme-switcher"
 
 const mainNavigation = [
-  { title: "Dashboard", href: "/", icon: LayoutDashboard },
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "POS", href: "/pos", icon: ShoppingCart },
 ]
 
