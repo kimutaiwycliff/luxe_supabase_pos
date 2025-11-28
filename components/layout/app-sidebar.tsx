@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ThemeSwitcher } from "../theme-switcher"
 
 const mainNavigation = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -66,17 +67,20 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Store className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Boutique</span>
-                  <span className="truncate text-xs text-muted-foreground">Store Manager</span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
+            <div className="flex items-center justify-between w-full">
+              <SidebarMenuButton size="lg" asChild>
+                <Link href="/">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <Store className="size-4" />
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">Boutique</span>
+                    <span className="truncate text-xs text-muted-foreground">Store Manager</span>
+                  </div>
+                </Link>
+              </SidebarMenuButton>
+              <ThemeSwitcher />
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
