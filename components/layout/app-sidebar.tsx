@@ -50,7 +50,7 @@ interface AppSidebarProps {
 }
 
 const mainNavigation = [
-  { title: "Dashboard", href: "/", icon: LayoutDashboard },
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "POS", href: "/pos", icon: ShoppingCart },
 ]
 

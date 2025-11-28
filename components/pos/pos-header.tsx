@@ -26,7 +26,7 @@ export function POSHeader({ searchQuery, onSearchChange }: POSHeaderProps) {
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card px-4">
       <div className="flex items-center gap-4">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/pos" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Store className="h-5 w-5 text-primary-foreground" />
           </div>
@@ -60,7 +60,7 @@ export function POSHeader({ searchQuery, onSearchChange }: POSHeaderProps) {
         </div>
 
         <Button variant="outline" asChild>
-          <Link href="/">
+          <Link href="/dashboard">
             <LayoutDashboard className="mr-2 h-4 w-4" />
             Dashboard
           </Link>
