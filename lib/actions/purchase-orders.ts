@@ -6,7 +6,6 @@ import { getSupabaseServer } from "../supabase/server"
 export type PurchaseOrderStatus = "draft" | "sent" | "confirmed" | "shipped" | "received" | "cancelled"
 
 export async function getPurchaseOrders(status?: PurchaseOrderStatus) {
-  "use cache"
   const supabase = await getSupabaseServer()
 
   let query = supabase
@@ -236,7 +235,6 @@ export async function receivePurchaseOrder(
 }
 
 export async function getReorderAlerts() {
-  "use cache"
   const supabase = await getSupabaseServer()
 
   const { data, error } = await supabase
@@ -270,7 +268,6 @@ export async function resolveReorderAlert(id: string) {
 }
 
 export async function getLowStockProducts() {
-  "use cache"
   const supabase = await getSupabaseServer()
 
   // Get products where any inventory is below reorder point

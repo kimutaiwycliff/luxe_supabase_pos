@@ -60,16 +60,16 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
     try {
       const result = category
         ? await updateCategory(category.id, {
-            name: formData.name,
-            description: formData.description || undefined,
-            parent_id: formData.parent_id || undefined,
-            is_active: formData.is_active,
-          })
+          name: formData.name,
+          description: formData.description || undefined,
+          parent_id: formData.parent_id || undefined,
+          is_active: formData.is_active,
+        })
         : await createCategory({
-            name: formData.name,
-            description: formData.description || undefined,
-            parent_id: formData.parent_id || undefined,
-          })
+          name: formData.name,
+          description: formData.description || undefined,
+          parent_id: formData.parent_id || undefined,
+        })
 
       if (result.error) {
         setError(result.error)
@@ -119,19 +119,18 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
           <div className="space-y-2">
             <Label htmlFor="parent">Parent Category</Label>
             <Select
-              value={formData.parent_id ? formData.parent_id.toString() : ""} // Updated value conversion to string
+              value={formData.parent_id ? formData.parent_id.toString() : "none"} // Updated value conversion to string
               onValueChange={(value) =>
-                setFormData({ ...formData, parent_id: value === "" ? null : Number.parseInt(value) })
+                setFormData({ ...formData, parent_id: value === "none" ? null : Number.parseInt(value) })
               } // Updated value conversion to integer
             >
               <SelectTrigger>
                 <SelectValue placeholder="None (Top Level)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None (Top Level)</SelectItem>
+                <SelectItem value="none">None (Top Level)</SelectItem>
                 {parentOptions.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id.toString()}>
-                    {" "}
                     {cat.name}
                   </SelectItem>
                 ))}

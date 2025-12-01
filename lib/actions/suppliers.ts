@@ -6,7 +6,6 @@ import { searchSuppliers as algoliaSearchSuppliers } from "@/lib/algolia-search"
 import { getSupabaseServer } from "../supabase/server"
 
 export async function getSuppliers(options?: { search?: string }) {
-  "use cache"
   const supabase = await getSupabaseServer()
 
   if (options?.search && options.search.trim().length > 0) {
@@ -89,7 +88,7 @@ export async function createSupplier(formData: FormData) {
     phone: (formData.get("phone") as string) || null,
     address: (formData.get("address") as string) || null,
     payment_terms: (formData.get("payment_terms") as string) || null,
-    lead_time_days: formData.get("lead_time_days") ? Number.parseInt(formData.get("lead_time_days") as string) : null,
+    // lead_time_days: formData.get("lead_time_days") ? Number.parseInt(formData.get("lead_time_days") as string) : null,
     notes: (formData.get("notes") as string) || null,
     is_active: true,
   }
