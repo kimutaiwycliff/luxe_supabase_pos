@@ -27,8 +27,6 @@ export async function indexProduct(product: {
   category?: { name: string } | null
   supplier?: { name: string } | null
 }) {
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.products)
-
   const algoliaProduct: AlgoliaProduct = {
     objectID: product.id,
     name: product.name,
@@ -48,13 +46,17 @@ export async function indexProduct(product: {
     created_at: product.created_at,
     updated_at: product.updated_at,
   }
-
-  await index.saveObject(algoliaProduct)
+  await algoliaClient.saveObject({
+    indexName: ALGOLIA_INDEXES.products,
+    body: algoliaProduct
+  })
 }
 
 export async function deleteProductFromIndex(productId: string) {
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.products)
-  await index.deleteObject(productId)
+  await algoliaClient.deleteObject({
+    indexName: ALGOLIA_INDEXES.products,
+    objectID: productId
+  })
 }
 
 // ============================================
@@ -74,7 +76,6 @@ export async function indexCustomer(customer: {
   is_active: boolean
   created_at: string
 }) {
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.customers)
 
   const algoliaCustomer: AlgoliaCustomer = {
     objectID: customer.id,
@@ -90,13 +91,17 @@ export async function indexCustomer(customer: {
     is_active: customer.is_active,
     created_at: customer.created_at,
   }
-
-  await index.saveObject(algoliaCustomer)
+  await algoliaClient.saveObject({
+    indexName: ALGOLIA_INDEXES.customers,
+    body: algoliaCustomer
+  })
 }
 
 export async function deleteCustomerFromIndex(customerId: string) {
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.customers)
-  await index.deleteObject(customerId)
+  await algoliaClient.deleteObject({
+    indexName: ALGOLIA_INDEXES.customers,
+    objectID: customerId
+  })
 }
 
 // ============================================
@@ -115,7 +120,6 @@ export async function indexSupplier(supplier: {
   is_active: boolean
   created_at: string
 }) {
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.suppliers)
 
   const algoliaSupplier: AlgoliaSupplier = {
     objectID: supplier.id,
@@ -130,12 +134,17 @@ export async function indexSupplier(supplier: {
     created_at: supplier.created_at,
   }
 
-  await index.saveObject(algoliaSupplier)
+  await algoliaClient.saveObject({
+    indexName: ALGOLIA_INDEXES.suppliers,
+    body: algoliaSupplier
+  })
 }
 
 export async function deleteSupplierFromIndex(supplierId: string) {
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.suppliers)
-  await index.deleteObject(supplierId)
+  await algoliaClient.deleteObject({
+    indexName: ALGOLIA_INDEXES.suppliers,
+    objectID: supplierId
+  })
 }
 
 // ============================================
@@ -164,8 +173,6 @@ export async function indexInventoryItem(item: {
     name: string
   } | null
 }) {
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.inventory)
-
   const algoliaInventory: AlgoliaInventory = {
     objectID: item.id,
     product_id: item.product_id,
@@ -183,7 +190,10 @@ export async function indexInventoryItem(item: {
     is_low_stock: item.quantity <= item.reorder_point,
   }
 
-  await index.saveObject(algoliaInventory)
+  await algoliaClient.saveObject({
+    indexName: ALGOLIA_INDEXES.inventory,
+    body: algoliaInventory
+  })
 }
 
 // ============================================
@@ -192,7 +202,6 @@ export async function indexInventoryItem(item: {
 
 export async function syncAllProductsToAlgolia() {
   const supabase = await getSupabaseServer()
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.products)
 
   const { data: products, error } = await supabase.from("products").select(`
       *,
@@ -225,14 +234,21 @@ export async function syncAllProductsToAlgolia() {
     updated_at: p.updated_at,
   }))
 
-  await index.saveObjects(algoliaProducts)
+  await algoliaClient.batch({
+    indexName: ALGOLIA_INDEXES.products,
+    batchWriteParams: {
+      requests: algoliaProducts.map((obj) => ({
+        action: "addObject",
+        body: obj,
+      })),
+    },
+  })
 
   return { success: true, error: null, count: algoliaProducts.length }
 }
 
 export async function syncAllCustomersToAlgolia() {
   const supabase = await getSupabaseServer()
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.customers)
 
   const { data: customers, error } = await supabase.from("customers").select("*")
 
@@ -256,14 +272,21 @@ export async function syncAllCustomersToAlgolia() {
     created_at: c.created_at,
   }))
 
-  await index.saveObjects(algoliaCustomers)
+  await algoliaClient.batch({
+    indexName: ALGOLIA_INDEXES.customers,
+    batchWriteParams: {
+      requests: algoliaCustomers.map((obj) => ({
+        action: "addObject",
+        body: obj,
+      })),
+    },
+  })
 
   return { success: true, error: null, count: algoliaCustomers.length }
 }
 
 export async function syncAllSuppliersToAlgolia() {
   const supabase = await getSupabaseServer()
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.suppliers)
 
   const { data: suppliers, error } = await supabase.from("suppliers").select("*")
 
@@ -285,19 +308,26 @@ export async function syncAllSuppliersToAlgolia() {
     created_at: s.created_at,
   }))
 
-  await index.saveObjects(algoliaSuppliers)
+  await algoliaClient.batch({
+    indexName: ALGOLIA_INDEXES.suppliers,
+    batchWriteParams: {
+      requests: algoliaSuppliers.map((obj) => ({
+        action: "addObject",
+        body: obj,
+      })),
+    },
+  })
 
   return { success: true, error: null, count: algoliaSuppliers.length }
 }
 
 export async function syncAllInventoryToAlgolia() {
   const supabase = await getSupabaseServer()
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.inventory)
 
   const { data: inventory, error } = await supabase.from("inventory").select(`
       *,
       product:products(name, sku, barcode, low_stock_threshold),
-      variant:product_variants(sku, option_values),
+      variant:product_variants(name, sku),
       location:locations(name)
     `)
 
@@ -323,7 +353,15 @@ export async function syncAllInventoryToAlgolia() {
     is_low_stock: i.quantity <= i.reorder_point,
   }))
 
-  await index.saveObjects(algoliaInventory)
+  await algoliaClient.batch({
+    indexName: ALGOLIA_INDEXES.inventory,
+    batchWriteParams: {
+      requests: algoliaInventory.map((obj) => ({
+        action: "addObject",
+        body: obj,
+      })),
+    },
+  })
 
   return { success: true, error: null, count: algoliaInventory.length }
 }
@@ -350,45 +388,53 @@ export async function syncAllToAlgolia() {
 
 export async function configureAlgoliaIndexes() {
   // Products index settings
-  const productsIndex = algoliaClient.initIndex(ALGOLIA_INDEXES.products)
-  await productsIndex.setSettings({
-    searchableAttributes: ["name", "sku", "barcode", "description", "category_name", "supplier_name", "tags"],
-    attributesForFaceting: [
-      "filterOnly(category_id)",
-      "filterOnly(supplier_id)",
-      "filterOnly(is_active)",
-      "filterOnly(has_variants)",
-      "searchable(category_name)",
-      "searchable(tags)",
-    ],
-    customRanking: ["desc(updated_at)"],
-    typoTolerance: true,
-    minWordSizefor1Typo: 3,
-    minWordSizefor2Typos: 6,
+  await algoliaClient.setSettings({
+    indexName: ALGOLIA_INDEXES.products,
+    indexSettings: {
+      searchableAttributes: ["name", "sku", "barcode", "description", "category_name", "supplier_name", "tags"],
+      attributesForFaceting: [
+        "filterOnly(category_id)",
+        "filterOnly(supplier_id)",
+        "filterOnly(is_active)",
+        "filterOnly(has_variants)",
+        "searchable(category_name)",
+        "searchable(tags)",
+      ],
+      customRanking: ["desc(updated_at)"],
+      typoTolerance: true,
+      minWordSizefor1Typo: 3,
+      minWordSizefor2Typos: 6,
+    },
   })
 
   // Customers index settings
-  const customersIndex = algoliaClient.initIndex(ALGOLIA_INDEXES.customers)
-  await customersIndex.setSettings({
-    searchableAttributes: ["full_name", "first_name", "last_name", "phone", "email", "city"],
-    attributesForFaceting: ["filterOnly(is_active)", "searchable(city)"],
-    customRanking: ["desc(total_spent)", "desc(total_orders)"],
+  await algoliaClient.setSettings({
+    indexName: ALGOLIA_INDEXES.customers,
+    indexSettings: {
+      searchableAttributes: ["full_name", "first_name", "last_name", "phone", "email", "city"],
+      attributesForFaceting: ["filterOnly(is_active)", "searchable(city)"],
+      customRanking: ["desc(total_spent)", "desc(total_orders)"],
+    },
   })
 
   // Suppliers index settings
-  const suppliersIndex = algoliaClient.initIndex(ALGOLIA_INDEXES.suppliers)
-  await suppliersIndex.setSettings({
-    searchableAttributes: ["name", "contact_person", "email", "phone", "address"],
-    attributesForFaceting: ["filterOnly(is_active)"],
-    customRanking: ["asc(name)"],
+  await algoliaClient.setSettings({
+    indexName: ALGOLIA_INDEXES.suppliers,
+    indexSettings: {
+      searchableAttributes: ["name", "contact_person", "email", "phone", "address"],
+      attributesForFaceting: ["filterOnly(is_active)"],
+      customRanking: ["asc(name)"],
+    },
   })
 
   // Inventory index settings
-  const inventoryIndex = algoliaClient.initIndex(ALGOLIA_INDEXES.inventory)
-  await inventoryIndex.setSettings({
-    searchableAttributes: ["product_name", "product_sku", "product_barcode", "variant_sku", "location_name"],
-    attributesForFaceting: ["filterOnly(location_id)", "filterOnly(product_id)", "filterOnly(is_low_stock)"],
-    customRanking: ["asc(quantity)"],
+  await algoliaClient.setSettings({
+    indexName: ALGOLIA_INDEXES.inventory,
+    indexSettings: {
+      searchableAttributes: ["product_name", "product_sku", "product_barcode", "variant_sku", "location_name"],
+      attributesForFaceting: ["filterOnly(location_id)", "filterOnly(product_id)", "filterOnly(is_low_stock)"],
+      customRanking: ["asc(quantity)"],
+    },
   })
 
   return { success: true }

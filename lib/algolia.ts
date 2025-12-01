@@ -29,6 +29,7 @@ export interface AlgoliaProduct {
   image_url?: string
   created_at: string
   updated_at: string
+  [key: string]: unknown
 }
 
 // Customer index type
@@ -45,6 +46,7 @@ export interface AlgoliaCustomer {
   loyalty_points: number
   is_active: boolean
   created_at: string
+  [key: string]: unknown
 }
 
 // Supplier index type
@@ -59,6 +61,7 @@ export interface AlgoliaSupplier {
   lead_time_days?: number
   is_active: boolean
   created_at: string
+  [key: string]: unknown
 }
 
 // Inventory index type (for searching products with stock info)
@@ -77,4 +80,5 @@ export interface AlgoliaInventory {
   reserved_quantity: number
   reorder_point: number
   is_low_stock: boolean
+  [key: string]: unknown 
 }
