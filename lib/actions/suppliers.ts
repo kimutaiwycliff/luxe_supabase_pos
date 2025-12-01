@@ -118,7 +118,7 @@ export async function updateSupplier(id: string, formData: FormData) {
     phone: (formData.get("phone") as string) || null,
     address: (formData.get("address") as string) || null,
     payment_terms: (formData.get("payment_terms") as string) || null,
-    lead_time_days: formData.get("lead_time_days") ? Number.parseInt(formData.get("lead_time_days") as string) : null,
+    // lead_time_days: formData.get("lead_time_days") ? Number.parseInt(formData.get("lead_time_days") as string) : null,
     notes: (formData.get("notes") as string) || null,
     is_active: formData.get("is_active") === "true",
   }
