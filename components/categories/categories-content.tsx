@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
+import Image from "next/image"
 
 export function CategoriesContent() {
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -118,8 +119,17 @@ export function CategoriesContent() {
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                      <Tags className="h-5 w-5 text-primary" />
+                    <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
+                      {category.image_path ? (
+                        <Image
+                          src={category.image_path}
+                          alt={category.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <Tags className="h-5 w-5 text-primary" />
+                      )}
                     </div>
                     <div>
                       <h3 className="font-medium">{category.name}</h3>
@@ -155,7 +165,7 @@ export function CategoriesContent() {
                   <StatusBadge status={category.is_active ? "active" : "inactive"} />
                 </div>
               </CardContent>
-            </Card>
+          </Card>
           ))}
         </div>
       )}
