@@ -1,5 +1,6 @@
 "use server"
 
+import { SearchResponse } from "algoliasearch"
 import { algoliaClient, ALGOLIA_INDEXES } from "./algolia"
 import type { AlgoliaProduct, AlgoliaCustomer, AlgoliaSupplier, AlgoliaInventory } from "./algolia"
 
@@ -15,8 +16,6 @@ export async function searchProducts(
     limit?: number
   },
 ) {
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.products)
-
   const filters: string[] = []
   if (options?.categoryId) {
     filters.push(`category_id:${options.categoryId}`)
@@ -25,31 +24,44 @@ export async function searchProducts(
     filters.push(`is_active:${options.isActive}`)
   }
 
-  const { hits, nbHits } = await index.search<AlgoliaProduct>(query, {
-    hitsPerPage: options?.limit || 50,
-    filters: filters.length > 0 ? filters.join(" AND ") : undefined,
+  const { results } = await algoliaClient.search({
+    requests: [
+      {
+        indexName: ALGOLIA_INDEXES.products,
+        query,
+        hitsPerPage: options?.limit || 50,
+        filters: filters.length > 0 ? filters.join(" AND ") : undefined,
+      },
+    ],
   })
 
+  const result = results[0] as SearchResponse<AlgoliaProduct>
+
   return {
-    products: hits,
-    count: nbHits,
+    products: result.hits,
+    count: result.nbHits,
   }
 }
 
 export async function searchProductsForPOS(query: string, categoryId?: string) {
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.products)
-
   const filters = ["is_active:true"]
   if (categoryId) {
     filters.push(`category_id:${categoryId}`)
   }
 
-  const { hits } = await index.search<AlgoliaProduct>(query, {
-    hitsPerPage: 50,
-    filters: filters.join(" AND "),
+  const { results } = await algoliaClient.search({
+    requests: [
+      {
+        indexName: ALGOLIA_INDEXES.products,
+        query,
+        hitsPerPage: 50,
+        filters: filters.join(" AND "),
+      },
+    ],
   })
 
-  return hits
+  const result = results[0] as SearchResponse<AlgoliaProduct>
+  return result.hits
 }
 
 // ============================================
@@ -63,21 +75,27 @@ export async function searchCustomers(
     limit?: number
   },
 ) {
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.customers)
-
   const filters: string[] = []
   if (options?.isActive !== undefined) {
     filters.push(`is_active:${options.isActive}`)
   }
 
-  const { hits, nbHits } = await index.search<AlgoliaCustomer>(query, {
-    hitsPerPage: options?.limit || 20,
-    filters: filters.length > 0 ? filters.join(" AND ") : undefined,
+  const { results } = await algoliaClient.search({
+    requests: [
+      {
+        indexName: ALGOLIA_INDEXES.customers,
+        query,
+        hitsPerPage: options?.limit || 20,
+        filters: filters.length > 0 ? filters.join(" AND ") : undefined,
+      },
+    ],
   })
 
+  const result = results[0] as SearchResponse<AlgoliaCustomer>
+
   return {
-    customers: hits,
-    count: nbHits,
+    customers: result.hits,
+    count: result.nbHits,
   }
 }
 
@@ -92,21 +110,27 @@ export async function searchSuppliers(
     limit?: number
   },
 ) {
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.suppliers)
-
   const filters: string[] = []
   if (options?.isActive !== undefined) {
     filters.push(`is_active:${options.isActive}`)
   }
 
-  const { hits, nbHits } = await index.search<AlgoliaSupplier>(query, {
-    hitsPerPage: options?.limit || 50,
-    filters: filters.length > 0 ? filters.join(" AND ") : undefined,
+  const { results } = await algoliaClient.search({
+    requests: [
+      {
+        indexName: ALGOLIA_INDEXES.suppliers,
+        query,
+        hitsPerPage: options?.limit || 50,
+        filters: filters.length > 0 ? filters.join(" AND ") : undefined,
+      },
+    ],
   })
 
+  const result = results[0] as SearchResponse<AlgoliaSupplier>
+
   return {
-    suppliers: hits,
-    count: nbHits,
+    suppliers: result.hits,
+    count: result.nbHits,
   }
 }
 
@@ -122,8 +146,6 @@ export async function searchInventory(
     limit?: number
   },
 ) {
-  const index = algoliaClient.initIndex(ALGOLIA_INDEXES.inventory)
-
   const filters: string[] = []
   if (options?.locationId) {
     filters.push(`location_id:${options.locationId}`)
@@ -132,13 +154,21 @@ export async function searchInventory(
     filters.push(`is_low_stock:true`)
   }
 
-  const { hits, nbHits } = await index.search<AlgoliaInventory>(query, {
-    hitsPerPage: options?.limit || 100,
-    filters: filters.length > 0 ? filters.join(" AND ") : undefined,
+  const { results } = await algoliaClient.search({
+    requests: [
+      {
+        indexName: ALGOLIA_INDEXES.inventory,
+        query,
+        hitsPerPage: options?.limit || 100,
+        filters: filters.length > 0 ? filters.join(" AND ") : undefined,
+      },
+    ],
   })
 
+  const result = results[0] as SearchResponse<AlgoliaInventory>
+
   return {
-    inventory: hits,
-    count: nbHits,
+    inventory: result.hits,
+    count: result.nbHits,
   }
 }
