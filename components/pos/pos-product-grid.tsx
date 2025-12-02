@@ -6,13 +6,13 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { getProducts, getProductVariants } from "@/lib/actions/products"
+import { getCategories } from "@/lib/actions/categories"
 import { formatCurrency } from "@/lib/format"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Package, Plus } from "lucide-react"
 import type { Product, ProductVariant } from "@/lib/types"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { getCategories } from "@/lib/actions/categories"
-import { getProducts, getProductVariants } from "@/lib/actions/products"
 
 interface POSProductGridProps {
   searchQuery: string
@@ -184,7 +184,9 @@ function VariantDialog({ open, onOpenChange, product, onSelect }: VariantDialogP
                   onClick={() => onSelect(variant)}
                 >
                   <div className="text-left">
-                    <p className="font-medium">{Object.values(variant.option_values).join(" / ")}</p>
+                    <p className="font-medium">
+                      {variant.option_values ? Object.values(variant.option_values).join(" / ") : variant.sku}
+                    </p>
                     <p className="text-xs text-muted-foreground">{variant.sku}</p>
                   </div>
                   <div className="flex items-center gap-2">

@@ -103,10 +103,13 @@ export function POSCart({
               <div key={item.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{item.product.name}</p>
-                  {item.variant && (
+                  {item.variant && item.variant.option_values && (
                     <p className="text-xs text-muted-foreground">
                       {Object.values(item.variant.option_values).join(" / ")}
                     </p>
+                  )}
+                  {item.variant && !item.variant.option_values && (
+                    <p className="text-xs text-muted-foreground">{item.variant.sku}</p>
                   )}
                   <p className="text-sm text-muted-foreground">{formatCurrency(item.price)} each</p>
                 </div>
