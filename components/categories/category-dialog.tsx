@@ -57,7 +57,7 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
         parent_id: category.parent_id || null,
         is_active: category.is_active,
       })
-      setImageUrl(category.image_url || null)
+      setImageUrl(category.image_path || null)
     } else {
       setFormData({
         name: "",
@@ -82,7 +82,7 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
         description: formData.description || undefined,
         parent_id: formData.parent_id || undefined,
         is_active: formData.is_active,
-        image_url: imageUrl || undefined,
+        image_path: imageUrl || undefined,
       }
 
       const result = category ? await updateCategory(category.id, submitData) : await createCategory(submitData)

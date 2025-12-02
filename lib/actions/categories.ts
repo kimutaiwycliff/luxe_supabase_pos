@@ -26,7 +26,7 @@ export async function createCategory(data: {
   name: string
   description?: string
   parent_id?: string
-  image_url?: string
+  image_path?: string
 }) {
   const supabase = await getSupabaseServer()
 
@@ -42,7 +42,7 @@ export async function createCategory(data: {
       slug,
       description: data.description || null,
       parent_id: data.parent_id || null,
-      image_url: data.image_url || null,
+      image_path: data.image_path || null,
     })
     .select()
     .single()
@@ -61,7 +61,7 @@ export async function updateCategory(
     name: string
     description: string
     parent_id: string
-    image_url: string
+    image_path: string
     is_active: boolean
     sort_order: number
   }>,
