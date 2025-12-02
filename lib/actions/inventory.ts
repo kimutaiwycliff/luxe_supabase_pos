@@ -15,6 +15,13 @@ export async function getInventory(options?: {
 }) {
   const supabase = await getSupabaseServer()
 
+  const selectQuery = `
+    *,
+    product:products(id, name, sku, barcode, image_url, selling_price, cost_price, low_stock_threshold),
+    variant:product_variants(id, sku, barcode, option_values, image_path, selling_price, cost_price),
+    location:locations(id, name)
+  `
+
   if (options?.search && options.search.trim().length > 0) {
     try {
       const { inventory: algoliaHits } = await algoliaSearchInventory(options.search, {
@@ -27,18 +34,11 @@ export async function getInventory(options?: {
         const inventoryIds = algoliaHits.map((i) => i.objectID)
         const { data, error, count } = await supabase
           .from("inventory")
-          .select(
-            `
-            *,
-            product:products(id, name, sku, barcode, image_url, selling_price, cost_price, low_stock_threshold),
-            variant:product_variants(id, sku, barcode, option_values, selling_price, cost_price),
-            location:locations(id, name)
-          `,
-            { count: "exact" },
-          )
+          .select(selectQuery, { count: "exact" })
           .in("id", inventoryIds)
 
         if (error) {
+          console.error("Error fetching inventory:", error)
           return { inventory: [], count: 0, error: error.message }
         }
 
@@ -58,15 +58,7 @@ export async function getInventory(options?: {
   // Standard query without search
   let query = supabase
     .from("inventory")
-    .select(
-      `
-      *,
-      product:products(id, name, sku, barcode, image_url, selling_price, cost_price, low_stock_threshold),
-      variant:product_variants(id, sku, barcode, option_values, selling_price, cost_price),
-      location:locations(id, name)
-    `,
-      { count: "exact" },
-    )
+    .select(selectQuery, { count: "exact" })
     .order("updated_at", { ascending: false })
 
   if (options?.location_id) {
@@ -103,17 +95,16 @@ async function fallbackInventorySearch(options?: {
 }) {
   const supabase = await getSupabaseServer()
 
+  const selectQuery = `
+    *,
+    product:products(id, name, sku, barcode, image_url, selling_price, cost_price, low_stock_threshold),
+    variant:product_variants(id, sku, barcode, option_values, image_path, selling_price, cost_price),
+    location:locations(id, name)
+  `
+
   let query = supabase
     .from("inventory")
-    .select(
-      `
-      *,
-      product:products(id, name, sku, barcode, image_url, selling_price, cost_price, low_stock_threshold),
-      variant:product_variants(id, sku, barcode, option_values, selling_price, cost_price),
-      location:locations(id, name)
-    `,
-      { count: "exact" },
-    )
+    .select(selectQuery, { count: "exact" })
     .order("updated_at", { ascending: false })
 
   if (options?.location_id) {
@@ -153,7 +144,7 @@ export async function getLowStockItems(locationId?: string) {
     .select(`
       *,
       product:products(id, name, sku, barcode, image_url, selling_price, cost_price, low_stock_threshold, supplier_id),
-      variant:product_variants(id, sku, barcode, option_values),
+      variant:product_variants(id, sku, barcode, option_values, image_path),
       location:locations(id, name)
     `)
     .or("quantity.lte.reorder_point")

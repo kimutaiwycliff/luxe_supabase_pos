@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react"
 import useSWR from "swr"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -27,7 +28,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import Image from "next/image"
 
 export function CategoriesContent() {
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -115,57 +115,61 @@ export function CategoriesContent() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => (
-            <Card key={category.id} className="group">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
-                      {category.image_path ? (
-                        <Image
-                          src={category.image_path}
-                          alt={category.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <Tags className="h-5 w-5 text-primary" />
-                      )}
-                    </div>
+            <Card key={category.id} className="group overflow-hidden">
+              <CardContent className="p-0">
+                {category.image_path ? (
+                  <div className="relative h-32 w-full">
+                    <Image
+                      src={category.image_path || "/placeholder.svg"}
+                      alt={category.name}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+                  </div>
+                ) : (
+                  <div className="flex h-32 items-center justify-center bg-muted/50">
+                    <Tags className="h-12 w-12 text-muted-foreground/50" />
+                  </div>
+                )}
+
+                <div className="p-4">
+                  <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-medium">{category.name}</h3>
                       <p className="text-xs text-muted-foreground">{category.slug}</p>
                     </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(category)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(category)}>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(category)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(category)}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                  {category.description && (
+                    <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{category.description}</p>
+                  )}
 
-                {category.description && (
-                  <p className="mt-3 text-sm text-muted-foreground line-clamp-2">{category.description}</p>
-                )}
-
-                <div className="mt-3">
-                  <StatusBadge status={category.is_active ? "active" : "inactive"} />
+                  <div className="mt-3">
+                    <StatusBadge status={category.is_active ? "active" : "inactive"} />
+                  </div>
                 </div>
               </CardContent>
-          </Card>
+            </Card>
           ))}
         </div>
       )}

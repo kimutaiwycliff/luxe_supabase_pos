@@ -1,10 +1,10 @@
 "use server"
 
+import { getSupabaseServer } from "@/lib/supabase/server"
 import { revalidateTag } from "next/cache"
 import type { Product, ProductVariant } from "@/lib/types"
 import { indexProduct, deleteProductFromIndex } from "./algolia"
 import { searchProducts as algoliaSearchProducts } from "@/lib/algolia-search"
-import { createClient, getSupabaseServer } from "../supabase/server"
 
 export interface ProductFormData {
   name: string
@@ -43,7 +43,7 @@ export async function getProducts(options?: {
   limit?: number
   offset?: number
 }) {
-  const supabase = await createClient()
+  const supabase = await getSupabaseServer()
 
   if (options?.search && options.search.trim().length > 0) {
     try {
