@@ -12,7 +12,9 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createCategory, updateCategory } from "@/lib/actions/categories"
 import type { Category } from "@/lib/types"
-import { Loader2 } from "lucide-react"
+import { Loader2, X } from "lucide-react"
+import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/dropzone"
+import { useSupabaseUpload } from "@/hooks/use-supabase-upload"
 
 interface CategoryDialogProps {
   open: boolean
@@ -25,12 +27,26 @@ interface CategoryDialogProps {
 export function CategoryDialog({ open, onOpenChange, category, categories, onSuccess }: CategoryDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    parent_id: null, // Updated default value to null
+    parent_id: null as string | null,
     is_active: true,
+  })
+
+  const uploadProps = useSupabaseUpload({
+    bucketName: "categories",
+    path: "images",
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+    maxFiles: 1,
+    maxFileSize: 2 * 1024 * 1024, // 2MB
+    onUploadComplete: (urls) => {
+      if (urls.length > 0) {
+        setImageUrl(urls[0])
+      }
+    },
   })
 
   useEffect(() => {
@@ -38,18 +54,21 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
       setFormData({
         name: category.name,
         description: category.description || "",
-        parent_id: category.parent_id || null, // Updated default value to null
+        parent_id: category.parent_id || null,
         is_active: category.is_active,
       })
+      setImageUrl(category.image_url || null)
     } else {
       setFormData({
         name: "",
         description: "",
-        parent_id: null, // Updated default value to null
+        parent_id: null,
         is_active: true,
       })
+      setImageUrl(null)
     }
     setError(null)
+    uploadProps.reset()
   }, [category, open])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,18 +77,15 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
     setError(null)
 
     try {
-      const result = category
-        ? await updateCategory(category.id, {
-          name: formData.name,
-          description: formData.description || undefined,
-          parent_id: formData.parent_id || undefined,
-          is_active: formData.is_active,
-        })
-        : await createCategory({
-          name: formData.name,
-          description: formData.description || undefined,
-          parent_id: formData.parent_id || undefined,
-        })
+      const submitData = {
+        name: formData.name,
+        description: formData.description || undefined,
+        parent_id: formData.parent_id || undefined,
+        is_active: formData.is_active,
+        image_url: imageUrl || undefined,
+      }
+
+      const result = category ? await updateCategory(category.id, submitData) : await createCategory(submitData)
 
       if (result.error) {
         setError(result.error)
@@ -83,12 +99,17 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
     }
   }
 
+  const handleRemoveImage = () => {
+    setImageUrl(null)
+    uploadProps.reset()
+  }
+
   // Filter out the current category from parent options
   const parentOptions = categories.filter((c) => c.id !== category?.id)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{category ? "Edit Category" : "Add New Category"}</DialogTitle>
         </DialogHeader>
@@ -117,12 +138,34 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
           </div>
 
           <div className="space-y-2">
+            <Label>Category Image</Label>
+            {imageUrl && !uploadProps.isSuccess ? (
+              <div className="relative w-full aspect-video max-w-[200px] rounded-lg overflow-hidden border">
+                <img src={imageUrl || "/placeholder.svg"} alt="Category" className="w-full h-full object-cover" />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-7 w-7"
+                  onClick={handleRemoveImage}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <Dropzone {...uploadProps} className="min-h-[120px]">
+                {uploadProps.files.length === 0 && <DropzoneEmptyState />}
+                <DropzoneContent />
+              </Dropzone>
+            )}
+            <p className="text-xs text-muted-foreground">Optional. Max 2MB.</p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="parent">Parent Category</Label>
             <Select
-              value={formData.parent_id ? formData.parent_id.toString() : "none"} // Updated value conversion to string
-              onValueChange={(value) =>
-                setFormData({ ...formData, parent_id: value === "none" ? null : Number.parseInt(value) })
-              } // Updated value conversion to integer
+              value={formData.parent_id ? formData.parent_id.toString() : "none"}
+              onValueChange={(value) => setFormData({ ...formData, parent_id: value === "none" ? null : value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="None (Top Level)" />
@@ -130,7 +173,7 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
               <SelectContent>
                 <SelectItem value="none">None (Top Level)</SelectItem>
                 {parentOptions.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id.toString()}>
+                  <SelectItem key={cat.id} value={cat.id}>
                     {cat.name}
                   </SelectItem>
                 ))}

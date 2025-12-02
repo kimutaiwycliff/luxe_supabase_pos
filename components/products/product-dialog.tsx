@@ -13,7 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createProduct, updateProduct } from "@/lib/actions/products"
 import type { Product, Category } from "@/lib/types"
-import { Loader2 } from "lucide-react"
+import { Loader2, X } from "lucide-react"
+import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/dropzone"
+import { useSupabaseUpload } from "@/hooks/use-supabase-upload"
 
 interface ProductDialogProps {
   open: boolean
@@ -26,6 +28,7 @@ interface ProductDialogProps {
 export function ProductDialog({ open, onOpenChange, product, categories, onSuccess }: ProductDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -42,6 +45,19 @@ export function ProductDialog({ open, onOpenChange, product, categories, onSucce
     track_inventory: true,
     allow_backorder: false,
     low_stock_threshold: 5,
+  })
+
+  const uploadProps = useSupabaseUpload({
+    bucketName: "products",
+    path: "images",
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+    maxFiles: 1,
+    maxFileSize: 5 * 1024 * 1024, // 5MB
+    onUploadComplete: (urls) => {
+      if (urls.length > 0) {
+        setImageUrl(urls[0])
+      }
+    },
   })
 
   useEffect(() => {
@@ -62,6 +78,7 @@ export function ProductDialog({ open, onOpenChange, product, categories, onSucce
         allow_backorder: product.allow_backorder,
         low_stock_threshold: product.low_stock_threshold,
       })
+      setImageUrl(product.image_url || undefined)
     } else {
       setFormData({
         name: "",
@@ -79,8 +96,10 @@ export function ProductDialog({ open, onOpenChange, product, categories, onSucce
         allow_backorder: false,
         low_stock_threshold: 5,
       })
+      setImageUrl(undefined)
     }
     setError(null)
+    uploadProps.reset()
   }, [product, open])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,7 +108,11 @@ export function ProductDialog({ open, onOpenChange, product, categories, onSucce
     setError(null)
 
     try {
-      const result = product ? await updateProduct(product.id, formData) : await createProduct(formData)
+      const submitData = {
+        ...formData,
+        image_url: imageUrl,
+      }
+      const result = product ? await updateProduct(product.id, submitData) : await createProduct(submitData)
 
       if (result.error) {
         setError(result.error)
@@ -103,20 +126,26 @@ export function ProductDialog({ open, onOpenChange, product, categories, onSucce
     }
   }
 
+  const handleRemoveImage = () => {
+    setImageUrl(undefined)
+    uploadProps.reset()
+  }
+
   const profit = formData.selling_price - formData.cost_price
   const margin = formData.selling_price > 0 ? (profit / formData.selling_price) * 100 : 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{product ? "Edit Product" : "Add New Product"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <Tabs defaultValue="basic" className="mt-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="image">Image</TabsTrigger>
               <TabsTrigger value="pricing">Pricing</TabsTrigger>
               <TabsTrigger value="inventory">Inventory</TabsTrigger>
             </TabsList>
@@ -194,6 +223,34 @@ export function ProductDialog({ open, onOpenChange, product, categories, onSucce
                   checked={formData.is_featured}
                   onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
                 />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="image" className="mt-4 space-y-4">
+              <div className="space-y-2">
+                <Label>Product Image</Label>
+                {imageUrl && !uploadProps.isSuccess ? (
+                  <div className="relative w-full aspect-square max-w-[200px] rounded-lg overflow-hidden border">
+                    <img src={imageUrl || "/placeholder.svg"} alt="Product" className="w-full h-full object-cover" />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8"
+                      onClick={handleRemoveImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Dropzone {...uploadProps}>
+                    {uploadProps.files.length === 0 && <DropzoneEmptyState />}
+                    <DropzoneContent />
+                  </Dropzone>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Upload a product image. Recommended size: 800x800px. Max 5MB.
+                </p>
               </div>
             </TabsContent>
 
