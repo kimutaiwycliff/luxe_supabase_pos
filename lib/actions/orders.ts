@@ -2,7 +2,7 @@
 
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { revalidateTag } from "next/cache"
-import type { Order, Payment } from "@/lib/types"
+import type { Order } from "@/lib/types"
 
 export interface CreateOrderData {
   customer_id?: string
@@ -309,7 +309,7 @@ export async function getTodayStats(locationId?: string) {
     mpesa = 0,
     card = 0
   data?.forEach((order) => {
-    order.payments?.forEach((p: Payment) => {
+    order.payments?.forEach((p) => {
       if (p.payment_method === "cash") cash += p.amount
       else if (p.payment_method === "mpesa") mpesa += p.amount
       else if (p.payment_method === "card") card += p.amount

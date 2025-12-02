@@ -25,17 +25,19 @@ import { formatCurrency } from "@/lib/format"
 import type { Customer } from "@/lib/types"
 
 export function CustomersContent() {
-  const [search, ] = useState("")
+  const [search,] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
-    data: customers = [],
+    data: customersData,
     mutate,
     isLoading,
-  } = useSWR(["customers", search], () => getCustomers(search), {
+  } = useSWR(["customers", search], () => getCustomers({ search }), {
     revalidateOnFocus: false,
   })
+
+  const customers = customersData?.customers || []
 
   const handleCreateCustomer = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -49,7 +51,7 @@ export function CustomersContent() {
       phone: formData.get("phone") as string,
     })
 
-    if (result.success) {
+    if (result.customer) {
       mutate()
       setDialogOpen(false)
     }
@@ -57,8 +59,8 @@ export function CustomersContent() {
   }
 
   const totalCustomers = customers.length
-  const totalLoyaltyPoints = customers.reduce((sum, c) => sum + (c.loyalty_points || 0), 0)
-  const totalSpent = customers.reduce((sum, c) => sum + (c.total_spent || 0), 0)
+  const totalLoyaltyPoints = customers.reduce((sum: number, c: Customer) => sum + (c.loyalty_points || 0), 0)
+  const totalSpent = customers.reduce((sum: number, c: Customer) => sum + (c.total_spent || 0), 0)
 
   const columns: ColumnDef<Customer>[] = [
     {

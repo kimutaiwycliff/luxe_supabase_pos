@@ -58,9 +58,9 @@ export function CreatePurchaseOrderDialog({ open, onOpenChange, onSuccess }: Cre
 
   const loadData = async () => {
     try {
-      const [suppliersData, productsData] = await Promise.all([getSuppliers(), getProducts()])
+      const [suppliersData, productsResult] = await Promise.all([getSuppliers(), getProducts()])
       setSuppliers(suppliersData || [])
-      setProducts(productsData || [])
+      setProducts(productsResult.products || [])
     } catch (error) {
       console.error("Failed to load data:", error)
     }

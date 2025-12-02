@@ -92,10 +92,10 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order, onUpdate 
 
   const loadLocations = async () => {
     try {
-      const data = await getLocations()
-      setLocations(data || [])
-      if (data?.length > 0) {
-        setSelectedLocation(data[0].id)
+      const result = await getLocations()
+      setLocations(result.locations || [])
+      if (result.locations?.length > 0) {
+        setSelectedLocation(result.locations[0].id)
       }
     } catch (error) {
       console.error("Failed to load locations:", error)
@@ -125,7 +125,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order, onUpdate 
     }
 
     const itemsToReceive = Object.entries(receivedQuantities)
-      .filter(([_, qty]) => qty > 0)
+      .filter(([, qty]) => qty > 0)
       .map(([itemId, qty]) => ({
         item_id: itemId,
         quantity_received: qty,
@@ -195,30 +195,30 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order, onUpdate 
     },
     ...(showReceiveMode
       ? [
-          {
-            id: "receive_now",
-            header: () => <div className="text-right">Receive Now</div>,
-            cell: ({ row }: { row: { original: PurchaseOrderItem } }) => {
-              const item = row.original
-              return (
-                <Input
-                  type="number"
-                  min="0"
-                  max={item.quantity_ordered - item.quantity_received}
-                  value={receivedQuantities[item.id] || 0}
-                  onChange={(e) =>
-                    setReceivedQuantities({
-                      ...receivedQuantities,
-                      [item.id]: Number.parseInt(e.target.value) || 0,
-                    })
-                  }
-                  className="w-20 h-8 text-right ml-auto"
-                />
-              )
-            },
-            meta: { className: "text-right" },
-          } as ColumnDef<PurchaseOrderItem>,
-        ]
+        {
+          id: "receive_now",
+          header: () => <div className="text-right">Receive Now</div>,
+          cell: ({ row }: { row: { original: PurchaseOrderItem } }) => {
+            const item = row.original
+            return (
+              <Input
+                type="number"
+                min="0"
+                max={item.quantity_ordered - item.quantity_received}
+                value={receivedQuantities[item.id] || 0}
+                onChange={(e) =>
+                  setReceivedQuantities({
+                    ...receivedQuantities,
+                    [item.id]: Number.parseInt(e.target.value) || 0,
+                  })
+                }
+                className="w-20 h-8 text-right ml-auto"
+              />
+            )
+          },
+          meta: { className: "text-right" },
+        } as ColumnDef<PurchaseOrderItem>,
+      ]
       : []),
   ]
 

@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 
 export type FileWithPreview = File & {
   preview?: string
-  errors: FileError[]
+  errors: readonly FileError[]
 }
 
 export type UseSupabaseUploadOptions = {

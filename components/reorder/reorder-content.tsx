@@ -10,11 +10,7 @@ import { CreatePurchaseOrderDialog } from "@/components/purchase-orders/create-p
 import { formatCurrency } from "@/lib/format"
 import { toast } from "sonner"
 
-interface InventoryItem {
-  quantity: number
-  reserved_quantity: number
-  location: { id: string; name: string } | null
-}
+
 
 interface LowStockProduct {
   id: string
@@ -28,8 +24,15 @@ interface LowStockProduct {
     name: string
     email: string | null
     phone: string | null
-  } | null
-  inventory: InventoryItem[]
+  }[] | null
+  inventory: {
+    quantity: number
+    reserved_quantity: number
+    location: {
+      id: string
+      name: string
+    }[]
+  }[]
 }
 
 interface ReorderAlert {
@@ -166,7 +169,7 @@ export function ReorderContent() {
                       <p className="font-medium">{product.name}</p>
                       <p className="text-sm text-muted-foreground">{product.sku}</p>
                       {product.supplier && (
-                        <p className="text-sm text-muted-foreground">Supplier: {product.supplier.name}</p>
+                        <p className="text-sm text-muted-foreground">Supplier: {product.supplier?.[0]?.name || "Unknown"}</p>
                       )}
                     </div>
                     <Badge variant="destructive">Out of Stock</Badge>
@@ -208,7 +211,7 @@ export function ReorderContent() {
                         <p className="font-medium">{product.name}</p>
                         <p className="text-sm text-muted-foreground">{product.sku}</p>
                         {product.supplier && (
-                          <p className="text-sm text-muted-foreground">Supplier: {product.supplier.name}</p>
+                          <p className="text-sm text-muted-foreground">Supplier: {product.supplier?.[0]?.name || "Unknown"}</p>
                         )}
                       </div>
                       <Badge variant="outline" className="border-yellow-500 text-yellow-500">
