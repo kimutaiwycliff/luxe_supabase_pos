@@ -9,6 +9,7 @@ import { Plus, Search, Grid3X3, List, Filter } from "lucide-react"
 import { ProductCard } from "./product-card"
 import { ProductTable } from "./product-table"
 import { ProductDialog } from "./product-dialog"
+import { VariantEditorDialog } from "./variant-editor-dialog"
 import { getProducts } from "@/lib/actions/products"
 import { getCategories } from "@/lib/actions/categories"
 import type { Product } from "@/lib/types"
@@ -23,6 +24,8 @@ export function ProductsContent() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [variantDialogOpen, setVariantDialogOpen] = useState(false)
+  const [variantEditingProduct, setVariantEditingProduct] = useState<Product | null>(null)
 
   const {
     data: productsData,
@@ -48,6 +51,11 @@ export function ProductsContent() {
   const handleEdit = useCallback((product: Product) => {
     setEditingProduct(product)
     setDialogOpen(true)
+  }, [])
+
+  const handleEditVariants = useCallback((product: Product) => {
+    setVariantEditingProduct(product)
+    setVariantDialogOpen(true)
   }, [])
 
   const handleCreate = useCallback(() => {
@@ -157,11 +165,22 @@ export function ProductsContent() {
       ) : viewMode === "grid" ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} onEdit={handleEdit} onDelete={() => mutate()} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              onEdit={handleEdit}
+              onEditVariants={handleEditVariants}
+              onDelete={() => mutate()}
+            />
           ))}
         </div>
       ) : (
-        <ProductTable products={products} onEdit={handleEdit} onDelete={() => mutate()} />
+        <ProductTable
+          products={products}
+          onEdit={handleEdit}
+          onEditVariants={handleEditVariants}
+          onDelete={() => mutate()}
+        />
       )}
 
       {/* Product Dialog */}
@@ -172,6 +191,16 @@ export function ProductsContent() {
         categories={categories}
         onSuccess={handleSuccess}
       />
+
+      {/* Variant Editor Dialog */}
+      {variantEditingProduct && (
+        <VariantEditorDialog
+          open={variantDialogOpen}
+          onOpenChange={setVariantDialogOpen}
+          product={variantEditingProduct}
+          onSuccess={() => mutate()}
+        />
+      )}
     </div>
   )
 }

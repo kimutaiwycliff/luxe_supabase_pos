@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { formatCurrency } from "@/lib/format"
-import { MoreVertical, Edit, Trash2, Copy, Eye } from "lucide-react"
+import { MoreVertical, Edit, Trash2, Copy, Eye, Layers } from "lucide-react"
 import { deleteProduct } from "@/lib/actions/products"
 import type { Product } from "@/lib/types"
 import {
@@ -26,14 +26,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
 
 interface ProductCardProps {
   product: Product
   onEdit: (product: Product) => void
+  onEditVariants?: (product: Product) => void
   onDelete: () => void
 }
 
-export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
+export function ProductCard({ product, onEdit, onEditVariants, onDelete }: ProductCardProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -75,6 +77,12 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
+                {product.has_variants && onEditVariants && (
+                  <DropdownMenuItem onClick={() => onEditVariants(product)}>
+                    <Layers className="mr-2 h-4 w-4" />
+                    Edit Variants
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem>
                   <Copy className="mr-2 h-4 w-4" />
                   Duplicate
@@ -92,8 +100,14 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
             </DropdownMenu>
           </div>
 
-          <div className="absolute left-2 top-2">
+          <div className="absolute left-2 top-2 flex gap-1">
             <StatusBadge status={product.is_active ? "active" : "inactive"} />
+            {product.has_variants && (
+              <Badge variant="secondary" className="text-xs">
+                <Layers className="mr-1 h-3 w-3" />
+                Variants
+              </Badge>
+            )}
           </div>
         </div>
 

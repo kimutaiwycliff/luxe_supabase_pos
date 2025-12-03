@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table"
+import { Badge } from "@/components/ui/badge"
 import { formatCurrency } from "@/lib/format"
-import { MoreVertical, Edit, Trash2, Copy } from "lucide-react"
+import { MoreVertical, Edit, Trash2, Copy, Layers } from "lucide-react"
 import { deleteProduct } from "@/lib/actions/products"
 import type { Product } from "@/lib/types"
 import {
@@ -31,11 +32,12 @@ import {
 interface ProductTableProps {
   products: Product[]
   onEdit: (product: Product) => void
+  onEditVariants?: (product: Product) => void
   onDelete: () => void
   isLoading?: boolean
 }
 
-export function ProductTable({ products, onEdit, onDelete, isLoading }: ProductTableProps) {
+export function ProductTable({ products, onEdit, onEditVariants, onDelete, isLoading }: ProductTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -87,9 +89,17 @@ export function ProductTable({ products, onEdit, onDelete, isLoading }: ProductT
       cell: ({ row }) => {
         const product = row.original
         return (
-          <div>
-            <p className="font-medium">{product.name}</p>
-            {product.brand && <p className="text-xs text-muted-foreground">{product.brand}</p>}
+          <div className="flex items-center gap-2">
+            <div>
+              <p className="font-medium">{product.name}</p>
+              {product?.brand && <p className="text-xs text-muted-foreground">{product?.brand}</p>}
+            </div>
+            {product.has_variants && (
+              <Badge variant="secondary" className="text-xs">
+                <Layers className="mr-1 h-3 w-3" />
+                Variants
+              </Badge>
+            )}
           </div>
         )
       },
@@ -161,6 +171,12 @@ export function ProductTable({ products, onEdit, onDelete, isLoading }: ProductT
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
+              {product.has_variants && onEditVariants && (
+                <DropdownMenuItem onClick={() => onEditVariants(product)}>
+                  <Layers className="mr-2 h-4 w-4" />
+                  Edit Variants
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem>
                 <Copy className="mr-2 h-4 w-4" />
                 Duplicate

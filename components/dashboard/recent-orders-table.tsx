@@ -7,93 +7,56 @@ import { formatCurrency, formatRelativeTime } from "@/lib/format"
 
 interface RecentOrder {
   id: string
-  orderNumber: string
-  customer: string
-  items: number
-  total: number
-  paymentMethod: string
-  status: "completed" | "pending" | "cancelled"
-  createdAt: string
+  order_number: string
+  total_amount: number
+  status: string
+  payment_status: string
+  created_at: string
+  customer: { first_name: string; last_name: string } | null
+  items: { id: string }[]
+  payments: { payment_method: string }[]
 }
 
-// Demo data
-const recentOrders: RecentOrder[] = [
-  {
-    id: "1",
-    orderNumber: "ORD-2024-0156",
-    customer: "Jane Muthoni",
-    items: 3,
-    total: 8500,
-    paymentMethod: "M-Pesa",
-    status: "completed",
-    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-  },
-  {
-    id: "2",
-    orderNumber: "ORD-2024-0155",
-    customer: "Walk-in Customer",
-    items: 1,
-    total: 2300,
-    paymentMethod: "Cash",
-    status: "completed",
-    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-  },
-  {
-    id: "3",
-    orderNumber: "ORD-2024-0154",
-    customer: "Peter Kamau",
-    items: 5,
-    total: 15600,
-    paymentMethod: "M-Pesa",
-    status: "completed",
-    createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
-  },
-  {
-    id: "4",
-    orderNumber: "ORD-2024-0153",
-    customer: "Mary Wanjiku",
-    items: 2,
-    total: 4200,
-    paymentMethod: "Card",
-    status: "pending",
-    createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-  },
-  {
-    id: "5",
-    orderNumber: "ORD-2024-0152",
-    customer: "John Ochieng",
-    items: 4,
-    total: 12800,
-    paymentMethod: "M-Pesa",
-    status: "completed",
-    createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-  },
-]
+interface RecentOrdersTableProps {
+  orders: RecentOrder[]
+}
 
 const columns: ColumnDef<RecentOrder>[] = [
   {
-    accessorKey: "orderNumber",
+    accessorKey: "order_number",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Order" />,
-    cell: ({ row }) => <span className="font-medium">{row.getValue("orderNumber")}</span>,
+    cell: ({ row }) => <span className="font-medium">{row.getValue("order_number")}</span>,
   },
   {
-    accessorKey: "customer",
+    id: "customer",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Customer" />,
+    cell: ({ row }) => {
+      const customer = row.original.customer
+      return customer ? `${customer.first_name} ${customer.last_name}` : "Walk-in Customer"
+    },
   },
   {
-    accessorKey: "items",
+    id: "items",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Items" className="justify-center" />,
-    cell: ({ row }) => <div className="text-center">{row.getValue("items")}</div>,
+    cell: ({ row }) => <div className="text-center">{row.original.items?.length || 0}</div>,
     meta: { className: "text-center" },
   },
   {
-    accessorKey: "paymentMethod",
+    id: "paymentMethod",
     header: "Payment",
+    cell: ({ row }) => {
+      const payments = row.original.payments
+      if (!payments || payments.length === 0) return "-"
+      const method = payments[0].payment_method
+      return method.charAt(0).toUpperCase() + method.slice(1)
+    },
   },
   {
-    accessorKey: "total",
+    accessorKey: "total_amount",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Total" className="justify-end" />,
-    cell: ({ row }) => <div className="text-right font-medium">{formatCurrency(row.getValue("total"))}</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-medium">{formatCurrency(row.getValue("total_amount") || 0)}</div>
+    ),
     meta: { className: "text-right" },
   },
   {
@@ -102,20 +65,20 @@ const columns: ColumnDef<RecentOrder>[] = [
     cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
   },
   {
-    accessorKey: "createdAt",
+    accessorKey: "created_at",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Time" className="justify-end" />,
     cell: ({ row }) => (
-      <div className="text-right text-muted-foreground">{formatRelativeTime(row.getValue("createdAt"))}</div>
+      <div className="text-right text-muted-foreground">{formatRelativeTime(row.getValue("created_at"))}</div>
     ),
     meta: { className: "text-right" },
   },
 ]
 
-export function RecentOrdersTable() {
+export function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
   return (
     <DataTable
       columns={columns}
-      data={recentOrders}
+      data={orders}
       showSearch={false}
       showColumnToggle={false}
       showPagination={false}
