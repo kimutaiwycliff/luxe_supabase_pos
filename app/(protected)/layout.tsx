@@ -28,7 +28,11 @@ export default function ProtectedLayout({
 
         <div className="flex-1 flex flex-col gap-20">
           <Suspense fallback={<LayoutSkeleton />}>
-            <SidebarWrapper>{children}</SidebarWrapper>
+            <SidebarWrapper>
+              <div className="container mx-auto px-4">
+                {children}
+              </div>
+            </SidebarWrapper>
           </Suspense>
         </div>
 
