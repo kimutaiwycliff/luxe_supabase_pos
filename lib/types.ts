@@ -168,7 +168,8 @@ export interface Order {
   subtotal: number
   discount_amount: number
   tax_amount: number
-  total: number
+  total_amount: number
+  total?: number // alias for backward compatibility
   notes: string | null
   staff_id: string | null
   discount_id: string | null
@@ -193,7 +194,8 @@ export interface OrderItem {
   cost_price: number
   discount_amount: number
   tax_amount: number
-  total: number
+  total_amount: number
+  total?: number // alias for backward compatibility
   product?: Product
   variant?: ProductVariant
 }

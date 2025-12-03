@@ -20,6 +20,8 @@ export function POSReceiptDialog({ open, onOpenChange, order }: POSReceiptDialog
     window.print()
   }
 
+  const orderTotal = order.total_amount ?? order.total ?? 0
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
@@ -52,7 +54,7 @@ export function POSReceiptDialog({ open, onOpenChange, order }: POSReceiptDialog
                   <span>{item.product_name}</span>
                   {item.variant_name && <span className="text-muted-foreground"> ({item.variant_name})</span>}
                 </div>
-                <span>{formatCurrency(item.total)}</span>
+                <span>{formatCurrency(item.total_amount ?? item.total ?? 0)}</span>
               </div>
             ))}
           </div>
@@ -72,12 +74,12 @@ export function POSReceiptDialog({ open, onOpenChange, order }: POSReceiptDialog
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-muted-foreground">VAT (16%)</span>
+              <span className="text-muted-foreground">VAT</span>
               <span>{formatCurrency(order.tax_amount)}</span>
             </div>
             <div className="flex justify-between pt-2 text-lg font-semibold">
               <span>Total</span>
-              <span>{formatCurrency(order.total)}</span>
+              <span>{formatCurrency(orderTotal)}</span>
             </div>
           </div>
 

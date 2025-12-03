@@ -17,6 +17,7 @@ export interface CartItem {
   quantity: number
   price: number
   discount: number
+  tax_rate: number
 }
 
 export function POSLayout() {
@@ -34,11 +35,20 @@ export function POSLayout() {
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [location, setLocation] = useState<Location | null>(null)
+  const [locationError, setLocationError] = useState<string | null>(null)
+  const [orderDiscount, setOrderDiscount] = useState<number>(0)
+  const [discountType, setDiscountType] = useState<"fixed" | "percentage">("fixed")
 
   useEffect(() => {
     async function fetchLocation() {
-      const { location } = await getDefaultLocation()
-      setLocation(location)
+      const { location, error } = await getDefaultLocation()
+      if (error) {
+        setLocationError(error)
+      } else if (location) {
+        setLocation(location)
+      } else {
+        setLocationError("No location found. Please create a location first.")
+      }
     }
     fetchLocation()
   }, [])
@@ -68,6 +78,7 @@ export function POSLayout() {
           quantity: 1,
           price,
           discount: 0,
+          tax_rate: product.tax_rate || 16, // Use product's tax rate or default to 16%
         },
       ]
     })
@@ -81,6 +92,10 @@ export function POSLayout() {
     }
   }, [])
 
+  const updateItemDiscount = useCallback((itemId: string, discount: number) => {
+    setCart((prev) => prev.map((item) => (item.id === itemId ? { ...item, discount: Math.max(0, discount) } : item)))
+  }, [])
+
   const removeItem = useCallback((itemId: string) => {
     setCart((prev) => prev.filter((item) => item.id !== itemId))
   }, [])
@@ -88,6 +103,8 @@ export function POSLayout() {
   const clearCart = useCallback(() => {
     setCart([])
     setCustomer(null)
+    setOrderDiscount(0)
+    setDiscountType("fixed")
   }, [])
 
   const handlePaymentComplete = useCallback(
@@ -106,12 +123,29 @@ export function POSLayout() {
   }, [])
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const totalDiscount = cart.reduce((sum, item) => sum + item.discount, 0)
-  const tax = (subtotal - totalDiscount) * 0.16
+  const itemDiscounts = cart.reduce((sum, item) => sum + item.discount, 0)
+
+  // Calculate order-level discount
+  const calculatedOrderDiscount =
+    discountType === "percentage" ? (subtotal - itemDiscounts) * (orderDiscount / 100) : orderDiscount
+  const totalDiscount = itemDiscounts + calculatedOrderDiscount
+
+  // Calculate tax per item based on each product's tax rate
+  const tax = cart.reduce((sum, item) => {
+    const itemTotal = item.price * item.quantity - item.discount
+    const itemTax = itemTotal * (item.tax_rate / 100)
+    return sum + itemTax
+  }, 0)
+
   const total = subtotal - totalDiscount + tax
 
   return (
     <div className="flex h-[calc(100vh-1rem)] flex-col bg-background">
+      {locationError && (
+        <div className="bg-destructive/10 border-b border-destructive px-4 py-2 text-sm text-destructive">
+          {locationError} - Run the seed scripts to create a default location.
+        </div>
+      )}
       <POSHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       <div className="flex flex-1 overflow-hidden">
@@ -126,14 +160,20 @@ export function POSLayout() {
             items={cart}
             customer={customer}
             subtotal={subtotal}
-            discount={totalDiscount}
+            itemDiscounts={itemDiscounts}
+            orderDiscount={calculatedOrderDiscount}
+            discountType={discountType}
+            discountValue={orderDiscount}
             tax={tax}
             total={total}
             onUpdateQuantity={updateQuantity}
+            onUpdateItemDiscount={updateItemDiscount}
             onRemoveItem={removeItem}
             onClearCart={clearCart}
             onSelectCustomer={setCustomer}
             onCheckout={() => setPaymentDialogOpen(true)}
+            onOrderDiscountChange={setOrderDiscount}
+            onDiscountTypeChange={setDiscountType}
           />
         </div>
       </div>
