@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useSidebar } from "@/components/ui/sidebar"
 import { POSHeader } from "./pos-header"
 import { POSProductGrid } from "./pos-product-grid"
 import { POSCart } from "./pos-cart"
 import { POSPaymentDialog } from "./pos-payment-dialog"
 import { POSReceiptDialog } from "./pos-receipt-dialog"
+import { getDefaultLocation, type Location } from "@/lib/actions/locations"
 import type { Product, ProductVariant, Customer, Order } from "@/lib/types"
 
 export interface CartItem {
@@ -32,6 +33,15 @@ export function POSLayout() {
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false)
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [location, setLocation] = useState<Location | null>(null)
+
+  useEffect(() => {
+    async function fetchLocation() {
+      const { location } = await getDefaultLocation()
+      setLocation(location)
+    }
+    fetchLocation()
+  }, [])
 
   const addToCart = useCallback((product: Product, variant?: ProductVariant) => {
     setCart((prevCart) => {
@@ -138,6 +148,7 @@ export function POSLayout() {
         discount={totalDiscount}
         tax={tax}
         total={total}
+        locationId={location?.id || null}
         onComplete={handlePaymentComplete}
       />
 

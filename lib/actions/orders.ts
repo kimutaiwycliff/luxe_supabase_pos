@@ -116,6 +116,25 @@ export async function getOrderById(id: string) {
 export async function createOrder(data: CreateOrderData) {
   const supabase = await getSupabaseServer()
 
+  if (!data.location_id) {
+    return { order: null, error: "Location ID is required. Please run the seed scripts to create a default location." }
+  }
+
+  // Verify location exists in database
+  const { data: locationExists, error: locationError } = await supabase
+    .from("locations")
+    .select("id")
+    .eq("id", data.location_id)
+    .single()
+
+  if (locationError || !locationExists) {
+    console.error("[v0] Location not found:", data.location_id, locationError)
+    return {
+      order: null,
+      error: `Location not found (${data.location_id}). Please run scripts/004_seed_data.sql to create a default location.`,
+    }
+  }
+
   // Calculate totals
   const subtotal = data.items.reduce(
     (sum, item) => sum + item.unit_price * item.quantity - (item.discount_amount || 0),

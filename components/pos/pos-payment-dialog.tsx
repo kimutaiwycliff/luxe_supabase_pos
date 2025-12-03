@@ -21,6 +21,7 @@ interface POSPaymentDialogProps {
   discount: number
   tax: number
   total: number
+  locationId: string | null
   onComplete: (order: Order) => void
 }
 
@@ -33,6 +34,7 @@ export function POSPaymentDialog({
   discount,
   tax,
   total,
+  locationId,
   onComplete,
 }: POSPaymentDialogProps) {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa" | "card">("cash")
@@ -51,18 +53,23 @@ export function POSPaymentDialog({
   const quickCashAmounts = [100, 200, 500, 1000, 2000, 5000]
 
   const handlePayment = async () => {
+    if (!locationId) {
+      setError("No location configured. Please set up a store location first.")
+      return
+    }
+
     setIsProcessing(true)
     setError(null)
 
     try {
       const orderData = {
         customer_id: customer?.id,
-        location_id: "00000000-0000-0000-0000-000000000001", // Default location
+        location_id: locationId,
         items: cart.map((item) => ({
           product_id: item.product.id,
           variant_id: item.variant?.id,
           product_name: item.product.name,
-          variant_name: item.variant ? Object.values(item.variant.option_values).join(" / ") : undefined,
+          variant_name: item.variant?.option_values ? Object.values(item.variant.option_values).join(" / ") : undefined,
           sku: item.variant?.sku || item.product.sku,
           quantity: item.quantity,
           unit_price: item.price,
