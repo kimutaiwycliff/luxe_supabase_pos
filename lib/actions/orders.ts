@@ -17,6 +17,7 @@ export interface CreateOrderData {
     unit_price: number
     cost_price: number
     discount_amount?: number
+    tax_rate?: number
   }[]
   discount_id?: string
   discount_amount?: number
@@ -135,15 +136,24 @@ export async function createOrder(data: CreateOrderData) {
     }
   }
 
-  // Calculate totals
   const subtotal = data.items.reduce(
     (sum, item) => sum + item.unit_price * item.quantity - (item.discount_amount || 0),
     0,
   )
   // const totalCost = data.items.reduce((sum, item) => sum + item.cost_price * item.quantity, 0)
   const discountAmount = data.discount_amount || 0
-  const taxAmount = (subtotal - discountAmount) * 0.16 // 16% VAT
-  const totalAmount = subtotal - discountAmount + taxAmount
+
+  const taxAmount = data.items.reduce((sum, item) => {
+    const itemSubtotal = item.unit_price * item.quantity - (item.discount_amount || 0)
+    const itemTaxRate = item.tax_rate ?? 0 // Default to 0% if not provided
+    return sum + itemSubtotal * itemTaxRate
+  }, 0)
+
+  // Apply order-level discount proportionally to tax
+  const discountRatio = subtotal > 0 ? (subtotal - discountAmount) / subtotal : 1
+  const adjustedTaxAmount = taxAmount * discountRatio
+
+  const totalAmount = subtotal - discountAmount + adjustedTaxAmount
 
   const totalPaid = data.payments.reduce((sum, p) => sum + p.amount, 0)
   const paymentStatus = totalPaid >= totalAmount ? "completed" : totalPaid > 0 ? "partial" : "pending"
@@ -158,7 +168,7 @@ export async function createOrder(data: CreateOrderData) {
       payment_status: paymentStatus,
       subtotal,
       discount_amount: discountAmount,
-      tax_amount: taxAmount,
+      tax_amount: adjustedTaxAmount,
       total_amount: totalAmount,
       paid_amount: totalPaid,
       change_amount: totalPaid > totalAmount ? totalPaid - totalAmount : 0,
@@ -174,21 +184,26 @@ export async function createOrder(data: CreateOrderData) {
     return { order: null, error: orderError.message }
   }
 
-  // Create order items
-  const orderItems = data.items.map((item) => ({
-    order_id: order.id,
-    product_id: item.product_id || null,
-    variant_id: item.variant_id || null,
-    product_name: item.product_name,
-    variant_name: item.variant_name || null,
-    sku: item.sku,
-    quantity: item.quantity,
-    unit_price: item.unit_price,
-    cost_price: item.cost_price,
-    discount_amount: item.discount_amount || 0,
-    tax_amount: item.unit_price * item.quantity * 0.16,
-    total_amount: item.unit_price * item.quantity - (item.discount_amount || 0),
-  }))
+  const orderItems = data.items.map((item) => {
+    const itemSubtotal = item.unit_price * item.quantity - (item.discount_amount || 0)
+    const itemTaxRate = item.tax_rate ?? 0
+    const itemTax = itemSubtotal * itemTaxRate * discountRatio
+
+    return {
+      order_id: order.id,
+      product_id: item.product_id || null,
+      variant_id: item.variant_id || null,
+      product_name: item.product_name,
+      variant_name: item.variant_name || null,
+      sku: item.sku,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      cost_price: item.cost_price,
+      discount_amount: item.discount_amount || 0,
+      tax_amount: itemTax,
+      total_amount: itemSubtotal + itemTax,
+    }
+  })
 
   const { error: itemsError } = await supabase.from("order_items").insert(orderItems)
 
@@ -270,7 +285,23 @@ export async function createOrder(data: CreateOrderData) {
   revalidateTag("inventory", "max")
   revalidateTag("analytics", "max")
 
-  return { order: order as Order, error: null }
+  const { data: completeOrder, error: fetchError } = await supabase
+    .from("orders")
+    .select(`
+      *,
+      customer:customers(id, first_name, last_name, email, phone),
+      items:order_items(*),
+      payments(*)
+    `)
+    .eq("id", order.id)
+    .single()
+
+  if (fetchError) {
+    console.error("Error fetching complete order:", fetchError)
+    return { order: order as Order, error: null }
+  }
+
+  return { order: completeOrder as Order, error: null }
 }
 
 export async function getRecentOrders(limit = 10) {

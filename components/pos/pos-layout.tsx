@@ -78,7 +78,7 @@ export function POSLayout() {
           quantity: 1,
           price,
           discount: 0,
-          tax_rate: product.tax_rate || 16, // Use product's tax rate or default to 16%
+          tax_rate: product.tax_rate || 0, // Use product's tax rate or default to 0%
         },
       ]
     })

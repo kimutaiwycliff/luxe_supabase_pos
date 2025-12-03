@@ -299,7 +299,7 @@ export async function createProduct(data: ProductFormData) {
       cost_price: data.cost_price,
       selling_price: data.selling_price,
       compare_at_price: data.compare_at_price || null,
-      tax_rate: data.tax_rate || 16,
+      tax_rate: data.tax_rate || 0,
       is_active: data.is_active ?? true,
       is_featured: data.is_featured ?? false,
       has_variants: data.has_variants ?? false,

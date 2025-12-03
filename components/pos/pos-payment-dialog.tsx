@@ -75,12 +75,13 @@ export function POSPaymentDialog({
           unit_price: item.price,
           cost_price: item.variant?.cost_price || item.product.cost_price,
           discount_amount: item.discount,
+          tax_rate: item.product.tax_rate ?? 0, // Pass product's tax rate
         })),
         discount_amount: discount,
         payments: [
           {
             payment_method: paymentMethod,
-            amount: total,
+            amount: paymentMethod === "cash" ? cashReceived : total, // For cash, pass the amount received
             mpesa_phone_number: paymentMethod === "mpesa" ? mpesaPhone : undefined,
             mpesa_receipt_number: paymentMethod === "mpesa" ? mpesaReceipt : undefined,
           },
@@ -136,7 +137,7 @@ export function POSPaymentDialog({
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-muted-foreground">VAT (16%)</span>
+              <span className="text-muted-foreground">VAT</span>
               <span>{formatCurrency(tax)}</span>
             </div>
           </div>

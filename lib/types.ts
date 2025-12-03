@@ -169,6 +169,7 @@ export interface Order {
   discount_amount: number
   tax_amount: number
   total_amount: number
+  change_amount: number
   total?: number // alias for backward compatibility
   notes: string | null
   staff_id: string | null
