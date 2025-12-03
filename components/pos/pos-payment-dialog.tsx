@@ -81,8 +81,8 @@ export function POSPaymentDialog({
           {
             payment_method: paymentMethod,
             amount: total,
-            mpesa_phone: paymentMethod === "mpesa" ? mpesaPhone : undefined,
-            mpesa_receipt: paymentMethod === "mpesa" ? mpesaReceipt : undefined,
+            mpesa_phone_number: paymentMethod === "mpesa" ? mpesaPhone : undefined,
+            mpesa_receipt_number: paymentMethod === "mpesa" ? mpesaReceipt : undefined,
           },
         ],
       }

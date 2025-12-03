@@ -25,8 +25,8 @@ export interface CreateOrderData {
     payment_method: "cash" | "mpesa" | "card" | "bank_transfer"
     amount: number
     reference_number?: string
-    mpesa_receipt?: string
-    mpesa_phone?: string
+    mpesa_receipt_number?: string
+    mpesa_phone_number?: string
   }[]
 }
 
@@ -140,7 +140,7 @@ export async function createOrder(data: CreateOrderData) {
     (sum, item) => sum + item.unit_price * item.quantity - (item.discount_amount || 0),
     0,
   )
-  const totalCost = data.items.reduce((sum, item) => sum + item.cost_price * item.quantity, 0)
+  // const totalCost = data.items.reduce((sum, item) => sum + item.cost_price * item.quantity, 0)
   const discountAmount = data.discount_amount || 0
   const taxAmount = (subtotal - discountAmount) * 0.16 // 16% VAT
   const totalAmount = subtotal - discountAmount + taxAmount
@@ -202,8 +202,8 @@ export async function createOrder(data: CreateOrderData) {
     payment_method: payment.payment_method,
     amount: payment.amount,
     reference_number: payment.reference_number || null,
-    mpesa_receipt: payment.mpesa_receipt || null,
-    mpesa_phone: payment.mpesa_phone || null,
+    mpesa_receipt_number: payment.mpesa_receipt_number || null,
+    mpesa_phone_number: payment.mpesa_phone_number || null,
     status: "completed",
     processed_at: new Date().toISOString(),
   }))
