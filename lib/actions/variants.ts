@@ -12,6 +12,7 @@ export interface ProductVariant {
   cost_price: number | null
   selling_price: number | null
   compare_at_price: number | null
+  tax_rate: number | null
   weight: number | null
   image_path: string | null
   is_active: boolean
@@ -57,6 +58,7 @@ export async function updateVariant(
     cost_price?: number
     selling_price?: number
     compare_at_price?: number
+    tax_rate?: number | null
     is_active?: boolean
   },
 ): Promise<{ error: string | null }> {
@@ -175,6 +177,7 @@ export async function createVariant(
     cost_price: number
     selling_price: number
     compare_at_price?: number
+    tax_rate?: number | null
     option_values?: Record<string, string>
     is_active?: boolean
   },
@@ -199,6 +202,7 @@ export async function createVariant(
       cost_price: data.cost_price,
       selling_price: data.selling_price,
       compare_at_price: data.compare_at_price,
+      tax_rate: data.tax_rate,
       option_values: data.option_values,
       is_active: data.is_active ?? true,
     })

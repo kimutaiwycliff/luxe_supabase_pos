@@ -36,6 +36,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
     cost_price: number
     selling_price: number
     compare_at_price: number
+    tax_rate: number | null
     is_active: boolean
   } | null>(null)
   const [inventoryForm, setInventoryForm] = useState<{ [key: string]: number }>({})
@@ -46,6 +47,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
     cost_price: product.cost_price,
     selling_price: product.selling_price,
     compare_at_price: product.compare_at_price || 0,
+    tax_rate: product.tax_rate || 16,
   })
   const [locationId, setLocationId] = useState<string | null>(null)
 
@@ -80,6 +82,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
       cost_price: variant.cost_price || 0,
       selling_price: variant.selling_price || 0,
       compare_at_price: variant.compare_at_price || 0,
+      tax_rate: variant.tax_rate,
       is_active: variant.is_active,
     })
   }
@@ -117,7 +120,10 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
     if (!newVariant.name) return
     setIsLoading(true)
 
-    const { error } = await createVariant(product.id, newVariant)
+    const { error } = await createVariant(product.id, {
+      ...newVariant,
+      tax_rate: newVariant.tax_rate,
+    })
 
     if (!error) {
       mutate()
@@ -127,6 +133,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
         cost_price: product.cost_price,
         selling_price: product.selling_price,
         compare_at_price: product.compare_at_price || 0,
+        tax_rate: product.tax_rate || 16,
       })
     }
 
@@ -158,23 +165,28 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
     return price > 0 ? (p / price) * 100 : 0
   }
 
+  const getEffectiveTaxRate = (variant: ProductVariant) => {
+    return variant.tax_rate ?? product.tax_rate ?? 0
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Manage Variants - {product.name}</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="pricing" className="mt-4">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="pricing">Pricing</TabsTrigger>
+            <TabsTrigger value="pricing">Pricing & Tax</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pricing" className="mt-4">
             <div className="flex justify-between items-center mb-4">
               <p className="text-sm text-muted-foreground">
-                Edit pricing for each variant. Leave blank to inherit from product.
+                Edit pricing and tax rates for each variant. Leave blank to inherit from product (Tax:{" "}
+                {product.tax_rate || 16}%).
               </p>
               <Button size="sm" onClick={() => setShowAddForm(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -185,7 +197,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
             {showAddForm && (
               <div className="mb-4 p-4 border rounded-lg space-y-4">
                 <h4 className="font-medium">New Variant</h4>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-5 gap-4">
                   <div className="space-y-2">
                     <Label>Name</Label>
                     <Input
@@ -214,6 +226,17 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
                       }
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label>Tax Rate (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={newVariant.tax_rate}
+                      onChange={(e) =>
+                        setNewVariant({ ...newVariant, tax_rate: Number.parseFloat(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
                   <div className="flex items-end gap-2">
                     <Button onClick={handleAddVariant} disabled={isLoading || !newVariant.name}>
                       {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
@@ -234,6 +257,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
                   <TableHead>SKU</TableHead>
                   <TableHead className="text-right">Cost Price</TableHead>
                   <TableHead className="text-right">Selling Price</TableHead>
+                  <TableHead className="text-right">Tax %</TableHead>
                   <TableHead className="text-right">Margin</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -242,7 +266,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
               <TableBody>
                 {variants.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No variants found
                     </TableCell>
                   </TableRow>
@@ -291,6 +315,28 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
                           />
                         ) : (
                           formatCurrency(variant.selling_price || product.selling_price)
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {editingVariant === variant.id ? (
+                          <Input
+                            type="number"
+                            step="0.01"
+                            className="w-20 text-right"
+                            placeholder={`${product.tax_rate || 16}`}
+                            value={editForm?.tax_rate ?? ""}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm!,
+                                tax_rate: e.target.value ? Number.parseFloat(e.target.value) : null,
+                              })
+                            }
+                          />
+                        ) : (
+                          <span className={variant.tax_rate === null ? "text-muted-foreground" : ""}>
+                            {getEffectiveTaxRate(variant)}%
+                            {variant.tax_rate === null && <span className="text-xs ml-1">(inherited)</span>}
+                          </span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
