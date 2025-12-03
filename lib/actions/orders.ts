@@ -127,7 +127,7 @@ export async function createOrder(data: CreateOrderData) {
   const totalAmount = subtotal - discountAmount + taxAmount
 
   const totalPaid = data.payments.reduce((sum, p) => sum + p.amount, 0)
-  const paymentStatus = totalPaid >= totalAmount ? "paid" : totalPaid > 0 ? "partial" : "pending"
+  const paymentStatus = totalPaid >= totalAmount ? "completed" : totalPaid > 0 ? "partial" : "pending"
 
   // Create the order
   const { data: order, error: orderError } = await supabase
