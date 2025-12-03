@@ -54,7 +54,7 @@ export async function getSalesAnalytics(
   const { data: currentOrders, error } = await supabase
     .from("orders")
     .select(`
-      total,
+      total_amount,
       subtotal,
       tax_amount,
       items:order_items(cost_price, quantity)
@@ -67,7 +67,7 @@ export async function getSalesAnalytics(
     return { data: null, error: error.message }
   }
 
-  const totalRevenue = currentOrders?.reduce((sum, o) => sum + o.total, 0) || 0
+  const totalRevenue = currentOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0
   const totalOrders = currentOrders?.length || 0
   const totalCost =
     currentOrders?.reduce(
@@ -93,7 +93,7 @@ export async function getSalesAnalytics(
     const { data: prevOrders } = await supabase
       .from("orders")
       .select(`
-        total,
+        total_amount,
         items:order_items(cost_price, quantity)
       `)
       .gte("created_at", compareDateFrom)
@@ -101,7 +101,7 @@ export async function getSalesAnalytics(
       .eq("status", "completed")
 
     if (prevOrders && prevOrders.length > 0) {
-      const prevRevenue = prevOrders.reduce((sum, o) => sum + o.total, 0)
+      const prevRevenue = prevOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
       const prevOrders_count = prevOrders.length
       const prevCost = prevOrders.reduce(
         (sum, o) =>
@@ -254,7 +254,7 @@ export async function getSalesTrend(
   const { data: orders, error } = await supabase
     .from("orders")
     .select(`
-      total,
+      total_amount,
       created_at,
       items:order_items(cost_price, quantity)
     `)
@@ -292,17 +292,17 @@ export async function getSalesTrend(
         (sum: number, item: { cost_price: number; quantity: number }) => sum + item.cost_price * item.quantity,
         0,
       ) || 0
-    const profit = order.total - cost
+    const profit = (order.total_amount || 0) - cost
 
     const existing = trendMap.get(key)
     if (existing) {
-      existing.revenue += order.total
+      existing.revenue += order.total_amount || 0
       existing.orders += 1
       existing.profit += profit
     } else {
       trendMap.set(key, {
         date: key,
-        revenue: order.total,
+        revenue: order.total_amount || 0,
         orders: 1,
         profit,
       })
@@ -322,7 +322,7 @@ export async function getCategorySales(
     .from("order_items")
     .select(`
       quantity,
-      total,
+      total_amount,
       product:products(
         category:categories(name)
       ),
@@ -343,12 +343,12 @@ export async function getCategorySales(
     const existing = categoryMap.get(categoryName)
 
     if (existing) {
-      existing.revenue += item.total
+      existing.revenue += item.total_amount || 0
       existing.quantity += item.quantity
     } else {
       categoryMap.set(categoryName, {
         category: categoryName,
-        revenue: item.total,
+        revenue: item.total_amount || 0,
         quantity: item.quantity,
       })
     }
@@ -372,7 +372,7 @@ export async function getHourlySales(
 
   const { data: orders, error } = await supabase
     .from("orders")
-    .select("total, created_at")
+    .select("total_amount, created_at")
     .gte("created_at", startDate.toISOString())
     .lte("created_at", endDate.toISOString())
     .eq("status", "completed")
@@ -391,7 +391,7 @@ export async function getHourlySales(
   orders?.forEach((order) => {
     const hour = new Date(order.created_at).getHours()
     hourlyData[hour].orders += 1
-    hourlyData[hour].revenue += order.total
+    hourlyData[hour].revenue += order.total_amount || 0
   })
 
   return { data: hourlyData, error: null }

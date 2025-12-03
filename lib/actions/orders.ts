@@ -124,10 +124,10 @@ export async function createOrder(data: CreateOrderData) {
   const totalCost = data.items.reduce((sum, item) => sum + item.cost_price * item.quantity, 0)
   const discountAmount = data.discount_amount || 0
   const taxAmount = (subtotal - discountAmount) * 0.16 // 16% VAT
-  const total = subtotal - discountAmount + taxAmount
+  const totalAmount = subtotal - discountAmount + taxAmount
 
   const totalPaid = data.payments.reduce((sum, p) => sum + p.amount, 0)
-  const paymentStatus = totalPaid >= total ? "paid" : totalPaid > 0 ? "partial" : "pending"
+  const paymentStatus = totalPaid >= totalAmount ? "paid" : totalPaid > 0 ? "partial" : "pending"
 
   // Create the order
   const { data: order, error: orderError } = await supabase
@@ -140,7 +140,9 @@ export async function createOrder(data: CreateOrderData) {
       subtotal,
       discount_amount: discountAmount,
       tax_amount: taxAmount,
-      total,
+      total_amount: totalAmount,
+      paid_amount: totalPaid,
+      change_amount: totalPaid > totalAmount ? totalPaid - totalAmount : 0,
       notes: data.notes || null,
       discount_id: data.discount_id || null,
       completed_at: new Date().toISOString(),
@@ -166,7 +168,7 @@ export async function createOrder(data: CreateOrderData) {
     cost_price: item.cost_price,
     discount_amount: item.discount_amount || 0,
     tax_amount: item.unit_price * item.quantity * 0.16,
-    total: item.unit_price * item.quantity - (item.discount_amount || 0),
+    total_amount: item.unit_price * item.quantity - (item.discount_amount || 0),
   }))
 
   const { error: itemsError } = await supabase.from("order_items").insert(orderItems)
@@ -236,9 +238,9 @@ export async function createOrder(data: CreateOrderData) {
       await supabase
         .from("customers")
         .update({
-          total_spent: customer.total_spent + total,
+          total_spent: customer.total_spent + totalAmount,
           total_orders: customer.total_orders + 1,
-          loyalty_points: customer.loyalty_points + Math.floor(total / 100), // 1 point per 100 KES
+          loyalty_points: customer.loyalty_points + Math.floor(totalAmount / 100),
           updated_at: new Date().toISOString(),
         })
         .eq("id", data.customer_id)
@@ -281,7 +283,7 @@ export async function getTodayStats(locationId?: string) {
 
   let query = supabase
     .from("orders")
-    .select("total, status, payments(payment_method, amount)")
+    .select("total_amount, status, payments(payment_method, amount)")
     .gte("created_at", todayStr)
     .eq("status", "completed")
 
@@ -302,19 +304,19 @@ export async function getTodayStats(locationId?: string) {
     }
   }
 
-  const revenue = data?.reduce((sum, o) => sum + o.total, 0) || 0
+  const revenue = data?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0
   const orders = data?.length || 0
 
   let cash = 0,
     mpesa = 0,
     card = 0
-  data?.forEach((order) => {
-    order.payments?.forEach((p) => {
-      if (p.payment_method === "cash") cash += p.amount
-      else if (p.payment_method === "mpesa") mpesa += p.amount
-      else if (p.payment_method === "card") card += p.amount
+    data?.forEach((order) => {
+      order.payments?.forEach((p) => {
+        if (p.payment_method === "cash") cash += p.amount
+        else if (p.payment_method === "mpesa") mpesa += p.amount
+        else if (p.payment_method === "card") card += p.amount
+      })
     })
-  })
 
   return { revenue, orders, cash, mpesa, card, error: null }
 }
