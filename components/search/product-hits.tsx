@@ -135,7 +135,7 @@ export function ProductHits({ viewMode, onEdit, onEditVariants, onDelete, onAdd,
         <Card key={product.objectID} className="p-4">
           <div className="flex items-center gap-4">
             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-secondary">
-              {product.image_path ? (
+              {product.image_url ? (
                 <Image
                   src={product.image_url || "/placeholder.svg"}
                   alt={product.name}
