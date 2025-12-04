@@ -133,7 +133,7 @@ export function POSLayout() {
   // Calculate tax per item based on each product's tax rate
   const tax = cart.reduce((sum, item) => {
     const itemTotal = item.price * item.quantity - item.discount
-    const itemTax = itemTotal * (item.tax_rate / 100)
+    const itemTax = itemTotal * (item.tax_rate / 100) // Convert percentage to decimal
     return sum + itemTax
   }, 0)
 

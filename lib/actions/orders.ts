@@ -146,7 +146,7 @@ export async function createOrder(data: CreateOrderData) {
   const taxAmount = data.items.reduce((sum, item) => {
     const itemSubtotal = item.unit_price * item.quantity - (item.discount_amount || 0)
     const itemTaxRate = item.tax_rate ?? 0 // Default to 0% if not provided
-    return sum + itemSubtotal * itemTaxRate
+    return sum + itemSubtotal * (itemTaxRate / 100) // Convert percentage to decimal
   }, 0)
 
   // Apply order-level discount proportionally to tax
@@ -187,8 +187,8 @@ export async function createOrder(data: CreateOrderData) {
   const orderItems = data.items.map((item) => {
     const itemSubtotal = item.unit_price * item.quantity - (item.discount_amount || 0)
     const itemTaxRate = item.tax_rate ?? 0
-    const itemTax = itemSubtotal * itemTaxRate * discountRatio
-
+    const itemTax = itemSubtotal * (itemTaxRate / 100) * discountRatio // Convert percentage to decimal
+    
     return {
       order_id: order.id,
       product_id: item.product_id || null,
