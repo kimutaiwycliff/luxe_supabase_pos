@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import useSWR from "swr"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -12,11 +12,11 @@ import { getProductById, deleteProduct } from "@/lib/actions/products"
 import { deleteProductFromIndex } from "@/lib/actions/algolia"
 import type { Product } from "@/lib/types"
 import type { AlgoliaProduct } from "@/lib/algolia"
-import { AlgoliaProvider } from "@/components/search/algolia-provider"
+import { InstantSearch, Configure } from "react-instantsearch"
+import { searchClient, ALGOLIA_INDEXES } from "@/lib/algolia-client"
 import { AlgoliaSearchBox } from "@/components/search/algolia-search-box"
 import { ProductHits } from "@/components/search/product-hits"
 import { AlgoliaPagination } from "@/components/search/algolia-pagination"
-import { ALGOLIA_INDEXES } from "@/lib/algolia-client"
 import { toast } from "sonner"
 
 type ViewMode = "grid" | "list"
@@ -38,20 +38,18 @@ export function ProductsContent() {
 
   const categories = categoriesData?.categories || []
 
-  // Build Algolia filters
-  const buildFilters = () => {
-    const filters: string[] = []
+  const filters = useMemo(() => {
+    const filterParts: string[] = []
     if (categoryFilter !== "all") {
-      filters.push(`category_id:${categoryFilter}`)
+      filterParts.push(`category_id:${categoryFilter}`)
     }
     if (statusFilter !== "all") {
-      filters.push(`is_active:${statusFilter === "active"}`)
+      filterParts.push(`is_active:${statusFilter === "active"}`)
     }
-    return filters.join(" AND ")
-  }
+    return filterParts.join(" AND ")
+  }, [categoryFilter, statusFilter])
 
   const handleEdit = useCallback(async (algoliaProduct: AlgoliaProduct) => {
-    // Fetch full product data from Supabase
     const result = await getProductById(algoliaProduct.objectID)
     if (result.product) {
       setEditingProduct(result.product)
@@ -101,7 +99,14 @@ export function ProductsContent() {
 
   return (
     <div className="p-6">
-      <AlgoliaProvider key={refreshKey} indexName={ALGOLIA_INDEXES.products} filters={buildFilters()} hitsPerPage={20}>
+      <InstantSearch
+        key={refreshKey}
+        searchClient={searchClient}
+        indexName={ALGOLIA_INDEXES.products}
+        future={{ preserveSharedStateOnUnmount: true }}
+      >
+        <Configure key={`${filters}-20`} filters={filters} hitsPerPage={20} />
+
         {/* Toolbar */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-1 items-center gap-3">
@@ -171,7 +176,7 @@ export function ProductsContent() {
 
         {/* Pagination */}
         <AlgoliaPagination />
-      </AlgoliaProvider>
+      </InstantSearch>
 
       {/* Product Dialog */}
       <ProductDialog

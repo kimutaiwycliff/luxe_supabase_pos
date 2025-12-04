@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import useSWR from "swr"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getProductVariants, getProductById } from "@/lib/actions/products"
@@ -12,9 +12,11 @@ import type { Product, ProductVariant } from "@/lib/types"
 import type { AlgoliaProduct } from "@/lib/algolia"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { AlgoliaProvider } from "@/components/search/algolia-provider"
-import { POSProductHits } from "@/components/search/pos-product-hits"
-import { ALGOLIA_INDEXES } from "@/lib/algolia-client"
+import { InstantSearch, Configure, useHits, useSearchBox, useInstantSearch } from "react-instantsearch"
+import { searchClient, ALGOLIA_INDEXES } from "@/lib/algolia-client"
+import Image from "next/image"
+import { Card, CardContent } from "@/components/ui/card"
+import { Package } from "lucide-react"
 
 interface POSProductGridProps {
   searchQuery: string
@@ -33,17 +35,16 @@ export function POSProductGrid({ searchQuery, onAddToCart }: POSProductGridProps
 
   const categories = categoriesData?.categories || []
 
-  // Build Algolia filters
-  const buildFilters = () => {
-    const filters: string[] = ["is_active:true"]
+  // Build Algolia filters - memoized
+  const filters = useMemo(() => {
+    const filterParts: string[] = ["is_active:true"]
     if (selectedCategory !== "all") {
-      filters.push(`category_id:${selectedCategory}`)
+      filterParts.push(`category_id:${selectedCategory}`)
     }
-    return filters.join(" AND ")
-  }
+    return filterParts.join(" AND ")
+  }, [selectedCategory])
 
   const handleProductClick = async (algoliaProduct: AlgoliaProduct) => {
-    // Fetch full product data
     const result = await getProductById(algoliaProduct.objectID)
     if (!result.product) return
 
@@ -78,12 +79,15 @@ export function POSProductGrid({ searchQuery, onAddToCart }: POSProductGridProps
         </TabsList>
       </Tabs>
 
-      {/* Product Grid with Algolia */}
-      <AlgoliaProvider indexName={ALGOLIA_INDEXES.products} filters={buildFilters()} hitsPerPage={50}>
-        {/* Inject search query into Algolia */}
-        <AlgoliaSearchInjector query={searchQuery} />
-        <POSProductHits onProductClick={handleProductClick} />
-      </AlgoliaProvider>
+      <InstantSearch
+        searchClient={searchClient}
+        indexName={ALGOLIA_INDEXES.products}
+        future={{ preserveSharedStateOnUnmount: true }}
+      >
+        <Configure filters={filters} hitsPerPage={50} />
+        <SearchQuerySyncer query={searchQuery} />
+        <POSProductHitsInline onProductClick={handleProductClick} />
+      </InstantSearch>
 
       {/* Variant Selection Dialog */}
       <VariantDialog
@@ -101,11 +105,7 @@ export function POSProductGrid({ searchQuery, onAddToCart }: POSProductGridProps
   )
 }
 
-// Component to inject search query into Algolia
-import { useSearchBox } from "react-instantsearch"
-import { useEffect } from "react"
-
-function AlgoliaSearchInjector({ query }: { query: string }) {
+function SearchQuerySyncer({ query }: { query: string }) {
   const { refine } = useSearchBox()
 
   useEffect(() => {
@@ -113,6 +113,70 @@ function AlgoliaSearchInjector({ query }: { query: string }) {
   }, [query, refine])
 
   return null
+}
+
+function POSProductHitsInline({ onProductClick }: { onProductClick: (product: AlgoliaProduct) => void }) {
+  const { hits } = useHits<AlgoliaProduct>()
+  const { status } = useInstantSearch()
+
+  const loading = status === "loading" || status === "stalled"
+
+  if (loading) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <Skeleton key={i} className="h-40 rounded-xl" />
+        ))}
+      </div>
+    )
+  }
+
+  if (hits.length === 0) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center py-12">
+        <Package className="h-12 w-12 text-muted-foreground" />
+        <p className="mt-4 text-lg font-medium">No products found</p>
+        <p className="text-sm text-muted-foreground">Try a different search or category</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 overflow-y-auto flex-1">
+      {hits.map((product) => (
+        <Card
+          key={product.objectID}
+          className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md"
+          onClick={() => onProductClick(product)}
+        >
+          <CardContent className="p-3">
+            <div className="relative mb-2 aspect-square overflow-hidden rounded-lg bg-secondary">
+              {product.image_path ? (
+                <Image
+                  src={product.image_url || "/placeholder.svg"}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-2xl text-muted-foreground/50">
+                  {product.name.charAt(0)}
+                </div>
+              )}
+              {product.has_variants && (
+                <div className="absolute bottom-1 right-1 rounded bg-background/80 px-1.5 py-0.5 text-[10px] font-medium">
+                  Variants
+                </div>
+              )}
+            </div>
+            <h3 className="truncate text-sm font-medium">{product.name}</h3>
+            <p className="text-xs text-muted-foreground">{product.sku}</p>
+            <p className="mt-1 font-semibold text-primary">{formatCurrency(product.selling_price)}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
 }
 
 interface VariantDialogProps {
