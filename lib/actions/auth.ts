@@ -9,6 +9,7 @@ export type AuthUser = {
   fullName: string | null
   avatarUrl: string | null
   initials: string
+  role?: string | null
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
@@ -20,6 +21,20 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
   if (error || !user) {
     return null
+  }
+
+  // Fetch user role from user_profiles table
+  let userRole = null;
+  if (user.sub) {
+    const { data: profileData, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', user.sub)
+      .single();
+
+    if (!profileError && profileData) {
+      userRole = profileData.role;
+    }
   }
 
   const fullName = user.user_metadata?.full_name || user.user_metadata?.name || null
@@ -43,6 +58,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     fullName,
     avatarUrl: user.user_metadata?.avatar_url || null,
     initials,
+    role: userRole,
   }
 }
 
