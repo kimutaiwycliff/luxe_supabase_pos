@@ -235,7 +235,7 @@ export async function getLowStockItems(limit = 5): Promise<{ data: LowStockItem[
 
   // Process products
   lowStockProducts?.forEach((inv) => {
-    const product = inv.product as { id: string; name: string; sku: string; low_stock_threshold: number }
+    const product = Array.isArray(inv.product) ? inv.product[0] : inv.product
     if (inv.quantity <= product.low_stock_threshold) {
       items.push({
         id: product.id,
@@ -249,19 +249,15 @@ export async function getLowStockItems(limit = 5): Promise<{ data: LowStockItem[
 
   // Process variants
   lowStockVariants?.forEach((inv) => {
-    const variant = inv.variant as {
-      id: string
-      sku: string
-      name: string
-      product: { id: string; name: string; low_stock_threshold: number }
-    }
-    if (inv.quantity <= variant.product.low_stock_threshold) {
+    const variant = Array.isArray(inv.variant) ? inv.variant[0] : inv.variant
+    const variantProduct = Array.isArray(variant.product) ? variant.product[0] : variant.product
+    if (inv.quantity <= variantProduct.low_stock_threshold) {
       items.push({
-        id: variant.product.id,
-        name: `${variant.product.name} - ${variant.name || variant.sku}`,
+        id: variantProduct.id,
+        name: `${variantProduct.name} - ${variant.name || variant.sku}`,
         sku: variant.sku,
         quantity: inv.quantity,
-        threshold: variant.product.low_stock_threshold,
+        threshold: variantProduct.low_stock_threshold,
         variant_id: variant.id,
       })
     }

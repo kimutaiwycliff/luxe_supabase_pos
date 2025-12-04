@@ -17,7 +17,7 @@ interface LowStockProduct {
   name: string
   sku: string
   cost_price: number
-  reorder_point: number | null
+  low_stock_threshold: number | null
   reorder_quantity: number | null
   supplier: {
     id: string
@@ -100,7 +100,7 @@ export function ReorderContent() {
 
   const lowStock = lowStockProducts.filter((p) => {
     const total = p.inventory?.reduce((sum, inv) => sum + (inv.quantity - inv.reserved_quantity), 0) || 0
-    return total > 0 && total <= (p.reorder_point || 0)
+    return total > 0 && total <= (p.low_stock_threshold || 0)
   })
 
   if (loading) {
@@ -221,7 +221,7 @@ export function ReorderContent() {
                     <div className="flex items-center justify-between mt-4 pt-3 border-t">
                       <div className="text-sm">
                         <span className="text-muted-foreground">Reorder Point: </span>
-                        <span className="font-medium">{product.reorder_point}</span>
+                        <span className="font-medium">{product.low_stock_threshold}</span>
                       </div>
                       <div className="text-sm">
                         <span className="text-muted-foreground">Reorder Qty: </span>

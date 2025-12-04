@@ -59,8 +59,8 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
 
   useEffect(() => {
     if (open) {
-      getDefaultLocation().then((loc) => {
-        if (loc) setLocationId(loc.id)
+      getDefaultLocation().then((result) => {
+        if (result.location) setLocationId(result.location.id)
       })
     }
   }, [open])
@@ -437,7 +437,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
                         <TableCell className="text-center">{current}</TableCell>
                         <TableCell className="text-center text-muted-foreground">{reserved}</TableCell>
                         <TableCell className="text-center">
-                          <Badge variant={available <= 0 ? "destructive" : available <= 5 ? "warning" : "default"}>
+                          <Badge variant={available <= 0 ? "destructive" : available <= 5 ? "secondary" : "default"}>
                             {available}
                           </Badge>
                         </TableCell>

@@ -26,7 +26,7 @@ interface PurchaseOrderItem {
   quantity_received: number
   unit_cost: number
   product: { id: string; name: string; sku: string } | null
-  variant: { id: string; sku: string; name: string } | null
+  variant: { id: string; sku: string; variant_name: string } | null
 }
 
 interface PurchaseOrder {
@@ -159,7 +159,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order, onUpdate 
         return (
           <div>
             <p className="font-medium">{item.product?.name || "Unknown"}</p>
-            <p className="text-sm text-muted-foreground">{item.variant?.name || item.product?.sku}</p>
+            <p className="text-sm text-muted-foreground">{item.variant?.variant_name || item.product?.sku}</p>
           </div>
         )
       },
