@@ -50,7 +50,7 @@ export function POSProductHits({ onProductClick }: POSProductHitsProps) {
             <div className="relative mb-2 aspect-square overflow-hidden rounded-lg bg-secondary">
               {product.image_path ? (
                 <Image
-                  src={product.image_path || "/placeholder.svg"}
+                  src={product.image_url || "/placeholder.svg"}
                   alt={product.name}
                   fill
                   className="object-cover"

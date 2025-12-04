@@ -37,7 +37,7 @@ export function POSProductGrid({ searchQuery, onAddToCart }: POSProductGridProps
 
   // Build Algolia filters - memoized
   const filters = useMemo(() => {
-    const filterParts: string[] = ["is_active:true"]
+    const filterParts: string[] = [] // Remove ["is_active:true"]
     if (selectedCategory !== "all") {
       filterParts.push(`category_id:${selectedCategory}`)
     }
