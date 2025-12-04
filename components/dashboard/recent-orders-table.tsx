@@ -12,7 +12,7 @@ interface RecentOrder {
   status: string
   payment_status: string
   created_at: string
-  customer: { first_name: string; last_name: string }[] | null
+  customer: { first_name: string; last_name: string } | null
   items: { id: string }[]
   payments: { payment_method: string }[]
 }
@@ -33,7 +33,7 @@ const columns: ColumnDef<RecentOrder>[] = [
     cell: ({ row }) => {
       const customer = row.original.customer
       if (customer) {
-        return `${customer[0].first_name} ${customer[0].last_name}`
+        return `${customer?.first_name} ${customer?.last_name}`
       }
       return "Walk-in Customer"
     },
