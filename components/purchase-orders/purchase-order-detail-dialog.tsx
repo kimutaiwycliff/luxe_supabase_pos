@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
-import { Send, Truck, CheckCircle2, XCircle, Package } from "lucide-react"
+import { Send, CheckCircle2, XCircle, Package, Clock, AlertCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +26,7 @@ interface PurchaseOrderItem {
   quantity_received: number
   unit_cost: number
   product: { id: string; name: string; sku: string } | null
-  variant: { id: string; sku: string; variant_name: string } | null
+  variant: { id: string; sku: string; name: string } | null
 }
 
 interface PurchaseOrder {
@@ -62,14 +62,13 @@ interface PurchaseOrderDetailDialogProps {
 
 const statusConfig: Record<
   PurchaseOrderStatus,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof Clock }
 > = {
-  draft: { label: "Draft", variant: "secondary" },
-  sent: { label: "Sent", variant: "default" },
-  confirmed: { label: "Confirmed", variant: "default" },
-  shipped: { label: "Shipped", variant: "default" },
-  received: { label: "Received", variant: "outline" },
-  cancelled: { label: "Cancelled", variant: "destructive" },
+  pending: { label: "Pending", variant: "secondary", icon: Clock },
+  ordered: { label: "Ordered", variant: "default", icon: Send },
+  partial: { label: "Partial", variant: "outline", icon: AlertCircle },
+  received: { label: "Received", variant: "outline", icon: CheckCircle2 },
+  cancelled: { label: "Cancelled", variant: "destructive", icon: XCircle },
 }
 
 export function PurchaseOrderDetailDialog({ open, onOpenChange, order, onUpdate }: PurchaseOrderDetailDialogProps) {
@@ -106,7 +105,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order, onUpdate 
     setLoading(true)
     try {
       await updatePurchaseOrderStatus(order.id, newStatus)
-      toast.success(`Order marked as ${newStatus}`)
+      toast.info(`Order marked as ${statusConfig[newStatus].label}`)
       onUpdate()
       onOpenChange(false)
     } catch (error) {
@@ -120,7 +119,6 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order, onUpdate 
   const handleReceive = async () => {
     if (!selectedLocation) {
       toast.error("Please select a location")
-
       return
     }
 
@@ -132,7 +130,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order, onUpdate 
       }))
 
     if (itemsToReceive.length === 0) {
-      toast.info("Please enter quantities to receive")
+      toast.error("Please enter quantities to receive")
       return
     }
 
@@ -150,7 +148,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order, onUpdate 
     }
   }
 
-  const status = statusConfig[order.status]
+  const status = statusConfig[order.status] || { label: order.status, variant: "secondary" as const, icon: Clock }
 
   const columns: ColumnDef<PurchaseOrderItem>[] = [
     {
@@ -161,7 +159,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order, onUpdate 
         return (
           <div>
             <p className="font-medium">{item.product?.name || "Unknown"}</p>
-            <p className="text-sm text-muted-foreground">{item.variant?.variant_name || item.product?.sku}</p>
+            <p className="text-sm text-muted-foreground">{item.variant?.name || item.product?.sku}</p>
           </div>
         )
       },
@@ -306,13 +304,12 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order, onUpdate 
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex flex-wrap gap-2 pt-4 border-t">
-            {order.status === "draft" && (
+            {order.status === "pending" && (
               <>
-                <Button onClick={() => handleStatusChange("sent")} disabled={loading}>
+                <Button onClick={() => handleStatusChange("ordered")} disabled={loading}>
                   <Send className="mr-2 h-4 w-4" />
-                  Mark as Sent
+                  Mark as Ordered
                 </Button>
                 <Button variant="destructive" onClick={() => handleStatusChange("cancelled")} disabled={loading}>
                   <XCircle className="mr-2 h-4 w-4" />
@@ -320,22 +317,22 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order, onUpdate 
                 </Button>
               </>
             )}
-            {order.status === "sent" && (
-              <Button onClick={() => handleStatusChange("confirmed")} disabled={loading}>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Mark as Confirmed
-              </Button>
+            {order.status === "ordered" && !showReceiveMode && (
+              <>
+                <Button onClick={() => setShowReceiveMode(true)}>
+                  <Package className="mr-2 h-4 w-4" />
+                  Receive Stock
+                </Button>
+                <Button variant="destructive" onClick={() => handleStatusChange("cancelled")} disabled={loading}>
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Cancel Order
+                </Button>
+              </>
             )}
-            {order.status === "confirmed" && (
-              <Button onClick={() => handleStatusChange("shipped")} disabled={loading}>
-                <Truck className="mr-2 h-4 w-4" />
-                Mark as Shipped
-              </Button>
-            )}
-            {(order.status === "shipped" || order.status === "confirmed") && !showReceiveMode && (
+            {order.status === "partial" && !showReceiveMode && (
               <Button onClick={() => setShowReceiveMode(true)}>
                 <Package className="mr-2 h-4 w-4" />
-                Receive Stock
+                Receive Remaining Stock
               </Button>
             )}
             {showReceiveMode && (
