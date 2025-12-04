@@ -2,17 +2,19 @@
 
 import { useState } from "react"
 import useSWR from "swr"
-import Image from "next/image"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getProducts, getProductVariants } from "@/lib/actions/products"
+import { getProductVariants, getProductById } from "@/lib/actions/products"
 import { getCategories } from "@/lib/actions/categories"
 import { formatCurrency } from "@/lib/format"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Package, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import type { Product, ProductVariant } from "@/lib/types"
+import type { AlgoliaProduct } from "@/lib/algolia"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { AlgoliaProvider } from "@/components/search/algolia-provider"
+import { POSProductHits } from "@/components/search/pos-product-hits"
+import { ALGOLIA_INDEXES } from "@/lib/algolia-client"
 
 interface POSProductGridProps {
   searchQuery: string
@@ -29,24 +31,27 @@ export function POSProductGrid({ searchQuery, onAddToCart }: POSProductGridProps
     return result
   })
 
-  const { data: productsData, isLoading } = useSWR(["pos-products", searchQuery, selectedCategory], async () => {
-    const result = await getProducts({
-      search: searchQuery || undefined,
-      category_id: selectedCategory !== "all" ? selectedCategory : undefined,
-      is_active: true,
-    })
-    return result
-  })
-
   const categories = categoriesData?.categories || []
-  const products = productsData?.products || []
 
-  const handleProductClick = async (product: Product) => {
-    if (product.has_variants) {
-      setSelectedProduct(product)
+  // Build Algolia filters
+  const buildFilters = () => {
+    const filters: string[] = ["is_active:true"]
+    if (selectedCategory !== "all") {
+      filters.push(`category_id:${selectedCategory}`)
+    }
+    return filters.join(" AND ")
+  }
+
+  const handleProductClick = async (algoliaProduct: AlgoliaProduct) => {
+    // Fetch full product data
+    const result = await getProductById(algoliaProduct.objectID)
+    if (!result.product) return
+
+    if (result.product.has_variants) {
+      setSelectedProduct(result.product)
       setVariantDialogOpen(true)
     } else {
-      onAddToCart(product)
+      onAddToCart(result.product)
     }
   }
 
@@ -73,57 +78,12 @@ export function POSProductGrid({ searchQuery, onAddToCart }: POSProductGridProps
         </TabsList>
       </Tabs>
 
-      {/* Product Grid */}
-      {isLoading ? (
-        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <Skeleton key={i} className="h-40 rounded-xl" />
-          ))}
-        </div>
-      ) : products.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center">
-          <Package className="h-12 w-12 text-muted-foreground" />
-          <p className="mt-4 text-lg font-medium">No products found</p>
-          <p className="text-sm text-muted-foreground">
-            {searchQuery ? "Try a different search term" : "Add products to get started"}
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {products.map((product) => (
-            <Card
-              key={product.id}
-              className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md"
-              onClick={() => handleProductClick(product)}
-            >
-              <CardContent className="p-3">
-                <div className="relative mb-2 aspect-square overflow-hidden rounded-lg bg-secondary">
-                  {product.image_url ? (
-                    <Image
-                      src={product.image_url || "/placeholder.svg"}
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-2xl text-muted-foreground/50">
-                      {product.name.charAt(0)}
-                    </div>
-                  )}
-                  {product.has_variants && (
-                    <div className="absolute bottom-1 right-1 rounded bg-background/80 px-1.5 py-0.5 text-[10px] font-medium">
-                      Variants
-                    </div>
-                  )}
-                </div>
-                <h3 className="truncate text-sm font-medium">{product.name}</h3>
-                <p className="text-xs text-muted-foreground">{product.sku}</p>
-                <p className="mt-1 font-semibold text-primary">{formatCurrency(product.selling_price)}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {/* Product Grid with Algolia */}
+      <AlgoliaProvider indexName={ALGOLIA_INDEXES.products} filters={buildFilters()} hitsPerPage={50}>
+        {/* Inject search query into Algolia */}
+        <AlgoliaSearchInjector query={searchQuery} />
+        <POSProductHits onProductClick={handleProductClick} />
+      </AlgoliaProvider>
 
       {/* Variant Selection Dialog */}
       <VariantDialog
@@ -139,6 +99,20 @@ export function POSProductGrid({ searchQuery, onAddToCart }: POSProductGridProps
       />
     </div>
   )
+}
+
+// Component to inject search query into Algolia
+import { useSearchBox } from "react-instantsearch"
+import { useEffect } from "react"
+
+function AlgoliaSearchInjector({ query }: { query: string }) {
+  const { refine } = useSearchBox()
+
+  useEffect(() => {
+    refine(query)
+  }, [query, refine])
+
+  return null
 }
 
 interface VariantDialogProps {

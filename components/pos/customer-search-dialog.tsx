@@ -1,15 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import useSWR from "swr"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Search, Plus, User } from "lucide-react"
-import { searchCustomerByPhone, createCustomer } from "@/lib/actions/customers"
+import { Plus, Loader2 } from "lucide-react"
+import { createCustomer, getCustomerById } from "@/lib/actions/customers"
 import type { Customer } from "@/lib/types"
-import { Loader2 } from "lucide-react"
+import type { AlgoliaCustomer } from "@/lib/algolia"
+import { AlgoliaProvider } from "@/components/search/algolia-provider"
+import { AlgoliaSearchBox } from "@/components/search/algolia-search-box"
+import { CustomerHits } from "@/components/search/customer-hits"
+import { ALGOLIA_INDEXES } from "@/lib/algolia-client"
 
 interface CustomerSearchDialogProps {
   open: boolean
@@ -18,7 +21,6 @@ interface CustomerSearchDialogProps {
 }
 
 export function CustomerSearchDialog({ open, onOpenChange, onSelect }: CustomerSearchDialogProps) {
-  const [searchPhone, setSearchPhone] = useState("")
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [newCustomer, setNewCustomer] = useState({
@@ -28,15 +30,13 @@ export function CustomerSearchDialog({ open, onOpenChange, onSelect }: CustomerS
     email: "",
   })
 
-  const { data: searchResults, isLoading } = useSWR(
-    searchPhone.length >= 3 ? ["customer-search", searchPhone] : null,
-    async () => {
-      const result = await searchCustomerByPhone(searchPhone)
-      return result
-    },
-  )
-
-  const customers = searchResults?.customers || []
+  const handleSelectAlgoliaCustomer = async (algoliaCustomer: AlgoliaCustomer) => {
+    // Fetch full customer data from Supabase
+    const result = await getCustomerById(algoliaCustomer.objectID)
+    if (result.customer) {
+      onSelect(result.customer)
+    }
+  }
 
   const handleCreate = async () => {
     setIsCreating(true)
@@ -53,7 +53,6 @@ export function CustomerSearchDialog({ open, onOpenChange, onSelect }: CustomerS
   const handleOpenChange = (newOpen: boolean) => {
     onOpenChange(newOpen)
     if (!newOpen) {
-      setSearchPhone("")
       setShowCreateForm(false)
       setNewCustomer({ first_name: "", last_name: "", phone: "", email: "" })
     }
@@ -124,59 +123,12 @@ export function CustomerSearchDialog({ open, onOpenChange, onSelect }: CustomerS
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by phone number..."
-                value={searchPhone}
-                onChange={(e) => setSearchPhone(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+            <AlgoliaProvider indexName={ALGOLIA_INDEXES.customers} hitsPerPage={10}>
+              <AlgoliaSearchBox placeholder="Search by name, phone, or email..." autoFocus />
+              <CustomerHits onSelect={handleSelectAlgoliaCustomer} />
+            </AlgoliaProvider>
 
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : customers.length > 0 ? (
-              <div className="space-y-2">
-                {customers.map((customer) => (
-                  <Button
-                    key={customer.id}
-                    variant="outline"
-                    className="h-auto w-full justify-start p-3 bg-transparent"
-                    onClick={() => onSelect(customer)}
-                  >
-                    <User className="mr-3 h-8 w-8 rounded-full bg-secondary p-1.5" />
-                    <div className="text-left">
-                      <p className="font-medium">
-                        {customer.first_name} {customer.last_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {customer.phone || customer.email || "No contact"}
-                      </p>
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            ) : searchPhone.length >= 3 ? (
-              <div className="py-8 text-center">
-                <p className="text-muted-foreground">No customers found</p>
-              </div>
-            ) : (
-              <div className="py-8 text-center">
-                <p className="text-muted-foreground">Enter at least 3 characters to search</p>
-              </div>
-            )}
-
-            <Button
-              variant="outline"
-              className="w-full bg-transparent"
-              onClick={() => {
-                setShowCreateForm(true)
-                setNewCustomer({ ...newCustomer, phone: searchPhone })
-              }}
-            >
+            <Button variant="outline" className="w-full bg-transparent" onClick={() => setShowCreateForm(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add New Customer
             </Button>

@@ -1,8 +1,7 @@
 "use client"
 
-import { Bell, Search, User } from "lucide-react"
+import { Bell, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { GlobalSearch } from "@/components/search/global-search"
 
 interface HeaderProps {
   title: string
@@ -26,10 +26,7 @@ export function Header({ title, subtitle }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search products, orders..." className="w-64 bg-secondary pl-9" />
-        </div>
+        <GlobalSearch />
 
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />

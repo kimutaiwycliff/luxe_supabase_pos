@@ -154,3 +154,22 @@ export async function deleteSupplier(id: string) {
 
   revalidateTag("suppliers", "max")
 }
+
+export async function getSupplierById(id: string) {
+  const supabase = await getSupabaseServer()
+
+  const { data, error } = await supabase
+    .from("suppliers")
+    .select(`
+      *,
+      products:products(count)
+    `)
+    .eq("id", id)
+    .single()
+
+  if (error) {
+    return { supplier: null, error: error.message }
+  }
+
+  return { supplier: data, error: null }
+}

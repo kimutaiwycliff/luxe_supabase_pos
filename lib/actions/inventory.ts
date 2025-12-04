@@ -323,3 +323,24 @@ export async function getStockMovements(options?: {
 
   return { movements: data as any[], error: null }
 }
+
+export async function getInventoryItemById(id: string) {
+  const supabase = await getSupabaseServer()
+
+  const { data, error } = await supabase
+    .from("inventory")
+    .select(`
+      *,
+      product:products(id, name, sku, barcode, image_url, selling_price, cost_price, low_stock_threshold),
+      variant:product_variants(id, sku, barcode, option_values, image_path, selling_price, cost_price),
+      location:locations(id, name)
+    `)
+    .eq("id", id)
+    .single()
+
+  if (error) {
+    return { item: null, error: error.message }
+  }
+
+  return { item: data as Inventory, error: null }
+}
