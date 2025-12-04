@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { useSidebar } from "@/components/ui/sidebar"
 import { POSHeader } from "./pos-header"
 import { POSProductGrid } from "./pos-product-grid"
 import { POSCart } from "./pos-cart"
@@ -21,13 +20,6 @@ export interface CartItem {
 }
 
 export function POSLayout() {
-  const { setOpen } = useSidebar()
-
-  // Collapse sidebar on mount for full POS experience
-  useState(() => {
-    setOpen(false)
-  })
-
   const [cart, setCart] = useState<CartItem[]>([])
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)

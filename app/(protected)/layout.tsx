@@ -1,19 +1,18 @@
 import { Suspense } from "react";
 import { LayoutSkeleton } from "@/components/layout/layout-skeleton";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/layout/app-sidebar";
-import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/actions/auth";
+import { Navbar, Sheet } from "@/components/layout/navbar";
 
-export async function SidebarWrapper({ children }: { children: React.ReactNode }) {
-  const [cookieStore, user] = await Promise.all([cookies(), getCurrentUser()])
-  const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false"
+export async function NavbarWrapper({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar user={user} />
-      <SidebarInset>{children}</SidebarInset>
-    </SidebarProvider>
+    <>
+      <Navbar user={user} />
+      <main className="flex-1 container mx-auto px-4 py-6">
+        {children}
+      </main>
+    </>
   )
 }
 
@@ -23,20 +22,14 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-screen flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-20 items-center">
-
-        <div className="flex-1 flex flex-col gap-20">
-          <Suspense fallback={<LayoutSkeleton />}>
-            <SidebarWrapper>
-              <div className="container mx-auto px-4">
-                {children}
-              </div>
-            </SidebarWrapper>
-          </Suspense>
-        </div>
-
+    <Sheet>
+      <div className="min-h-screen flex flex-col">
+        <Suspense fallback={<LayoutSkeleton />}>
+          <NavbarWrapper>
+            {children}
+          </NavbarWrapper>
+        </Suspense>
       </div>
-    </main>
+    </Sheet>
   );
 }

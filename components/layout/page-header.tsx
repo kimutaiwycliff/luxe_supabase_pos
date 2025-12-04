@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-
-import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Menu } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import {
   Breadcrumb,
@@ -12,6 +12,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { SheetTrigger } from "@/components/ui/sheet"
 
 interface PageHeaderProps {
   title: string
@@ -22,7 +23,12 @@ interface PageHeaderProps {
 export function PageHeader({ title, breadcrumbs, children }: PageHeaderProps) {
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-      <SidebarTrigger className="-ml-1" />
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="md:hidden -ml-1">
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle menu</span>
+        </Button>
+      </SheetTrigger>
       <Separator orientation="vertical" className="mr-2 h-4" />
       <Breadcrumb>
         <BreadcrumbList>
