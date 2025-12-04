@@ -58,9 +58,9 @@ export function ProductHits({ viewMode, onEdit, onEditVariants, onDelete, onAdd,
         {hits.map((product) => (
           <Card key={product.objectID} className="overflow-hidden">
             <div className="relative aspect-square bg-secondary">
-              {product.image_path ? (
+              {product.image_url ? (
                 <Image
-                  src={product.image_path || "/placeholder.svg"}
+                  src={product.image_url || "/placeholder.svg"}
                   alt={product.name}
                   fill
                   className="object-cover"
@@ -137,7 +137,7 @@ export function ProductHits({ viewMode, onEdit, onEditVariants, onDelete, onAdd,
             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-secondary">
               {product.image_path ? (
                 <Image
-                  src={product.image_path || "/placeholder.svg"}
+                  src={product.image_url || "/placeholder.svg"}
                   alt={product.name}
                   fill
                   className="object-cover"

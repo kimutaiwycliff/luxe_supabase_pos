@@ -307,7 +307,7 @@ export async function createProduct(data: ProductFormData) {
       allow_backorder: data.allow_backorder ?? false,
       low_stock_threshold: data.low_stock_threshold || 5,
       image_url: data.image_url || null,
-      images: data.images || [],
+      // images: data.images || [],
       tags: data.tags || [],
     })
     .select(`
