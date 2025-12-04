@@ -250,7 +250,7 @@ export async function getReorderAlerts() {
       ),
       variant:product_variants(id, sku, name)
     `)
-    .eq("is_resolved", false)
+    .eq("is_acknowledged", false)
     .order("created_at", { ascending: false })
 
   if (error) throw error
@@ -260,7 +260,10 @@ export async function getReorderAlerts() {
 export async function resolveReorderAlert(id: string) {
   const supabase = await getSupabaseServer()
 
-  const { error } = await supabase.from("reorder_alerts").update({ is_resolved: true }).eq("id", id)
+  const { error } = await supabase
+    .from("reorder_alerts")
+    .update({ is_acknowledged: true, acknowledged_at: new Date().toISOString() })
+    .eq("id", id)
 
   if (error) throw error
 
