@@ -16,7 +16,7 @@ export default function SettingsPage() {
   return (
     <>
       <PageHeader title="Settings" breadcrumbs={[{ label: "Settings" }]} />
-      <div className="flex flex-1 flex-col gap-6 p-4 pt-0 max-w-4xl">
+      <div className="flex flex-1 flex-col gap-6 p-4 pt-0 w-full">
         {/* Store Information */}
         <Card>
           <CardHeader>
