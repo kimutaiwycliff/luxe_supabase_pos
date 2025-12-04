@@ -151,7 +151,7 @@ function POSProductHitsInline({ onProductClick }: { onProductClick: (product: Al
         >
           <CardContent className="p-3">
             <div className="relative mb-2 aspect-square overflow-hidden rounded-lg bg-secondary">
-              {product.image_path ? (
+              {product.image_url ? (
                 <Image
                   src={product.image_url || "/placeholder.svg"}
                   alt={product.name}
