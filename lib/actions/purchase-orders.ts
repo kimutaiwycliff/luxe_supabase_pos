@@ -1,7 +1,7 @@
 "use server"
 
+import { getSupabaseServer } from "@/lib/supabase/server"
 import { revalidateTag } from "next/cache"
-import { getSupabaseServer } from "../supabase/server"
 
 export type PurchaseOrderStatus = "draft" | "sent" | "confirmed" | "shipped" | "received" | "cancelled"
 
@@ -19,7 +19,7 @@ export async function getPurchaseOrders(status?: PurchaseOrderStatus) {
         quantity_received,
         unit_cost,
         product:products(id, name, sku),
-        variant:product_variants(id, sku, variant_name)
+        variant:product_variants(id, sku, name)
       )
     `)
     .order("created_at", { ascending: false })
@@ -45,7 +45,7 @@ export async function getPurchaseOrder(id: string) {
       items:purchase_order_items(
         *,
         product:products(id, name, sku, cost_price),
-        variant:product_variants(id, sku, variant_name, cost_price)
+        variant:product_variants(id, sku, name, cost_price)
       )
     `)
     .eq("id", id)
@@ -248,7 +248,7 @@ export async function getReorderAlerts() {
         cost_price,
         supplier:suppliers(id, name, email)
       ),
-      variant:product_variants(id, sku, variant_name)
+      variant:product_variants(id, sku, name)
     `)
     .eq("is_resolved", false)
     .order("created_at", { ascending: false })

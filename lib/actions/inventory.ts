@@ -139,15 +139,12 @@ async function fallbackInventorySearch(options?: {
 export async function getLowStockItems(locationId?: string) {
   const supabase = await getSupabaseServer()
 
-  let query = supabase
-    .from("inventory")
-    .select(`
+  let query = supabase.from("inventory").select(`
       *,
       product:products(id, name, sku, barcode, image_url, selling_price, cost_price, low_stock_threshold, supplier_id),
       variant:product_variants(id, sku, barcode, option_values, image_path),
       location:locations(id, name)
     `)
-    .or("quantity.lte.reorder_point")
 
   if (locationId) {
     query = query.eq("location_id", locationId)
@@ -160,8 +157,10 @@ export async function getLowStockItems(locationId?: string) {
     return { items: [], error: error.message }
   }
 
-  // Filter items where quantity <= reorder_point
-  const lowStock = (data || []).filter((item) => item.quantity <= item.reorder_point)
+  const lowStock = (data || []).filter((item) => {
+    const threshold = item.product?.low_stock_threshold || 0
+    return item.quantity <= threshold
+  })
 
   return { items: lowStock as Inventory[], error: null }
 }
