@@ -95,7 +95,7 @@ export function Navbar({ user }: NavbarProps) {
                     <Store className="size-4" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Boutique</span>
+                    <span className="truncate font-semibold">Luxe Collections</span>
                     <span className="truncate text-xs text-muted-foreground">Store Manager</span>
                   </div>
                 </Link>
@@ -180,7 +180,7 @@ export function Navbar({ user }: NavbarProps) {
             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Store className="size-4" />
             </div>
-            <span className="font-semibold">Boutique</span>
+            <span className="font-semibold">Luxe Collections</span>
           </Link>
 
           <nav className="flex items-center gap-4">

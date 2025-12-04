@@ -30,7 +30,7 @@ export function POSHeader({ searchQuery, onSearchChange }: POSHeaderProps) {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Store className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="text-lg font-semibold">Boutique POS</span>
+          <span className="text-lg font-semibold">Luxe Collections POS</span>
         </Link>
 
         <div className="ml-8 flex items-center gap-6 text-sm">

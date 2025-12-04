@@ -42,7 +42,7 @@ export function POSReceiptDialog({ open, onOpenChange, order }: POSReceiptDialog
         {/* Receipt */}
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="text-center">
-            <h3 className="font-semibold">Boutique Store</h3>
+            <h3 className="font-semibold">Luxe Collections</h3>
             <p className="text-xs text-muted-foreground">Nairobi, Kenya</p>
             <p className="mt-2 text-xs text-muted-foreground">{formatDateTime(order.created_at)}</p>
             <p className="font-mono text-xs text-muted-foreground">#{order.order_number}</p>

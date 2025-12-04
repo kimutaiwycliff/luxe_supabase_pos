@@ -4,7 +4,7 @@ import { SuppliersContent } from "@/components/suppliers/suppliers-content"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata = {
-  title: "Suppliers | Boutique Store",
+  title: "Suppliers | Luxe Collections",
   description: "Manage your suppliers and vendors",
 }
 

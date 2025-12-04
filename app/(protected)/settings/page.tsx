@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator"
 import { AlgoliaSyncCard } from "@/components/settings/algolia-sync-card"
 
 export const metadata = {
-  title: "Settings | Boutique Store",
+  title: "Settings | Luxe Collections",
   description: "Configure your store settings",
 }
 

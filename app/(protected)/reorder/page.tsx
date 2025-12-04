@@ -4,7 +4,7 @@ import { ReorderContent } from "@/components/reorder/reorder-content"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata = {
-  title: "Reorder Alerts | Boutique Store",
+  title: "Reorder Alerts | Luxe Collections",
   description: "Low stock alerts and quick reordering",
 }
 

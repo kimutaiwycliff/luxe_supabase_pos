@@ -4,7 +4,7 @@ import { CustomersContent } from "@/components/customers/customers-content"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata = {
-  title: "Customers | Boutique Store",
+  title: "Customers | Luxe Collections",
   description: "Manage your customer database",
 }
 

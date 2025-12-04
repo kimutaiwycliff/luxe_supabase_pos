@@ -4,7 +4,7 @@ import { PurchaseOrdersContent } from "@/components/purchase-orders/purchase-ord
 import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata = {
-  title: "Purchase Orders | Boutique Store",
+  title: "Purchase Orders | Luxe Collections",
   description: "Manage purchase orders and restock inventory",
 }
 
