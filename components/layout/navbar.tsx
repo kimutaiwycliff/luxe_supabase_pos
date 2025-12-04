@@ -67,8 +67,13 @@ const analyticsNavigation = [
   { title: "Settings", href: "/settings", icon: Settings },
 ]
 
+const staffNavigation = [
+  { title: "POS", href: "/pos", icon: ShoppingCart },
+]
+
 export function Navbar({ user }: NavbarProps) {
   const pathname = usePathname()
+  const navigation = user?.role === "admin" ? [...mainNavigation] : staffNavigation
 
   const checkIsActive = (href: string) => pathname === href || (href !== "/" && pathname.startsWith(href))
 
@@ -184,7 +189,7 @@ export function Navbar({ user }: NavbarProps) {
           </Link>
 
           <nav className="flex items-center gap-4">
-            {mainNavigation.map((item) => (
+            {navigation.map((item) => (
               <Link
                 key={item.title}
                 href={item.href}
@@ -201,14 +206,18 @@ export function Navbar({ user }: NavbarProps) {
         </div>
 
         <div className="flex flex-1 items-center justify-end gap-4">
-          <GlobalSearch />
+          {user?.role === "admin" && (
+            <>
+              <GlobalSearch />
 
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground">
-              3
-            </span>
-          </Button>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground">
+                  3
+                </span>
+              </Button>
+              </>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
