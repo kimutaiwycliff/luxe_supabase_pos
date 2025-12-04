@@ -188,7 +188,7 @@ export async function createOrder(data: CreateOrderData) {
     const itemSubtotal = item.unit_price * item.quantity - (item.discount_amount || 0)
     const itemTaxRate = item.tax_rate ?? 0
     const itemTax = itemSubtotal * (itemTaxRate / 100) * discountRatio // Convert percentage to decimal
-    
+
     return {
       order_id: order.id,
       product_id: item.product_id || null,
