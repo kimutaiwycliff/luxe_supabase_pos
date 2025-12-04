@@ -3,7 +3,7 @@
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { revalidateTag } from "next/cache"
 
-export type PurchaseOrderStatus = "draft" | "sent" | "confirmed" | "shipped" | "received" | "cancelled"
+export type PurchaseOrderStatus = "pending" | "ordered" | "partial" | "received" | "cancelled"
 
 export async function getPurchaseOrders(status?: PurchaseOrderStatus) {
   const supabase = await getSupabaseServer()
@@ -87,7 +87,7 @@ export async function createPurchaseOrder(
     .insert({
       po_number: poNumber,
       supplier_id: supplierId,
-      status: "draft",
+      status: "pending",
       total_amount: totalAmount,
       notes,
     })
@@ -119,7 +119,7 @@ export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrde
 
   const updateData: Record<string, unknown> = { status }
 
-  if (status === "sent") {
+  if (status === "ordered") {
     updateData.sent_at = new Date().toISOString()
   } else if (status === "received") {
     updateData.received_at = new Date().toISOString()

@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { Plus, Search, Package, ChevronRight, Truck, CheckCircle2, XCircle, Clock, Send } from "lucide-react"
+import { Plus, Search, Package, ChevronRight, Truck, XCircle, Clock, ShoppingCart, PackageCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -51,11 +51,10 @@ const statusConfig: Record<
     icon: React.ComponentType<{ className?: string }>
   }
 > = {
-  draft: { label: "Draft", variant: "secondary", icon: Clock },
-  sent: { label: "Sent", variant: "default", icon: Send },
-  confirmed: { label: "Confirmed", variant: "default", icon: CheckCircle2 },
-  shipped: { label: "Shipped", variant: "default", icon: Truck },
-  received: { label: "Received", variant: "outline", icon: CheckCircle2 },
+  pending: { label: "Pending", variant: "secondary", icon: Clock },
+  ordered: { label: "Ordered", variant: "default", icon: ShoppingCart },
+  partial: { label: "Partial", variant: "default", icon: Truck },
+  received: { label: "Received", variant: "outline", icon: PackageCheck },
   cancelled: { label: "Cancelled", variant: "destructive", icon: XCircle },
 }
 
@@ -73,7 +72,7 @@ export function PurchaseOrdersContent() {
       setOrders(data || [])
     } catch (error) {
       console.error("Failed to load purchase orders:", error)
-      toast.error( "Failed to load purchase orders")
+      toast.error("Failed to load purchase orders")
     } finally {
       setLoading(false)
     }
@@ -118,9 +117,9 @@ export function PurchaseOrdersContent() {
         <Tabs value={statusFilter} onValueChange={setStatusFilter}>
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="draft">Draft</TabsTrigger>
-            <TabsTrigger value="sent">Sent</TabsTrigger>
-            <TabsTrigger value="shipped">Shipped</TabsTrigger>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="ordered">Ordered</TabsTrigger>
+            <TabsTrigger value="partial">Partial</TabsTrigger>
             <TabsTrigger value="received">Received</TabsTrigger>
           </TabsList>
         </Tabs>
