@@ -281,7 +281,7 @@ export async function getLowStockProducts() {
       name,
       sku,
       cost_price,
-      reorder_point,
+      low_stock_threshold,
       reorder_quantity,
       supplier:suppliers(id, name, email, phone),
       inventory:inventory(
@@ -304,7 +304,7 @@ export async function getLowStockProducts() {
             sum + (inv.quantity - inv.reserved_quantity),
           0,
         ) || 0
-      return totalStock <= (product.reorder_point || 0)
+      return totalStock <= (product.low_stock_threshold || 0)
     }) || []
   )
 }
