@@ -12,7 +12,7 @@ interface RecentOrder {
   status: string
   payment_status: string
   created_at: string
-  customer: { first_name: string; last_name: string } | null
+  customer: { first_name: string; last_name: string }[] | null
   items: { id: string }[]
   payments: { payment_method: string }[]
 }
@@ -32,8 +32,8 @@ const columns: ColumnDef<RecentOrder>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Customer" />,
     cell: ({ row }) => {
       const customer = row.original.customer
-      if (customer) {
-        return `${customer?.first_name} ${customer?.last_name}`
+      if (customer && customer.length > 0) {
+        return `${customer?.[0]?.first_name} ${customer?.[0]?.last_name}`
       }
       return "Walk-in Customer"
     },
