@@ -28,6 +28,20 @@ export interface LowStockItem {
   variant_id?: string
 }
 
+export interface LayawayOrderSummary {
+  id: string
+  order_number: string
+  customer_name: string
+  customer_phone: string
+  total_amount: number
+  paid_amount: number
+  balance: number
+  due_date: string | null
+  is_overdue: boolean
+  items_count: number
+  created_at: string
+}
+
 export async function getDashboardStats(): Promise<{ data: DashboardStats | null; error: string | null }> {
   const supabase = await getSupabaseServer()
 
@@ -294,3 +308,96 @@ export async function getRecentOrdersForDashboard(limit = 5) {
 
   return { orders: data || [], error: null }
 }
+
+export async function getLayawayStats(): Promise<{
+  data: {
+    totalLayaways: number
+    totalReservedValue: number
+    totalCollected: number
+    totalPending: number
+    overdueCount: number
+  } | null
+  error: string | null
+}> {
+  const supabase = await getSupabaseServer()
+
+  const { data: layaways, error } = await supabase
+    .from("orders")
+    .select("total_amount, paid_amount, layaway_due_date")
+    .eq("status", "layaway")
+
+  if (error) {
+    return { data: null, error: error.message }
+  }
+
+  const today = new Date().toISOString().split("T")[0]
+  let totalReservedValue = 0
+  let totalCollected = 0
+  let overdueCount = 0
+
+  layaways?.forEach((order) => {
+    totalReservedValue += order.total_amount || 0
+    totalCollected += order.paid_amount || 0
+    if (order.layaway_due_date && order.layaway_due_date < today) {
+      overdueCount++
+    }
+  })
+
+  return {
+    data: {
+      totalLayaways: layaways?.length || 0,
+      totalReservedValue,
+      totalCollected,
+      totalPending: totalReservedValue - totalCollected,
+      overdueCount,
+    },
+    error: null,
+  }
+}
+
+export async function getRecentLayaways(limit = 5): Promise<{
+  data: LayawayOrderSummary[]
+  error: string | null
+}> {
+  const supabase = await getSupabaseServer()
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select(`
+      id,
+      order_number,
+      total_amount,
+      paid_amount,
+      layaway_customer_name,
+      layaway_customer_phone,
+      layaway_due_date,
+      created_at,
+      items:order_items(id)
+    `)
+    .eq("status", "layaway")
+    .order("created_at", { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    return { data: [], error: error.message }
+  }
+
+  const today = new Date().toISOString().split("T")[0]
+
+  const layaways: LayawayOrderSummary[] = (data || []).map((order) => ({
+    id: order.id,
+    order_number: order.order_number,
+    customer_name: order.layaway_customer_name || "Unknown",
+    customer_phone: order.layaway_customer_phone || "",
+    total_amount: order.total_amount,
+    paid_amount: order.paid_amount,
+    balance: order.total_amount - order.paid_amount,
+    due_date: order.layaway_due_date,
+    is_overdue: order.layaway_due_date ? order.layaway_due_date < today : false,
+    items_count: order.items?.length || 0,
+    created_at: order.created_at,
+  }))
+
+  return { data: layaways, error: null }
+}
+

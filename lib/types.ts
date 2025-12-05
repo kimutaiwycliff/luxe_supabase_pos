@@ -182,6 +182,11 @@ export interface Order {
   customer?: Customer
   items?: OrderItem[]
   payments?: Payment[]
+  paid_amount: number
+  layaway_customer_name?: string | null
+  layaway_customer_phone?: string | null
+  layaway_due_date: string | null
+  layaway_deposit_percent: number | null
 }
 
 export interface OrderItem {

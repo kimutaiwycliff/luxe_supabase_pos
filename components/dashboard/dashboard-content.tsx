@@ -9,12 +9,15 @@ import Link from "next/link"
 import { RecentOrdersTable } from "./recent-orders-table"
 import { LowStockAlert } from "./low-stock-alert"
 import { SalesChart } from "./sales-chart"
+import { LayawaySummary } from "./layaway-summary"
 import useSWR from "swr"
 import {
   getDashboardStats,
   getWeeklySales,
   getLowStockItems,
   getRecentOrdersForDashboard,
+  getLayawayStats,
+  getRecentLayaways,
 } from "@/lib/actions/dashboard"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -35,10 +38,20 @@ export function DashboardContent() {
     mutate: mutateOrders,
   } = useSWR("recent-orders-dashboard", async () => getRecentOrdersForDashboard(5))
 
+  const { data: layawayStatsData, isLoading: layawayStatsLoading } = useSWR("layaway-stats", async () =>
+    getLayawayStats(),
+  )
+
+  const { data: recentLayawaysData, isLoading: layawaysLoading } = useSWR("recent-layaways", async () =>
+    getRecentLayaways(5),
+  )
+
   const stats = statsData?.data
   const salesChartData = salesData?.data || []
   const lowStockItems = lowStockData?.data || []
   const recentOrders = ordersData?.orders || []
+  const layawayStats = layawayStatsData?.data
+  const recentLayaways = recentLayawaysData?.data || []
 
   const handleRefresh = () => {
     mutateStats()
@@ -140,21 +153,30 @@ export function DashboardContent() {
         </Card>
       </div>
 
-      {/* Recent Orders */}
-      <Card className="mt-6">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Recent Orders</CardTitle>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/pos" className="flex items-center gap-1">
-              New Sale
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {ordersLoading ? <Skeleton className="h-64 w-full" /> : <RecentOrdersTable orders={recentOrders} />}
-        </CardContent>
-      </Card>
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        {/* Layaway Summary */}
+        {layawayStatsLoading || layawaysLoading ? (
+          <Skeleton className="h-64 rounded-xl" />
+        ) : (
+          <LayawaySummary layaways={recentLayaways} stats={layawayStats} />
+        )}
+
+        {/* Recent Orders */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Recent Orders</CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/pos" className="flex items-center gap-1">
+                New Sale
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {ordersLoading ? <Skeleton className="h-48 w-full" /> : <RecentOrdersTable orders={recentOrders} />}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
