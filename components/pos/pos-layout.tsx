@@ -7,6 +7,7 @@ import { POSCart } from "./pos-cart"
 import { POSPaymentDialog } from "./pos-payment-dialog"
 import { POSReceiptDialog } from "./pos-receipt-dialog"
 import { getDefaultLocation, type Location } from "@/lib/actions/locations"
+import { toast } from "sonner"
 import type { Product, ProductVariant, Customer, Order } from "@/lib/types"
 
 export interface CartItem {
@@ -17,6 +18,7 @@ export interface CartItem {
   price: number
   discount: number
   tax_rate: number
+  available_stock: number
 }
 
 export function POSLayout() {
@@ -45,44 +47,79 @@ export function POSLayout() {
     fetchLocation()
   }, [])
 
-  const addToCart = useCallback((product: Product, variant?: ProductVariant) => {
-    setCart((prevCart) => {
-      const itemId = variant ? `${product.id}-${variant.id}` : product.id
-      const existingIndex = prevCart.findIndex((item) => item.id === itemId)
+  const addToCart = useCallback(
+    (product: Product, variant?: ProductVariant, availableStock?: number) => {
+      const stock = availableStock ?? 999 // Default to high value if stock not provided
 
-      if (existingIndex >= 0) {
-        const updated = [...prevCart]
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          quantity: updated[existingIndex].quantity + 1,
+      setCart((prevCart) => {
+        const itemId = variant ? `${product.id}-${variant.id}` : product.id
+        const existingIndex = prevCart.findIndex((item) => item.id === itemId)
+
+        if (existingIndex >= 0) {
+          const existingItem = prevCart[existingIndex]
+          const newQuantity = existingItem.quantity + 1
+
+          // Check stock validation
+          if (newQuantity > existingItem.available_stock) {
+            toast.error(`Insufficient stock!. Only ${existingItem.available_stock} units available`)
+            return prevCart
+          }
+
+          const updated = [...prevCart]
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            quantity: newQuantity,
+          }
+          return updated
         }
-        return updated
+
+        // Check if stock is 0 when adding new item
+        if (stock <= 0) {
+          toast.error(`${product.name}${variant ? ` - ${variant.name || variant.sku}` : ""} is out of stock`)
+          return prevCart
+        }
+
+        const price = variant?.selling_price || product.selling_price
+
+        return [
+          ...prevCart,
+          {
+            id: itemId,
+            product,
+            variant,
+            quantity: 1,
+            price,
+            discount: 0,
+            tax_rate: variant?.tax_rate ?? product.tax_rate ?? 16,
+            available_stock: stock,
+          },
+        ]
+      })
+    },
+    [],
+  )
+
+  const updateQuantity = useCallback(
+    (itemId: string, quantity: number) => {
+      if (quantity <= 0) {
+        setCart((prev) => prev.filter((item) => item.id !== itemId))
+      } else {
+        setCart((prev) =>
+          prev.map((item) => {
+            if (item.id === itemId) {
+              if (quantity > item.available_stock) {
+                toast.error(`Insufficient stock. Only ${item.available_stock} units available`)
+                return item
+              }
+              return { ...item, quantity }
+            }
+            return item
+          }),
+        )
       }
-
-      const price = variant?.selling_price || product.selling_price
-
-      return [
-        ...prevCart,
-        {
-          id: itemId,
-          product,
-          variant,
-          quantity: 1,
-          price,
-          discount: 0,
-          tax_rate: product.tax_rate || 0, // Use product's tax rate or default to 0%
-        },
-      ]
-    })
-  }, [])
-
-  const updateQuantity = useCallback((itemId: string, quantity: number) => {
-    if (quantity <= 0) {
-      setCart((prev) => prev.filter((item) => item.id !== itemId))
-    } else {
-      setCart((prev) => prev.map((item) => (item.id === itemId ? { ...item, quantity } : item)))
-    }
-  }, [])
+    },
+    [],
+  )
 
   const updateItemDiscount = useCallback((itemId: string, discount: number) => {
     setCart((prev) => prev.map((item) => (item.id === itemId ? { ...item, discount: Math.max(0, discount) } : item)))
@@ -125,7 +162,7 @@ export function POSLayout() {
   // Calculate tax per item based on each product's tax rate
   const tax = cart.reduce((sum, item) => {
     const itemTotal = item.price * item.quantity - item.discount
-    const itemTax = itemTotal * (item.tax_rate / 100) // Convert percentage to decimal
+    const itemTax = itemTotal * (item.tax_rate / 100)
     return sum + itemTax
   }, 0)
 
@@ -143,7 +180,7 @@ export function POSLayout() {
       <div className="flex flex-1 overflow-hidden">
         {/* Product Grid */}
         <div className="flex-1 overflow-auto p-4">
-          <POSProductGrid searchQuery={searchQuery} onAddToCart={addToCart} />
+          <POSProductGrid searchQuery={searchQuery} onAddToCart={addToCart} locationId={location?.id} />
         </div>
 
         {/* Cart Sidebar */}

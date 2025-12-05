@@ -21,6 +21,7 @@ import {
   type ProductVariant,
 } from "@/lib/actions/variants"
 import { getDefaultLocation } from "@/lib/actions/locations"
+import { toast } from "sonner"
 import type { Product } from "@/lib/types"
 
 interface VariantEditorDialogProps {
@@ -41,6 +42,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
   } | null>(null)
   const [inventoryForm, setInventoryForm] = useState<{ [key: string]: number }>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [savingInventory, setSavingInventory] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newVariant, setNewVariant] = useState({
     name: "",
@@ -60,7 +62,9 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
   useEffect(() => {
     if (open) {
       getDefaultLocation().then((result) => {
-        if (result.location) setLocationId(result.location.id)
+        if (result.location) {
+          setLocationId(result.location.id)
+        }
       })
     }
   }, [open])
@@ -97,23 +101,33 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
       mutate()
       setEditingVariant(null)
       setEditForm(null)
+      toast.success("Variant updated", {  description: "Pricing and settings have been saved." })
+    } else {
+      toast.error( "Error updating variant", { description: error })
     }
 
     setIsLoading(false)
   }
 
   const handleSaveInventory = async (variantId: string) => {
-    if (!locationId) return
-    setIsLoading(true)
+    if (!locationId) {
+      toast.error("No location available. Please try again.")
+      return
+    }
 
-    const quantity = inventoryForm[variantId] || 0
+    setSavingInventory(variantId)
+
+    const quantity = inventoryForm[variantId] ?? 0
     const { error } = await updateVariantInventory(variantId, locationId, quantity)
 
-    if (!error) {
+    if (error) {
+      toast.error(error)
+    } else {
+      toast.success("Inventory updated", { description: `Stock quantity set to ${quantity}` })
       mutate()
     }
 
-    setIsLoading(false)
+    setSavingInventory(null)
   }
 
   const handleAddVariant = async () => {
@@ -135,6 +149,9 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
         compare_at_price: product.compare_at_price || 0,
         tax_rate: product.tax_rate || 16,
       })
+      toast.success("Variant added", { description: "New variant has been created." })
+    } else {
+      toast.error("Error", { description: error })
     }
 
     setIsLoading(false)
@@ -148,6 +165,9 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
 
     if (!error) {
       mutate()
+      toast.success("Variant deleted")
+    } else {
+      toast.error("Error", { description: error })
     }
 
     setIsLoading(false)
@@ -166,7 +186,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
   }
 
   const getEffectiveTaxRate = (variant: ProductVariant) => {
-    return variant.tax_rate ?? product.tax_rate ?? 0
+    return variant.tax_rate ?? product.tax_rate ?? 16
   }
 
   return (
@@ -437,7 +457,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
                         <TableCell className="text-center">{current}</TableCell>
                         <TableCell className="text-center text-muted-foreground">{reserved}</TableCell>
                         <TableCell className="text-center">
-                          <Badge variant={available <= 0 ? "destructive" : available <= 5 ? "secondary" : "default"}>
+                          <Badge variant={available <= 0 ? "destructive" : available <= 5 ? "outline" : "default"}>
                             {available}
                           </Badge>
                         </TableCell>
@@ -457,9 +477,9 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
                             size="sm"
                             variant="outline"
                             onClick={() => handleSaveInventory(variant.id)}
-                            disabled={isLoading || inventoryForm[variant.id] === current}
+                            disabled={savingInventory === variant.id || inventoryForm[variant.id] === current}
                           >
-                            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update"}
+                            {savingInventory === variant.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update"}
                           </Button>
                         </TableCell>
                       </TableRow>

@@ -5,13 +5,15 @@ import useSWR from "swr"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getProductVariants, getProductById } from "@/lib/actions/products"
 import { getCategories } from "@/lib/actions/categories"
+import { getProductStock, getVariantStock } from "@/lib/actions/inventory"
 import { formatCurrency } from "@/lib/format"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Plus } from "lucide-react"
+import { Plus, AlertTriangle } from "lucide-react"
 import type { Product, ProductVariant } from "@/lib/types"
 import type { AlgoliaProduct } from "@/lib/algolia"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { InstantSearch, Configure, useHits, useSearchBox, useInstantSearch } from "react-instantsearch"
 import { searchClient, ALGOLIA_INDEXES } from "@/lib/algolia-client"
 import Image from "next/image"
@@ -20,10 +22,11 @@ import { Package } from "lucide-react"
 
 interface POSProductGridProps {
   searchQuery: string
-  onAddToCart: (product: Product, variant?: ProductVariant) => void
+  onAddToCart: (product: Product, variant?: ProductVariant, availableStock?: number) => void
+  locationId?: string
 }
 
-export function POSProductGrid({ searchQuery, onAddToCart }: POSProductGridProps) {
+export function POSProductGrid({ searchQuery, onAddToCart, locationId }: POSProductGridProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [variantDialogOpen, setVariantDialogOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -52,7 +55,13 @@ export function POSProductGrid({ searchQuery, onAddToCart }: POSProductGridProps
       setSelectedProduct(result.product)
       setVariantDialogOpen(true)
     } else {
-      onAddToCart(result.product)
+      // Fetch stock for simple products
+      let availableStock = 0
+      if (locationId) {
+        const stockResult = await getProductStock(result.product.id, locationId)
+        availableStock = stockResult.available_quantity
+      }
+      onAddToCart(result.product, undefined, availableStock)
     }
   }
 
@@ -94,9 +103,10 @@ export function POSProductGrid({ searchQuery, onAddToCart }: POSProductGridProps
         open={variantDialogOpen}
         onOpenChange={setVariantDialogOpen}
         product={selectedProduct}
-        onSelect={(variant) => {
+        locationId={locationId}
+        onSelect={(variant, availableStock) => {
           if (selectedProduct) {
-            onAddToCart(selectedProduct, variant)
+            onAddToCart(selectedProduct, variant, availableStock)
           }
           setVariantDialogOpen(false)
         }}
@@ -183,10 +193,14 @@ interface VariantDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   product: Product | null
-  onSelect: (variant: ProductVariant) => void
+  locationId?: string
+  onSelect: (variant: ProductVariant, availableStock: number) => void
 }
 
-function VariantDialog({ open, onOpenChange, product, onSelect }: VariantDialogProps) {
+function VariantDialog({ open, onOpenChange, product, locationId, onSelect }: VariantDialogProps) {
+  const [variantStocks, setVariantStocks] = useState<Record<string, number>>({})
+  const [loadingStocks, setLoadingStocks] = useState(false)
+
   const { data: variantsData, isLoading } = useSWR(product && open ? ["variants", product.id] : null, async () => {
     if (!product) return { variants: [] }
     const result = await getProductVariants(product.id)
@@ -195,6 +209,50 @@ function VariantDialog({ open, onOpenChange, product, onSelect }: VariantDialogP
 
   const variants = variantsData?.variants || []
 
+  useEffect(() => {
+    async function fetchStocks() {
+      if (!variants.length || !locationId) return
+      setLoadingStocks(true)
+
+      const stocks: Record<string, number> = {}
+      for (const variant of variants) {
+        const result = await getVariantStock(variant.id, locationId)
+        stocks[variant.id] = result.available_quantity
+      }
+
+      setVariantStocks(stocks)
+      setLoadingStocks(false)
+    }
+
+    if (open && variants.length > 0 && locationId) {
+      fetchStocks()
+    }
+  }, [open, variants, locationId])
+
+  const getStockBadge = (variantId: string) => {
+    const stock = variantStocks[variantId]
+    if (stock === undefined) return null
+
+    if (stock <= 0) {
+      return (
+        <Badge variant="destructive" className="ml-2">
+          Out of stock
+        </Badge>
+      )
+    } else if (stock <= 5) {
+      return (
+        <Badge variant="destructive" className="ml-2">
+          Low: {stock}
+        </Badge>
+      )
+    }
+    return (
+      <Badge variant="outline" className="ml-2">
+        {stock} in stock
+      </Badge>
+    )
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -202,7 +260,7 @@ function VariantDialog({ open, onOpenChange, product, onSelect }: VariantDialogP
           <DialogTitle>Select Variant - {product?.name}</DialogTitle>
         </DialogHeader>
 
-        {isLoading ? (
+        {isLoading || loadingStocks ? (
           <div className="space-y-2">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-16 rounded-lg" />
@@ -214,27 +272,37 @@ function VariantDialog({ open, onOpenChange, product, onSelect }: VariantDialogP
           <div className="space-y-2">
             {variants
               .filter((v) => v.is_active)
-              .map((variant) => (
-                <Button
-                  key={variant.id}
-                  variant="outline"
-                  className="h-auto w-full justify-between p-4 bg-transparent"
-                  onClick={() => onSelect(variant)}
-                >
-                  <div className="text-left">
-                    <p className="font-medium">
-                      {variant.option_values ? Object.values(variant.option_values).join(" / ") : variant.sku}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{variant.sku}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">
-                      {formatCurrency(variant.selling_price || product?.selling_price || 0)}
-                    </span>
-                    <Plus className="h-4 w-4" />
-                  </div>
-                </Button>
-              ))}
+              .map((variant) => {
+                const stock = variantStocks[variant.id] ?? 0
+                const isOutOfStock = stock <= 0
+
+                return (
+                  <Button
+                    key={variant.id}
+                    variant="outline"
+                    className={`h-auto w-full justify-between p-4 bg-transparent ${isOutOfStock ? "opacity-50" : ""}`}
+                    onClick={() => onSelect(variant, stock)}
+                    disabled={isOutOfStock}
+                  >
+                    <div className="text-left">
+                      <div className="flex items-center">
+                        <p className="font-medium">
+                          {variant.option_values ? Object.values(variant.option_values).join(" / ") : variant.sku}
+                        </p>
+                        {getStockBadge(variant.id)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{variant.sku}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">
+                        {formatCurrency(variant.selling_price || product?.selling_price || 0)}
+                      </span>
+                      {!isOutOfStock && <Plus className="h-4 w-4" />}
+                      {isOutOfStock && <AlertTriangle className="h-4 w-4 text-destructive" />}
+                    </div>
+                  </Button>
+                )
+              })}
           </div>
         )}
       </DialogContent>

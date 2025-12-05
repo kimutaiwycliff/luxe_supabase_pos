@@ -344,3 +344,56 @@ export async function getInventoryItemById(id: string) {
 
   return { item: data as Inventory, error: null }
 }
+
+export async function getProductStock(productId: string, locationId: string) {
+  const supabase = await getSupabaseServer()
+
+  const { data, error } = await supabase
+    .from("inventory")
+    .select("quantity, reserved_quantity")
+    .eq("product_id", productId)
+    .eq("location_id", locationId)
+    .is("variant_id", null)
+    .single()
+
+  if (error && error.code !== "PGRST116") {
+    console.error("Error fetching product stock:", error)
+    return { quantity: 0, reserved_quantity: 0, available_quantity: 0, error: error.message }
+  }
+
+  const quantity = data?.quantity || 0
+  const reserved = data?.reserved_quantity || 0
+
+  return {
+    quantity,
+    reserved_quantity: reserved,
+    available_quantity: quantity - reserved,
+    error: null,
+  }
+}
+
+export async function getVariantStock(variantId: string, locationId: string) {
+  const supabase = await getSupabaseServer()
+
+  const { data, error } = await supabase
+    .from("inventory")
+    .select("quantity, reserved_quantity")
+    .eq("variant_id", variantId)
+    .eq("location_id", locationId)
+    .single()
+
+  if (error && error.code !== "PGRST116") {
+    console.error("Error fetching variant stock:", error)
+    return { quantity: 0, reserved_quantity: 0, available_quantity: 0, error: error.message }
+  }
+
+  const quantity = data?.quantity || 0
+  const reserved = data?.reserved_quantity || 0
+
+  return {
+    quantity,
+    reserved_quantity: reserved,
+    available_quantity: quantity - reserved,
+    error: null,
+  }
+}

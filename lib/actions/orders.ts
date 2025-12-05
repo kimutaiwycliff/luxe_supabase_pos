@@ -149,7 +149,6 @@ export async function createOrder(data: CreateOrderData) {
     return sum + itemSubtotal * (itemTaxRate / 100) // Convert percentage to decimal
   }, 0)
 
-  // Apply order-level discount proportionally to tax
   const discountRatio = subtotal > 0 ? (subtotal - discountAmount) / subtotal : 1
   const adjustedTaxAmount = taxAmount * discountRatio
 
@@ -229,23 +228,31 @@ export async function createOrder(data: CreateOrderData) {
     console.error("Error creating payments:", paymentsError)
   }
 
-  // Update inventory (reduce stock)
   for (const item of data.items) {
-    const { data: inventory } = await supabase
-      .from("inventory")
-      .select("*")
-      .eq("location_id", data.location_id)
-      .eq(item.variant_id ? "variant_id" : "product_id", item.variant_id || item.product_id)
-      .single()
+    let inventoryQuery = supabase.from("inventory").select("*").eq("location_id", data.location_id)
+
+    // For variants, query by variant_id
+    // For simple products, query by product_id where variant_id IS NULL
+    if (item.variant_id) {
+      inventoryQuery = inventoryQuery.eq("variant_id", item.variant_id)
+    } else if (item.product_id) {
+      inventoryQuery = inventoryQuery.eq("product_id", item.product_id).is("variant_id", null)
+    }
+
+    const { data: inventory } = await inventoryQuery.single()
 
     if (inventory) {
-      await supabase
+      const { error: updateError } = await supabase
         .from("inventory")
         .update({
           quantity: Math.max(0, inventory.quantity - item.quantity),
           updated_at: new Date().toISOString(),
         })
         .eq("id", inventory.id)
+
+      if (updateError) {
+        console.error("Error updating inventory:", updateError)
+      }
 
       // Record stock movement
       await supabase.from("stock_movements").insert({
@@ -257,6 +264,10 @@ export async function createOrder(data: CreateOrderData) {
         reference_type: "order",
         reference_id: order.id,
       })
+    } else {
+      console.warn(
+        `No inventory found for product ${item.product_id} / variant ${item.variant_id} at location ${data.location_id}`,
+      )
     }
   }
 

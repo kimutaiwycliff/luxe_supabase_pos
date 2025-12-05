@@ -89,6 +89,8 @@ export interface ProductVariant {
   is_active: boolean
   created_at: string
   updated_at: string
+  name: string
+  tax_rate: number
 }
 
 export interface Location {
