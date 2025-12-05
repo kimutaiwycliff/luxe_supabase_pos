@@ -397,3 +397,96 @@ export async function getVariantStock(variantId: string, locationId: string) {
     error: null,
   }
 }
+
+export async function getInventoryInsights(locationId?: string) {
+  const supabase = await getSupabaseServer()
+
+  let query = supabase.from("inventory").select(`
+    quantity,
+    reserved_quantity,
+    product:products(cost_price, selling_price),
+    variant:product_variants(cost_price, selling_price)
+  `)
+
+  if (locationId && locationId !== "all") {
+    query = query.eq("location_id", locationId)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error("Error fetching inventory insights:", error)
+    return {
+      totalItems: 0,
+      totalUnits: 0,
+      totalStockValue: 0,
+      totalPotentialRevenue: 0,
+      totalPotentialProfit: 0,
+      lowStockCount: 0,
+      outOfStockCount: 0,
+      error: error.message,
+    }
+  }
+
+  let totalUnits = 0
+  let totalStockValue = 0
+  let totalPotentialRevenue = 0
+  let lowStockCount = 0
+  let outOfStockCount = 0
+
+  for (const item of data || []) {
+    const qty = item.quantity || 0
+    const costPrice = item.variant?.cost_price || item.product?.cost_price || 0
+    const sellingPrice = item.variant?.selling_price || item.product?.selling_price || 0
+
+    totalUnits += qty
+    totalStockValue += qty * costPrice
+    totalPotentialRevenue += qty * sellingPrice
+
+    if (qty <= 0) {
+      outOfStockCount++
+    } else if (qty <= 10) {
+      // Consider low stock if <= 10 units
+      lowStockCount++
+    }
+  }
+
+  const totalPotentialProfit = totalPotentialRevenue - totalStockValue
+
+  return {
+    totalItems: data?.length || 0,
+    totalUnits,
+    totalStockValue,
+    totalPotentialRevenue,
+    totalPotentialProfit,
+    lowStockCount,
+    outOfStockCount,
+    error: null,
+  }
+}
+
+export async function getAllInventory(locationId?: string) {
+  const supabase = await getSupabaseServer()
+
+  const selectQuery = `
+    *,
+    product:products(id, name, sku, barcode, image_url, selling_price, cost_price, low_stock_threshold),
+    variant:product_variants(id, sku, barcode, option_values, image_path, selling_price, cost_price),
+    location:locations(id, name)
+  `
+
+  let query = supabase.from("inventory").select(selectQuery).order("updated_at", { ascending: false })
+
+  if (locationId && locationId !== "all") {
+    query = query.eq("location_id", locationId)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error("Error fetching all inventory:", error)
+    return { inventory: [], error: error.message }
+  }
+
+  return { inventory: data as Inventory[], error: null }
+}
