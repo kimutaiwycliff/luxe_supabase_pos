@@ -181,7 +181,7 @@ export async function createOrder(data: CreateOrderData) {
   const discountRatio = subtotal > 0 ? (subtotal - discountAmount) / subtotal : 1
   const adjustedTaxAmount = taxAmount * discountRatio
 
-  const totalAmount = subtotal - discountAmount + adjustedTaxAmount
+  const totalAmount = subtotal
 
   const totalPaid = data.payments.reduce((sum, p) => sum + p.amount, 0)
   const paymentStatus = totalPaid >= totalAmount ? "completed" : totalPaid > 0 ? "partial" : "pending"
@@ -364,7 +364,7 @@ export async function createLayawayOrder(data: CreateLayawayOrderData) {
   }, 0)
   const discountRatio = subtotal > 0 ? (subtotal - discountAmount) / subtotal : 1
   const adjustedTaxAmount = taxAmount * discountRatio
-  const totalAmount = subtotal - discountAmount + adjustedTaxAmount
+  const totalAmount = subtotal
 
   // Create the layaway order
   const { data: order, error: orderError } = await supabase
