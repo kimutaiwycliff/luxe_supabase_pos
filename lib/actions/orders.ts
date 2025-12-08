@@ -60,6 +60,43 @@ export interface CreateLayawayOrderData {
   }
 }
 
+/**
+ * Calculate proportional revenue, profit, and cost for layaway orders
+ * based on the payment ratio (paid_amount / total_amount)
+ */
+function calculateProportionalMetrics(
+  items: {
+    quantity: number
+    unit_price: number
+    cost_price: number
+    discount_amount?: number
+  }[],
+  totalAmount: number,
+  paidAmount: number,
+): { revenue: number; profit: number; cost: number; paymentRatio: number } {
+  // Calculate the payment ratio
+  const paymentRatio = totalAmount > 0 ? paidAmount / totalAmount : 0
+
+  // Calculate total cost
+  const totalCost = items.reduce((sum, item) => sum + item.cost_price * item.quantity, 0)
+
+  // Calculate proportional revenue (what was actually paid)
+  const revenue = paidAmount
+
+  // Calculate proportional cost based on payment ratio
+  const cost = totalCost * paymentRatio
+
+  // Calculate proportional profit
+  const profit = revenue - cost
+
+  return {
+    revenue,
+    profit,
+    cost,
+    paymentRatio,
+  }
+}
+
 export async function getOrders(options?: {
   status?: string
   payment_status?: string
@@ -647,9 +684,8 @@ export async function getTodayStats(locationId?: string) {
 
   let query = supabase
     .from("orders")
-    .select("total_amount, status, payments(payment_method, amount)")
+    .select("total_amount, paid_amount, status, payments(payment_method, amount)")
     .gte("created_at", todayStr)
-    .eq("status", "completed")
 
   if (locationId) {
     query = query.eq("location_id", locationId)
@@ -668,19 +704,31 @@ export async function getTodayStats(locationId?: string) {
     }
   }
 
-  const revenue = data?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0
+  // Calculate revenue based on order status
+  // For completed orders: use total_amount
+  // For layaway orders: use paid_amount (deposit or partial payments)
+  const revenue =
+    data?.reduce((sum, o) => {
+      if (o.status === "completed") {
+        return sum + (o.total_amount || 0)
+      } else if (o.status === "layaway") {
+        return sum + (o.paid_amount || 0)
+      }
+      return sum
+    }, 0) || 0
+
   const orders = data?.length || 0
 
   let cash = 0,
     mpesa = 0,
     card = 0
-    data?.forEach((order) => {
-      order.payments?.forEach((p) => {
-        if (p.payment_method === "cash") cash += p.amount
-        else if (p.payment_method === "mpesa") mpesa += p.amount
-        else if (p.payment_method === "card") card += p.amount
-      })
+  data?.forEach((order) => {
+    order.payments?.forEach((p) => {
+      if (p.payment_method === "cash") cash += p.amount
+      else if (p.payment_method === "mpesa") mpesa += p.amount
+      else if (p.payment_method === "card") card += p.amount
     })
+  })
 
   return { revenue, orders, cash, mpesa, card, error: null }
 }

@@ -55,31 +55,53 @@ export async function getSalesAnalytics(
     .from("orders")
     .select(`
       total_amount,
+      paid_amount,
+      status,
       subtotal,
       tax_amount,
       items:order_items(cost_price, quantity)
     `)
     .gte("created_at", dateFrom)
     .lte("created_at", dateTo)
-    .eq("status", "completed")
+    .in("status", ["completed", "layaway"])
 
   if (error) {
     return { data: null, error: error.message }
   }
 
-  const totalRevenue = currentOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0
+  // Calculate metrics with proportional handling for layaway orders
+  const totalRevenue =
+    currentOrders?.reduce((sum, o) => {
+      // For completed orders, use total_amount
+      // For layaway orders, use paid_amount (proportional revenue)
+      if (o.status === "completed") {
+        return sum + (o.total_amount || 0)
+      } else if (o.status === "layaway") {
+        return sum + (o.paid_amount || 0)
+      }
+      return sum
+    }, 0) || 0
+
   const totalOrders = currentOrders?.length || 0
+
   const totalCost =
-    currentOrders?.reduce(
-      (sum, o) =>
-        sum +
-        (o.items?.reduce(
+    currentOrders?.reduce((sum, o) => {
+      const orderCost =
+        o.items?.reduce(
           (itemSum: number, item: { cost_price: number; quantity: number }) =>
             itemSum + item.cost_price * item.quantity,
           0,
-        ) || 0),
-      0,
-    ) || 0
+        ) || 0
+
+      // For layaway orders, calculate proportional cost
+      if (o.status === "layaway" && o.total_amount > 0) {
+        const paymentRatio = (o.paid_amount || 0) / o.total_amount
+        return sum + orderCost * paymentRatio
+      }
+
+      return sum + orderCost
+    }, 0) || 0
+
   const totalProfit = totalRevenue - totalCost
   const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
@@ -94,25 +116,43 @@ export async function getSalesAnalytics(
       .from("orders")
       .select(`
         total_amount,
+        paid_amount,
+        status,
         items:order_items(cost_price, quantity)
       `)
       .gte("created_at", compareDateFrom)
       .lte("created_at", compareDateTo)
-      .eq("status", "completed")
+      .in("status", ["completed", "layaway"])
 
     if (prevOrders && prevOrders.length > 0) {
-      const prevRevenue = prevOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
+      const prevRevenue = prevOrders.reduce((sum, o) => {
+        if (o.status === "completed") {
+          return sum + (o.total_amount || 0)
+        } else if (o.status === "layaway") {
+          return sum + (o.paid_amount || 0)
+        }
+        return sum
+      }, 0)
+
       const prevOrders_count = prevOrders.length
-      const prevCost = prevOrders.reduce(
-        (sum, o) =>
-          sum +
-          (o.items?.reduce(
+
+      const prevCost = prevOrders.reduce((sum, o) => {
+        const orderCost =
+          o.items?.reduce(
             (itemSum: number, item: { cost_price: number; quantity: number }) =>
               itemSum + item.cost_price * item.quantity,
             0,
-          ) || 0),
-        0,
-      )
+          ) || 0
+
+        // For layaway orders, calculate proportional cost
+        if (o.status === "layaway" && o.total_amount > 0) {
+          const paymentRatio = (o.paid_amount || 0) / o.total_amount
+          return sum + orderCost * paymentRatio
+        }
+
+        return sum + orderCost
+      }, 0)
+
       const prevProfit = prevRevenue - prevCost
       const prevAvg = prevRevenue / prevOrders_count
 
@@ -202,11 +242,12 @@ export async function getTopProducts(
       quantity,
       unit_price,
       cost_price,
-      order:orders!inner(status, created_at)
+      total_amount,
+      order:orders!inner(status, created_at, total_amount, paid_amount)
     `)
     .gte("order.created_at", dateFrom)
     .lte("order.created_at", dateTo)
-    .eq("order.status", "completed")
+    .in("order.status", ["completed", "layaway"])
 
   if (error) {
     return { data: [], error: error.message }
@@ -218,8 +259,23 @@ export async function getTopProducts(
   items?.forEach((item) => {
     const key = item.product_id || item.sku
     const existing = productMap.get(key)
-    const revenue = item.unit_price * item.quantity
-    const profit = (item.unit_price - item.cost_price) * item.quantity
+
+    // Supabase returns joined relations as arrays, get the first element
+    const order = Array.isArray(item.order) ? item.order[0] : item.order
+
+    // Calculate revenue and profit based on order status
+    let revenue = 0
+    let profit = 0
+
+    if (order?.status === "completed") {
+      revenue = item.unit_price * item.quantity
+      profit = (item.unit_price - item.cost_price) * item.quantity
+    } else if (order?.status === "layaway" && order.total_amount > 0) {
+      // Calculate proportional revenue and profit for layaway orders
+      const paymentRatio = (order.paid_amount || 0) / order.total_amount
+      revenue = item.unit_price * item.quantity * paymentRatio
+      profit = (item.unit_price - item.cost_price) * item.quantity * paymentRatio
+    }
 
     if (existing) {
       existing.quantity_sold += item.quantity
@@ -255,12 +311,14 @@ export async function getSalesTrend(
     .from("orders")
     .select(`
       total_amount,
+      paid_amount,
+      status,
       created_at,
       items:order_items(cost_price, quantity)
     `)
     .gte("created_at", dateFrom)
     .lte("created_at", dateTo)
-    .eq("status", "completed")
+    .in("status", ["completed", "layaway"])
     .order("created_at")
 
   if (error) {
@@ -287,22 +345,36 @@ export async function getSalesTrend(
         key = date.toISOString().split("T")[0]
     }
 
-    const cost =
+    const orderCost =
       order.items?.reduce(
         (sum: number, item: { cost_price: number; quantity: number }) => sum + item.cost_price * item.quantity,
         0,
       ) || 0
-    const profit = (order.total_amount || 0) - cost
+
+    // Calculate revenue and cost based on order status
+    let revenue = 0
+    let cost = 0
+
+    if (order.status === "completed") {
+      revenue = order.total_amount || 0
+      cost = orderCost
+    } else if (order.status === "layaway" && order.total_amount > 0) {
+      revenue = order.paid_amount || 0
+      const paymentRatio = revenue / order.total_amount
+      cost = orderCost * paymentRatio
+    }
+
+    const profit = revenue - cost
 
     const existing = trendMap.get(key)
     if (existing) {
-      existing.revenue += order.total_amount || 0
+      existing.revenue += revenue
       existing.orders += 1
       existing.profit += profit
     } else {
       trendMap.set(key, {
         date: key,
-        revenue: order.total_amount || 0,
+        revenue,
         orders: 1,
         profit,
       })

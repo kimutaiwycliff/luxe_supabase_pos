@@ -58,10 +58,12 @@ export async function getDashboardStats(): Promise<{ data: DashboardStats | null
     .from("orders")
     .select(`
       total_amount,
+      paid_amount,
+      status,
       items:order_items(cost_price, quantity)
     `)
     .gte("created_at", todayStr)
-    .eq("status", "completed")
+    .in("status", ["completed", "layaway"])
 
   if (todayError) {
     return { data: null, error: todayError.message }
@@ -72,42 +74,78 @@ export async function getDashboardStats(): Promise<{ data: DashboardStats | null
     .from("orders")
     .select(`
       total_amount,
+      paid_amount,
+      status,
       items:order_items(cost_price, quantity)
     `)
     .gte("created_at", yesterdayStr)
     .lt("created_at", todayStr)
-    .eq("status", "completed")
+    .in("status", ["completed", "layaway"])
 
-  // Calculate today's stats
-  const todayRevenue = todayOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0
+  // Calculate today's stats with proportional handling for layaway
+  const todayRevenue =
+    todayOrders?.reduce((sum, o) => {
+      if (o.status === "completed") {
+        return sum + (o.total_amount || 0)
+      } else if (o.status === "layaway") {
+        return sum + (o.paid_amount || 0)
+      }
+      return sum
+    }, 0) || 0
+
   const todayOrderCount = todayOrders?.length || 0
+
   const todayCost =
-    todayOrders?.reduce(
-      (sum, o) =>
-        sum +
-        (o.items?.reduce(
+    todayOrders?.reduce((sum, o) => {
+      const orderCost =
+        o.items?.reduce(
           (itemSum: number, item: { cost_price: number; quantity: number }) =>
             itemSum + item.cost_price * item.quantity,
           0,
-        ) || 0),
-      0,
-    ) || 0
+        ) || 0
+
+      // For layaway orders, calculate proportional cost
+      if (o.status === "layaway" && o.total_amount > 0) {
+        const paymentRatio = (o.paid_amount || 0) / o.total_amount
+        return sum + orderCost * paymentRatio
+      }
+
+      return sum + orderCost
+    }, 0) || 0
+
   const todayProfit = todayRevenue - todayCost
 
-  // Calculate yesterday's stats
-  const yesterdayRevenue = yesterdayOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0
+  // Calculate yesterday's stats with proportional handling for layaway
+  const yesterdayRevenue =
+    yesterdayOrders?.reduce((sum, o) => {
+      if (o.status === "completed") {
+        return sum + (o.total_amount || 0)
+      } else if (o.status === "layaway") {
+        return sum + (o.paid_amount || 0)
+      }
+      return sum
+    }, 0) || 0
+
   const yesterdayOrderCount = yesterdayOrders?.length || 0
+
   const yesterdayCost =
-    yesterdayOrders?.reduce(
-      (sum, o) =>
-        sum +
-        (o.items?.reduce(
+    yesterdayOrders?.reduce((sum, o) => {
+      const orderCost =
+        o.items?.reduce(
           (itemSum: number, item: { cost_price: number; quantity: number }) =>
             itemSum + item.cost_price * item.quantity,
           0,
-        ) || 0),
-      0,
-    ) || 0
+        ) || 0
+
+      // For layaway orders, calculate proportional cost
+      if (o.status === "layaway" && o.total_amount > 0) {
+        const paymentRatio = (o.paid_amount || 0) / o.total_amount
+        return sum + orderCost * paymentRatio
+      }
+
+      return sum + orderCost
+    }, 0) || 0
+
   const yesterdayProfit = yesterdayRevenue - yesterdayCost
 
   // Get total products count
@@ -157,9 +195,9 @@ export async function getWeeklySales(): Promise<{ data: WeeklySalesData[]; error
 
   const { data: orders, error } = await supabase
     .from("orders")
-    .select("total_amount, created_at")
+    .select("total_amount, paid_amount, status, created_at")
     .gte("created_at", sevenDaysAgo.toISOString())
-    .eq("status", "completed")
+    .in("status", ["completed", "layaway"])
     .order("created_at")
 
   if (error) {
@@ -177,13 +215,16 @@ export async function getWeeklySales(): Promise<{ data: WeeklySalesData[]; error
     dailyMap.set(dayName, { revenue: 0, orders: 0 })
   }
 
-  // Aggregate orders
+  // Aggregate orders with proportional revenue for layaway
   orders?.forEach((order) => {
     const date = new Date(order.created_at)
     const dayName = date.toLocaleDateString("en-US", { weekday: "short" })
     const existing = dailyMap.get(dayName)
     if (existing) {
-      existing.revenue += order.total_amount || 0
+      // For completed orders, use total_amount; for layaway, use paid_amount
+      const revenue =
+        order.status === "completed" ? order.total_amount || 0 : order.paid_amount || 0
+      existing.revenue += revenue
       existing.orders += 1
     }
   })
