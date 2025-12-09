@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createProduct, updateProduct } from "@/lib/actions/products"
-import type { Product, Category } from "@/lib/types"
+import type { Product, Category, Supplier } from "@/lib/types"
 import { Loader2, X } from "lucide-react"
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/dropzone"
 import { useSupabaseUpload } from "@/hooks/use-supabase-upload"
@@ -22,10 +22,11 @@ interface ProductDialogProps {
   onOpenChange: (open: boolean) => void
   product: Product | null
   categories: Category[]
+  suppliers: Supplier[]
   onSuccess: () => void
 }
 
-export function ProductDialog({ open, onOpenChange, product, categories, onSuccess }: ProductDialogProps) {
+export function ProductDialog({ open, onOpenChange, product, categories, suppliers, onSuccess }: ProductDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined)
@@ -34,6 +35,7 @@ export function ProductDialog({ open, onOpenChange, product, categories, onSucce
     name: "",
     description: "",
     category_id: "",
+    supplier_id: "",
     brand: "",
     cost_price: 0,
     selling_price: 0,
@@ -66,6 +68,7 @@ export function ProductDialog({ open, onOpenChange, product, categories, onSucce
         name: product.name,
         description: product.description || "",
         category_id: product.category_id || "",
+        supplier_id: product.supplier_id || "",
         brand: product.brand || "",
         cost_price: product.cost_price,
         selling_price: product.selling_price,
@@ -84,6 +87,7 @@ export function ProductDialog({ open, onOpenChange, product, categories, onSucce
         name: "",
         description: "",
         category_id: "",
+        supplier_id: "",
         brand: "",
         cost_price: 0,
         selling_price: 0,
@@ -197,6 +201,25 @@ export function ProductDialog({ open, onOpenChange, product, categories, onSucce
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
                         {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="supplier">Supplier</Label>
+                <Select
+                  value={formData.supplier_id || undefined}
+                  onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select supplier (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(suppliers || []).map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id}>
+                        {supplier.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -8,6 +8,7 @@ import { Plus, Grid3X3, List } from "lucide-react"
 import { ProductDialog } from "./product-dialog"
 import { VariantEditorDialog } from "./variant-editor-dialog"
 import { getCategories } from "@/lib/actions/categories"
+import { getSuppliers } from "@/lib/actions/suppliers"
 import { getProductById, deleteProduct } from "@/lib/actions/products"
 import { deleteProductFromIndex } from "@/lib/actions/algolia"
 import type { Product } from "@/lib/types"
@@ -36,7 +37,13 @@ export function ProductsContent() {
     return result
   })
 
+  const { data: suppliersData } = useSWR("suppliers", async () => {
+    const result = await getSuppliers()
+    return result
+  })
+
   const categories = categoriesData?.categories || []
+  const suppliers = (suppliersData as any[]) || []
 
   const filters = useMemo(() => {
     const filterParts: string[] = []
@@ -184,6 +191,7 @@ export function ProductsContent() {
         onOpenChange={setDialogOpen}
         product={editingProduct}
         categories={categories}
+        suppliers={suppliers}
         onSuccess={handleSuccess}
       />
 
