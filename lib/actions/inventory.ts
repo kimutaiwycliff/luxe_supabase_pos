@@ -436,8 +436,13 @@ export async function getInventoryInsights(locationId?: string) {
 
   for (const item of data || []) {
     const qty = item.quantity || 0
-    const costPrice = item.variant?.cost_price || item.product?.cost_price || 0
-    const sellingPrice = item.variant?.selling_price || item.product?.selling_price || 0
+
+    // Handle Supabase's array response for relationships
+    const variantData = Array.isArray(item.variant) ? item.variant[0] : item.variant
+    const productData = Array.isArray(item.product) ? item.product[0] : item.product
+
+    const costPrice = variantData?.cost_price || productData?.cost_price || 0
+    const sellingPrice = variantData?.selling_price || productData?.selling_price || 0
 
     totalUnits += qty
     totalStockValue += qty * costPrice

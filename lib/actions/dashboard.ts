@@ -246,7 +246,7 @@ export async function getLowStockItems(limit = 5): Promise<{ data: LowStockItem[
     .from("inventory")
     .select(`
       quantity,
-      product:products!inner(
+      product:products!product_id(
         id,
         name,
         sku,
@@ -267,11 +267,11 @@ export async function getLowStockItems(limit = 5): Promise<{ data: LowStockItem[
     .from("inventory")
     .select(`
       quantity,
-      variant:product_variants!inner(
+      variant:product_variants!variant_id(
         id,
         sku,
         name,
-        product:products!inner(
+        product:products!product_id(
           id,
           name,
           low_stock_threshold
@@ -290,7 +290,11 @@ export async function getLowStockItems(limit = 5): Promise<{ data: LowStockItem[
 
   // Process products
   lowStockProducts?.forEach((inv) => {
-    const product = inv.product as { id: string; name: string; sku: string; low_stock_threshold: number }
+    // Handle Supabase's array response for the product relationship
+    const productData = Array.isArray(inv.product) ? inv.product[0] : inv.product
+    if (!productData) return
+
+    const product = productData as { id: string; name: string; sku: string; low_stock_threshold: number }
     if (inv.quantity <= product.low_stock_threshold) {
       items.push({
         id: product.id,
@@ -304,19 +308,30 @@ export async function getLowStockItems(limit = 5): Promise<{ data: LowStockItem[
 
   // Process variants
   lowStockVariants?.forEach((inv) => {
-    const variant = inv.variant as {
+    // Handle Supabase's array response for the variant relationship
+    const variantData = Array.isArray(inv.variant) ? inv.variant[0] : inv.variant
+    if (!variantData) return
+
+    const variant = variantData as {
       id: string
       sku: string
       name: string
-      product: { id: string; name: string; low_stock_threshold: number }
+      product: any
     }
-    if (inv.quantity <= variant.product.low_stock_threshold) {
+
+    // Handle nested product array
+    const productData = Array.isArray(variant.product) ? variant.product[0] : variant.product
+    if (!productData) return
+
+    const product = productData as { id: string; name: string; low_stock_threshold: number }
+
+    if (inv.quantity <= product.low_stock_threshold) {
       items.push({
-        id: variant.product.id,
-        name: `${variant.product.name} - ${variant.name || variant.sku}`,
+        id: product.id,
+        name: `${product.name} - ${variant.name || variant.sku}`,
         sku: variant.sku,
         quantity: inv.quantity,
-        threshold: variant.product.low_stock_threshold,
+        threshold: product.low_stock_threshold,
         variant_id: variant.id,
       })
     }
@@ -340,7 +355,7 @@ export async function getRecentOrdersForDashboard(limit = 5) {
       status,
       payment_status,
       created_at,
-      customer:customers(first_name, last_name),
+      customer:customers!customer_id(first_name, last_name),
       items:order_items(id),
       payments(payment_method, amount)
     `)
@@ -351,7 +366,15 @@ export async function getRecentOrdersForDashboard(limit = 5) {
     return { orders: [], error: error.message }
   }
 
-  return { orders: data || [], error: null }
+  // Transform the data to handle Supabase's array response for relationships
+  const transformedData = data?.map((order: any) => ({
+    ...order,
+    customer: Array.isArray(order.customer)
+      ? (order.customer.length > 0 ? order.customer[0] : null)
+      : order.customer
+  })) || []
+
+  return { orders: transformedData, error: null }
 }
 
 export async function getLayawayStats(): Promise<{
