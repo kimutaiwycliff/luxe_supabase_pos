@@ -73,7 +73,7 @@ const staffNavigation = [
 
 export function Navbar({ user }: NavbarProps) {
   const pathname = usePathname()
-  const navigation = user?.role === "admin" ? [...mainNavigation] : staffNavigation
+  const navigation = user?.role === "admin" ? [...mainNavigation, ...inventoryNavigation] : staffNavigation
 
   const checkIsActive = (href: string) => pathname === href || (href !== "/" && pathname.startsWith(href))
 
