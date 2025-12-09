@@ -66,11 +66,14 @@ export function LowStockContent() {
       meta: { className: "text-center" },
     },
     {
-      accessorKey: "reorder_point",
+      accessorKey: "product.low_stock_threshold",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Threshold" className="justify-center" />,
-      cell: ({ row }) => (
-        <div className="text-center text-muted-foreground">{formatNumber(row.getValue("reorder_point"))}</div>
-      ),
+      cell: ({ row }) => {
+        const threshold = row.original.product?.low_stock_threshold || 0
+        return (
+          <div className="text-center text-muted-foreground">{formatNumber(threshold)}</div>
+        )
+      },
       meta: { className: "text-center" },
     },
     {
