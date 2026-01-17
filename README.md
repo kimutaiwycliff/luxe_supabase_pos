@@ -1,109 +1,189 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Luxe Collections POS
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+A modern, full-featured Point of Sale (POS) system built for Luxe Collections - a Kenyan e-commerce platform specializing in authentic African fashion, baby essentials, luxury bedding, and premium perfumes.
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+## 🚀 Features
 
-## Features
+### 🏪 Point of Sale Interface
+- **Quick Product Search**: Search products by name or scan barcodes for fast checkout
+- **Category Filtering**: Browse products by category (Men Wear, Women Wear, Kids, Shoes, Textiles)
+- **Visual Product Grid**: Product cards with images, prices, and SKUs
+- **Real-time Cart Management**: Add/remove products with live subtotal, VAT, and total calculations
+- **Customer Management**: Optional customer association with sales
+- **Sales Tracking**: Track daily sales and order counts
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Proxy
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+![POS Interface](docs/screenshots/pos-interface.png)
 
-## Demo
+### 📊 Dashboard & Analytics
+- **Real-time Metrics**: Monitor today's revenue, orders, profit, and total products
+- **Sales Overview Chart**: Visualize sales trends over time
+- **Low Stock Alerts**: Get instant notifications for out-of-stock items
+- **Product Count Tracking**: Weekly trend analysis for inventory levels
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+![Dashboard](docs/screenshots/dashboard.png)
 
-## Deploy to Vercel
+### 📦 Product Management
+- **Grid/List Views**: Toggle between different product viewing modes
+- **Advanced Search**: Search products by name, SKU, or description
+- **Category & Status Filters**: Filter products by category and status (Active/Inactive)
+- **Variant Support**: Manage product variants (sizes, colors, etc.)
+- **Product Cards**: Rich product information with images, pricing, SKU, and status badges
+- **Quick Actions**: Edit or manage products directly from the grid
+- **Bulk Operations**: Add, edit, or delete products efficiently
 
-Vercel deployment will guide you through creating a Supabase account and project.
+![Products Management](docs/screenshots/products-page.png)
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+### 📋 Inventory Management
+- **Stock Value Tracking**: Monitor total stock value, potential revenue, and potential profit
+- **Multi-location Support**: Track inventory across different locations (Main Store, etc.)
+- **Stock Status Indicators**: Visual badges for Out of Stock, Low Stock, and Active items
+- **Stock Adjustments**: Quick +/- buttons for manual stock updates
+- **Reserved Stock Tracking**: Monitor reserved inventory vs. available stock
+- **Stock Alerts**: Get notified when items need reordering (142 alerts shown in example)
+- **Location-based Filtering**: Filter inventory by specific locations
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+![Inventory Management](docs/screenshots/inventory-page.png)
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+### 🏷️ Category Management
+- **Visual Category Cards**: Categories displayed with images, names, slugs, and descriptions
+- **Category Search**: Quick search functionality to find specific categories
+- **Status Management**: Activate or deactivate categories
+- **Easy Creation**: Add new categories with the prominent "+ Add Category" button
+- **Category Actions**: Edit or delete categories via action menus
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+![Categories Management](docs/screenshots/categories-page.png)
 
-## Clone and run locally
+### 🌍 E-commerce Landing Page
+- **Kenyan-centric Branding**: Proudly displaying "Proudly Kenyan 🇰🇪" badge
+- **Product Categories**: African Fashion, Baby Shop, Clothing, Bedding, Perfumes, Reviews
+- **Hero Section**: Beautiful imagery showcasing "African Elegance Meets Modern Style"
+- **Call-to-Action Buttons**: "Shop Now" and "Browse Collections" for easy navigation
+- **User Authentication**: Secure login/logout functionality
+- **Responsive Design**: Beautiful, modern interface optimized for all devices
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+![Landing Page](docs/screenshots/landing-page.png)
 
-2. Create a Next.js app using the Supabase Starter template npx command
+## 🛠️ Technology Stack
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+- **Framework**: Next.js 14+ with App Router
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Styling**: Tailwind CSS
+- **Language**: TypeScript
+- **UI Components**: Custom components with Radix UI primitives
+- **State Management**: React Hooks and Server Components
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+## 📋 Prerequisites
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+- Node.js 18+ installed
+- npm or yarn package manager
+- Supabase account and project
 
-3. Use `cd` to change into the app's directory
+## 🚀 Getting Started
 
-   ```bash
-   cd with-supabase-app
-   ```
+### 1. Clone the Repository
 
-4. Rename `.env.example` to `.env.local` and update the following:
+```bash
+git clone <repository-url>
+cd supabase-pos
+```
 
-  ```env
-  NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
-  ```
-  > [!NOTE]
-  > This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-  > Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-  > See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
+### 2. Install Dependencies
 
-  Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+```bash
+npm install
+```
 
-5. You can now run the Next.js local development server:
+### 3. Set Up Environment Variables
 
-   ```bash
-   npm run dev
-   ```
+Create a `.env.local` file in the root directory:
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+### 4. Run Database Migrations
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+The database schema includes tables for:
+- Products (with variants)
+- Categories
+- Inventory (multi-location stock tracking)
+- Sales and Orders
+- Customers
+- Stock Movements
 
-## Feedback and issues
+Migrations should be applied automatically via Supabase.
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+### 5. Start the Development Server
 
-## More Supabase examples
+```bash
+npm run dev
+```
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+The application will be available at `http://localhost:3000`
+
+## 📱 Application Routes
+
+- `/` - E-commerce landing page
+- `/dashboard` - Analytics dashboard
+- `/pos` - Point of Sale interface
+- `/products` - Product management
+- `/categories` - Category management
+- `/inventory` - Inventory tracking
+- `/low-stock` - Low stock alerts
+
+## 🔐 Authentication
+
+The system uses Supabase Authentication with:
+- Email/Password login
+- Protected routes for admin/POS functionality
+- Row-level security (RLS) policies
+
+## 💾 Database Schema
+
+### Key Tables:
+- **products**: Product information, pricing, SKUs
+- **product_variants**: Size, color, and other variant options
+- **categories**: Product categories with slugs
+- **inventory**: Multi-location stock tracking
+- **sales**: Sales records with customer information
+- **sale_items**: Individual items in each sale
+- **customers**: Customer information
+- **stock_movements**: Audit trail for inventory changes
+
+## 🎨 Design Features
+
+- Modern, clean UI with Tailwind CSS
+- Responsive grid layouts
+- Real-time data updates
+- Visual status indicators
+- Intuitive navigation
+- Search and filter capabilities across all modules
+
+## 📈 Future Enhancements
+
+- [ ] Advanced reporting and analytics
+- [ ] Multi-currency support
+- [ ] Receipt printing
+- [ ] Barcode generation
+- [ ] Supplier management
+- [ ] Purchase order tracking
+- [ ] Employee/user role management
+- [ ] Mobile app version
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 👤 Author
+
+Wycliff Kimutai - [kimtaiwiki@gmail.com](mailto:kimtaiwiki@gmail.com)
+
+---
+
+**Built with ❤️ for Kenyan businesses**
