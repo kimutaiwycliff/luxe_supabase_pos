@@ -5,6 +5,7 @@ import { revalidateTag } from "next/cache"
 import type { Product, ProductVariant } from "@/lib/types"
 import { indexProduct, deleteProductFromIndex } from "./algolia"
 import { searchProducts as algoliaSearchProducts } from "@/lib/algolia-search"
+import { indexInventoryItem } from "./algolia"
 
 export interface ProductFormData {
   name: string
@@ -329,6 +330,45 @@ export async function createProduct(data: ProductFormData) {
     console.error("Error indexing product to Algolia:", err)
   }
 
+  // Initialize inventory for default location if tracking is enabled
+  if (data.track_inventory && !data.has_variants) {
+    try {
+      // Get default location
+      const { data: locations } = await supabase
+        .from("locations")
+        .select("id")
+        .eq("is_active", true)
+        .order("is_default", { ascending: false })
+        .limit(1)
+
+      if (locations && locations.length > 0) {
+        const defaultLocationId = locations[0].id
+
+        // Create 0 quantity inventory
+        const { data: inventory, error: invError } = await supabase
+          .from("inventory")
+          .insert({
+            product_id: product.id,
+            location_id: defaultLocationId,
+            quantity: 0,
+          })
+          .select(`
+            *,
+            product:products(name, sku, barcode, low_stock_threshold),
+            variant:product_variants(sku, option_values),
+            location:locations(name)
+          `)
+          .single()
+
+        if (!invError && inventory) {
+          await indexInventoryItem(inventory)
+        }
+      }
+    } catch (err) {
+      console.error("Error initializing inventory:", err)
+    }
+  }
+
   revalidateTag("products", "max")
   return { product: product as Product, error: null }
 }
@@ -422,6 +462,44 @@ export async function createProductVariant(data: VariantFormData) {
   if (error) {
     console.error("Error creating variant:", error)
     return { variant: null, error: error.message }
+  }
+
+  // Initialize inventory for default location
+  try {
+    // Get default location
+    const { data: locations } = await supabase
+      .from("locations")
+      .select("id")
+      .eq("is_active", true)
+      .order("is_default", { ascending: false })
+      .limit(1)
+
+    if (locations && locations.length > 0) {
+      const defaultLocationId = locations[0].id
+
+      // Create 0 quantity inventory
+      const { data: inventory, error: invError } = await supabase
+        .from("inventory")
+        .insert({
+          product_id: data.product_id,
+          variant_id: variant.id,
+          location_id: defaultLocationId,
+          quantity: 0,
+        })
+        .select(`
+          *,
+          product:products(name, sku, barcode, low_stock_threshold),
+          variant:product_variants(sku, option_values),
+          location:locations(name)
+        `)
+        .single()
+
+      if (!invError && inventory) {
+        await indexInventoryItem(inventory)
+      }
+    }
+  } catch (err) {
+    console.error("Error initializing variant inventory:", err)
   }
 
   revalidateTag("products", "max")
