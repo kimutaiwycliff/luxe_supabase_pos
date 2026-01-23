@@ -18,16 +18,7 @@ import { formatCurrency } from "@/lib/format"
 import { MoreVertical, Edit, Trash2, Copy, Layers } from "lucide-react"
 import { deleteProduct } from "@/lib/actions/products"
 import type { Product } from "@/lib/types"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { DeleteProductDialog } from "@/components/products/delete-product-dialog"
 
 interface ProductTableProps {
   products: Product[]
@@ -209,26 +200,13 @@ export function ProductTable({ products, onEdit, onEditVariants, onDelete, isLoa
         pageSize={20}
       />
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Product</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete &quot;{productToDelete?.name}&quot;? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteProductDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        product={productToDelete}
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
+      />
     </>
   )
 }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Grid3X3, List } from "lucide-react"
 import { ProductDialog } from "./product-dialog"
+import { DeleteProductDialog } from "./delete-product-dialog"
 import { VariantEditorDialog } from "./variant-editor-dialog"
 import { getCategories } from "@/lib/actions/categories"
 import { getSuppliers } from "@/lib/actions/suppliers"
@@ -30,6 +31,11 @@ export function ProductsContent() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [variantDialogOpen, setVariantDialogOpen] = useState(false)
   const [variantEditingProduct, setVariantEditingProduct] = useState<Product | null>(null)
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [productToDelete, setProductToDelete] = useState<AlgoliaProduct | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   const [refreshKey, setRefreshKey] = useState(0)
 
   const { data: categoriesData } = useSWR("categories", async () => {
@@ -72,22 +78,29 @@ export function ProductsContent() {
     }
   }, [])
 
-  const handleDelete = useCallback(
-    async (productId: string) => {
-      if (!confirm("Are you sure you want to delete this product?")) return
+  const handleDelete = useCallback((product: AlgoliaProduct) => {
+    setProductToDelete(product)
+    setDeleteDialogOpen(true)
+  }, [])
 
-      try {
-        await deleteProduct(productId)
-        await deleteProductFromIndex(productId)
-        toast.success("Product deleted")
-        setRefreshKey((k) => k + 1)
-      } catch (error) {
-        console.error(error)
-        toast.error("Failed to delete product")
-      }
-    },
-    [],
-  )
+  const confirmDelete = async () => {
+    if (!productToDelete) return
+
+    setIsDeleting(true)
+    try {
+      await deleteProduct(productToDelete.objectID)
+      await deleteProductFromIndex(productToDelete.objectID)
+      toast.success("Product deleted")
+      setRefreshKey((k) => k + 1)
+      setDeleteDialogOpen(false)
+      setProductToDelete(null)
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to delete product")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   const handleCreate = useCallback(() => {
     setEditingProduct(null)
@@ -204,6 +217,15 @@ export function ProductsContent() {
           onSuccess={() => setRefreshKey((k) => k + 1)}
         />
       )}
+
+      {/* Delete Product Dialog */}
+      <DeleteProductDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        product={productToDelete}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   )
 }

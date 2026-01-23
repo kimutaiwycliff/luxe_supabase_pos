@@ -16,7 +16,7 @@ interface ProductHitsProps {
   viewMode: "grid" | "list"
   onEdit?: (product: AlgoliaProduct) => void
   onEditVariants?: (product: AlgoliaProduct) => void
-  onDelete?: (productId: string) => void
+  onDelete?: (product: AlgoliaProduct) => void
   onAdd?: () => void
   isLoading?: boolean
 }
@@ -107,7 +107,7 @@ export function ProductHits({ viewMode, onEdit, onEditVariants, onDelete, onAdd,
                       </DropdownMenuItem>
                     )}
                     {onDelete && (
-                      <DropdownMenuItem onClick={() => onDelete(product.objectID)} className="text-destructive">
+                      <DropdownMenuItem onClick={() => onDelete(product)} className="text-destructive">
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
@@ -188,7 +188,7 @@ export function ProductHits({ viewMode, onEdit, onEditVariants, onDelete, onAdd,
                   </DropdownMenuItem>
                 )}
                 {onDelete && (
-                  <DropdownMenuItem onClick={() => onDelete(product.objectID)} className="text-destructive">
+                  <DropdownMenuItem onClick={() => onDelete(product)} className="text-destructive">
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete
                   </DropdownMenuItem>
