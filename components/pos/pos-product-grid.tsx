@@ -68,7 +68,7 @@ export function POSProductGrid({ searchQuery, onAddToCart, locationId }: POSProd
   return (
     <div className="flex h-full flex-col">
       {/* Category Tabs */}
-      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mb-4">
+      {/* <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mb-4">
         <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
           <TabsTrigger
             value="all"
@@ -86,7 +86,7 @@ export function POSProductGrid({ searchQuery, onAddToCart, locationId }: POSProd
             </TabsTrigger>
           ))}
         </TabsList>
-      </Tabs>
+      </Tabs> */}
 
       <InstantSearch
         searchClient={searchClient}
