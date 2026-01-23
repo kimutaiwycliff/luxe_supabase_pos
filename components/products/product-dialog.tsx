@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Combobox } from "@/components/ui/combobox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createProduct, updateProduct } from "@/lib/actions/products"
 import type { Product, Category, Supplier } from "@/lib/types"
@@ -190,40 +190,32 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
 
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Select
+                <Combobox
+                  options={categories.map((cat) => ({
+                    label: cat.name,
+                    value: cat.id,
+                  }))}
                   value={formData.category_id}
-                  onValueChange={(value) => setFormData({ ...formData, category_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onSelect={(value) => setFormData({ ...formData, category_id: value })}
+                  placeholder="Select category"
+                  searchPlaceholder="Search category..."
+                  emptyText="No category found."
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="supplier">Supplier</Label>
-                <Select
-                  value={formData.supplier_id || undefined}
-                  onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select supplier (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(suppliers || []).map((supplier) => (
-                      <SelectItem key={supplier.id} value={supplier.id}>
-                        {supplier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Combobox
+                  options={(suppliers || []).map((supplier) => ({
+                    label: supplier.name,
+                    value: supplier.id,
+                  }))}
+                  value={formData.supplier_id || ""}
+                  onSelect={(value) => setFormData({ ...formData, supplier_id: value })}
+                  placeholder="Select supplier (optional)"
+                  searchPlaceholder="Search supplier..."
+                  emptyText="No supplier found."
+                />
               </div>
 
               <div className="flex items-center justify-between rounded-lg border border-border p-4">
