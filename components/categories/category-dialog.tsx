@@ -51,6 +51,8 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
     },
   })
 
+  const { reset: resetUpload } = uploadProps
+
   useEffect(() => {
     if (category) {
       setFormData({
@@ -70,8 +72,9 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
       setImageUrl(null)
     }
     setError(null)
-    uploadProps.reset()
-  }, [category, open, uploadProps.reset])
+    setError(null)
+    resetUpload()
+  }, [category, open, resetUpload])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,7 +106,7 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
 
   const handleRemoveImage = () => {
     setImageUrl(null)
-    uploadProps.reset()
+    resetUpload()
   }
 
   // Filter out the current category from parent options

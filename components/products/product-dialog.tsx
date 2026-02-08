@@ -64,6 +64,8 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
     },
   })
 
+  const { reset: resetUpload } = uploadProps
+
   useEffect(() => {
     if (product) {
       setFormData({
@@ -105,8 +107,9 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
       setImageUrl(undefined)
     }
     setError(null)
-    uploadProps.reset()
-  }, [product, open, uploadProps.reset])
+    setError(null)
+    resetUpload()
+  }, [product, open, resetUpload])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -134,7 +137,7 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
 
   const handleRemoveImage = () => {
     setImageUrl(undefined)
-    uploadProps.reset()
+    resetUpload()
   }
 
   const profit = formData.selling_price - formData.cost_price
