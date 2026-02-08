@@ -207,7 +207,7 @@ function VariantDialog({ open, onOpenChange, product, locationId, onSelect }: Va
     return result
   })
 
-  const variants = variantsData?.variants || []
+  const variants = useMemo(() => variantsData?.variants || [], [variantsData])
 
   useEffect(() => {
     async function fetchStocks() {

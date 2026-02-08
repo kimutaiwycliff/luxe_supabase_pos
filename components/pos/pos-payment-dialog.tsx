@@ -149,7 +149,6 @@ export function POSPaymentDialog({
         return
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let payments: any[] = []
       if (paymentMode === "split") {
         if (splitCashAmount > 0) {

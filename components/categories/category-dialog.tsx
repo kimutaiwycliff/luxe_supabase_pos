@@ -1,5 +1,7 @@
 "use client"
 
+import Image from "next/image"
+
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -69,7 +71,7 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
     }
     setError(null)
     uploadProps.reset()
-  }, [category, open])
+  }, [category, open, uploadProps])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -141,7 +143,7 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
             <Label>Category Image</Label>
             {imageUrl && !uploadProps.isSuccess ? (
               <div className="relative w-full aspect-video max-w-[200px] rounded-lg overflow-hidden border">
-                <img src={imageUrl || "/placeholder.svg"} alt="Category" className="w-full h-full object-cover" />
+                <Image src={imageUrl || "/placeholder.svg"} alt="Category" fill className="object-cover" />
                 <Button
                   type="button"
                   variant="destructive"

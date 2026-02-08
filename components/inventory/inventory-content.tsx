@@ -45,7 +45,9 @@ export function InventoryContent() {
   })
 
   const locations = locationsData?.locations || []
-  const inventory = inventoryData?.inventory || []
+  // Ensure inventory reference is stable to prevent unnecessary re-renders in useMemo
+  const inventory = useMemo(() => inventoryData?.inventory || [], [inventoryData])
+
   const insights = insightsData || {
     totalItems: 0,
     totalUnits: 0,

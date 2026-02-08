@@ -1,5 +1,7 @@
 "use client"
 
+import Image from "next/image"
+
 import type React from "react"
 
 import { cn } from "@/lib/utils"
@@ -108,10 +110,12 @@ const DropzoneContent = ({ className }: { className?: string }) => {
         return (
           <div key={file.name + idx} className="flex items-center space-x-3 p-2 border rounded-md bg-background">
             {file.type.startsWith("image/") ? (
-              <img
+              <Image
                 src={URL.createObjectURL(file) || "/placeholder.svg"}
                 alt={file.name}
-                className="h-10 w-10 object-cover rounded-md"
+                width={40}
+                height={40}
+                className="object-cover rounded-md"
               />
             ) : (
               <File className="h-10 w-10 text-muted-foreground" />

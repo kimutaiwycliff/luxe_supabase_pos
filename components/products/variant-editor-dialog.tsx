@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import useSWR from "swr"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -57,7 +57,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
     getProductVariants(product.id),
   )
 
-  const variants = variantsData?.variants || []
+  const variants = useMemo(() => variantsData?.variants || [], [variantsData])
 
   useEffect(() => {
     if (open) {
@@ -101,9 +101,9 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
       mutate()
       setEditingVariant(null)
       setEditForm(null)
-      toast.success("Variant updated", {  description: "Pricing and settings have been saved." })
+      toast.success("Variant updated", { description: "Pricing and settings have been saved." })
     } else {
-      toast.error( "Error updating variant", { description: error })
+      toast.error("Error updating variant", { description: error })
     }
 
     setIsLoading(false)

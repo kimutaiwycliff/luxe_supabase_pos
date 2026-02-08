@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import type { Product } from "@/lib/types"
 import type { AlgoliaProduct } from "@/lib/algolia"
 import { AlertTriangle, Loader2 } from "lucide-react"
+import Image from "next/image"
 
 interface DeleteProductDialogProps {
     open: boolean
@@ -44,10 +45,11 @@ export function DeleteProductDialog({ open, onOpenChange, product, onConfirm, is
                     <div className="flex items-start gap-4">
                         <div className="relative h-16 w-16 overflow-hidden rounded-md border bg-background">
                             {product.image_url ? (
-                                <img
+                                <Image
                                     src={product.image_url || "/placeholder.svg"}
                                     alt={product.name}
-                                    className="h-full w-full object-cover"
+                                    fill
+                                    className="object-cover"
                                 />
                             ) : (
                                 <div className="flex h-full items-center justify-center bg-secondary text-lg font-bold text-muted-foreground">

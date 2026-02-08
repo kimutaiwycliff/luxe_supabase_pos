@@ -1,5 +1,7 @@
 "use client"
 
+import Image from "next/image"
+
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -104,7 +106,7 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
     }
     setError(null)
     uploadProps.reset()
-  }, [product, open])
+  }, [product, open, uploadProps])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -246,7 +248,7 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
                 <Label>Product Image</Label>
                 {imageUrl && !uploadProps.isSuccess ? (
                   <div className="relative w-full aspect-square max-w-[200px] rounded-lg overflow-hidden border">
-                    <img src={imageUrl || "/placeholder.svg"} alt="Product" className="w-full h-full object-cover" />
+                    <Image src={imageUrl || "/placeholder.svg"} alt="Product" fill className="object-cover" />
                     <Button
                       type="button"
                       variant="destructive"
