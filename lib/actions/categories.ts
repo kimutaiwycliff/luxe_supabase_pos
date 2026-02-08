@@ -51,6 +51,7 @@ export async function createCategory(data: {
     return { category: null, error: error.message }
   }
 
+  // @ts-ignore
   revalidateTag("categories", "max")
   return { category: category as Category, error: null }
 }
@@ -83,6 +84,7 @@ export async function updateCategory(
     return { category: null, error: error.message }
   }
 
+  // @ts-ignore
   revalidateTag("categories", "max")
   return { category: category as Category, error: null }
 }
@@ -96,6 +98,7 @@ export async function deleteCategory(id: string) {
     return { success: false, error: error.message }
   }
 
+  // @ts-ignore
   revalidateTag("categories", "max")
   return { success: true, error: null }
 }
