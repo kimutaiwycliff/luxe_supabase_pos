@@ -76,8 +76,8 @@ export async function updateVariant(
     return { error: error.message }
   }
 
-  revalidateTag("products", "max")
-  revalidateTag("inventory", "max")
+  ; (revalidateTag as any)("products", "max")
+    ; (revalidateTag as any)("inventory", "max")
 
   return { error: null }
 }
@@ -164,7 +164,7 @@ export async function updateVariantInventory(
     }
   }
 
-  revalidateTag("inventory", "max")
+  ; (revalidateTag as any)("inventory", "max")
 
   return { error: null }
 }
@@ -213,7 +213,7 @@ export async function createVariant(
     return { variant: null, error: error.message }
   }
 
-  revalidateTag("products", "max")
+  ; (revalidateTag as any)("products", "max")
 
   return { variant, error: null }
 }
@@ -227,8 +227,8 @@ export async function deleteVariant(variantId: string): Promise<{ error: string 
     return { error: error.message }
   }
 
-  revalidateTag("products", "max")
-  revalidateTag("inventory", "max")
+  ; (revalidateTag as any)("products", "max")
+    ; (revalidateTag as any)("inventory", "max")
 
   return { error: null }
 }

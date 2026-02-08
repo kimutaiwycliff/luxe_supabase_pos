@@ -143,7 +143,7 @@ export async function createCustomer(data: {
     console.error("Error indexing customer to Algolia:", err)
   }
 
-  revalidateTag("customers", "max")
+  ; (revalidateTag as any)("customers", "max")
   return { customer: customer as Customer, error: null }
 }
 

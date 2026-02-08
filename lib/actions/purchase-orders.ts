@@ -110,7 +110,7 @@ export async function createPurchaseOrder(
 
   if (itemsError) throw itemsError
 
-  revalidateTag("purchase-orders", "max")
+    ; (revalidateTag as any)("purchase-orders", "max")
   return po
 }
 
@@ -129,7 +129,7 @@ export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrde
 
   if (error) throw error
 
-  revalidateTag("purchase-orders", "max")
+    ; (revalidateTag as any)("purchase-orders", "max")
   return data
 }
 
@@ -229,9 +229,9 @@ export async function receivePurchaseOrder(
       .eq("id", id)
   }
 
-  revalidateTag("purchase-orders", "max")
-  revalidateTag("inventory", "max")
-  revalidateTag("products", "max")
+  ; (revalidateTag as any)("purchase-orders", "max")
+    ; (revalidateTag as any)("inventory", "max")
+    ; (revalidateTag as any)("products", "max")
 }
 
 export async function getReorderAlerts() {
@@ -267,7 +267,7 @@ export async function resolveReorderAlert(id: string) {
 
   if (error) throw error
 
-  revalidateTag("reorder-alerts", "max")
+    ; (revalidateTag as any)("reorder-alerts", "max")
 }
 
 export async function getLowStockProducts() {

@@ -261,7 +261,7 @@ export async function adjustInventory(data: {
     }
   }
 
-  revalidateTag("inventory", "max")
+  ; (revalidateTag as any)("inventory", "max")
   return { success: true, error: null }
 }
 

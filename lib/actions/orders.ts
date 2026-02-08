@@ -358,9 +358,9 @@ export async function createOrder(data: CreateOrderData) {
     }
   }
 
-  revalidateTag("orders", "max")
-  revalidateTag("inventory", "max")
-  revalidateTag("analytics", "max")
+  ; (revalidateTag as any)("orders", "max")
+    ; (revalidateTag as any)("inventory", "max")
+    ; (revalidateTag as any)("analytics", "max")
 
   const { data: completeOrder, error: fetchError } = await supabase
     .from("orders")
@@ -501,8 +501,8 @@ export async function createLayawayOrder(data: CreateLayawayOrderData) {
     }
   }
 
-  revalidateTag("orders", "max")
-  revalidateTag("inventory", "max")
+  ; (revalidateTag as any)("orders", "max")
+    ; (revalidateTag as any)("inventory", "max")
 
   // Fetch complete order
   const { data: completeOrder } = await supabase
@@ -608,8 +608,8 @@ export async function completeLayawayOrder(
     }
   }
 
-  revalidateTag("orders", "max")
-  revalidateTag("inventory", "max")
+  ; (revalidateTag as any)("orders", "max")
+    ; (revalidateTag as any)("inventory", "max")
 
   const { data: completeOrder } = await supabase
     .from("orders")

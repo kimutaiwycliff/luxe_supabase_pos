@@ -104,7 +104,7 @@ export async function createSupplier(formData: FormData) {
     console.error("Error indexing supplier to Algolia:", err)
   }
 
-  revalidateTag("suppliers", "max")
+  ; (revalidateTag as any)("suppliers", "max")
   return data
 }
 
@@ -134,7 +134,7 @@ export async function updateSupplier(id: string, formData: FormData) {
     console.error("Error updating supplier in Algolia:", err)
   }
 
-  revalidateTag("suppliers", "max")
+  ; (revalidateTag as any)("suppliers", "max")
   return data
 }
 
@@ -152,7 +152,7 @@ export async function deleteSupplier(id: string) {
     console.error("Error removing supplier from Algolia:", err)
   }
 
-  revalidateTag("suppliers", "max")
+  ; (revalidateTag as any)("suppliers", "max")
 }
 
 export async function getSupplierById(id: string) {

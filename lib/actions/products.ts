@@ -369,7 +369,7 @@ export async function createProduct(data: ProductFormData) {
     }
   }
 
-  revalidateTag("products", "max")
+  ; (revalidateTag as any)("products", "max")
   return { product: product as Product, error: null }
 }
 
@@ -402,7 +402,7 @@ export async function updateProduct(id: string, data: Partial<ProductFormData>) 
     console.error("Error updating product in Algolia:", err)
   }
 
-  revalidateTag("products", "max")
+  ; (revalidateTag as any)("products", "max")
   return { product: product as Product, error: null }
 }
 
@@ -423,7 +423,7 @@ export async function deleteProduct(id: string) {
     console.error("Error removing product from Algolia:", err)
   }
 
-  revalidateTag("products", "max")
+  ; (revalidateTag as any)("products", "max")
   return { success: true, error: null }
 }
 
@@ -502,7 +502,7 @@ export async function createProductVariant(data: VariantFormData) {
     console.error("Error initializing variant inventory:", err)
   }
 
-  revalidateTag("products", "max")
+  ; (revalidateTag as any)("products", "max")
   return { variant: variant as ProductVariant, error: null }
 }
 
@@ -523,7 +523,7 @@ export async function updateProductVariant(id: string, data: Partial<VariantForm
     return { variant: null, error: error.message }
   }
 
-  revalidateTag("products", "max")
+  ; (revalidateTag as any)("products", "max")
   return { variant: variant as ProductVariant, error: null }
 }
 
@@ -536,6 +536,6 @@ export async function deleteProductVariant(id: string) {
     return { success: false, error: error.message }
   }
 
-  revalidateTag("products", "max")
+  ; (revalidateTag as any)("products", "max")
   return { success: true, error: null }
 }
