@@ -106,7 +106,7 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
     }
     setError(null)
     uploadProps.reset()
-  }, [product, open, uploadProps])
+  }, [product, open, uploadProps.reset])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

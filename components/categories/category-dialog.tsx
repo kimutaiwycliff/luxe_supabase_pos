@@ -71,7 +71,7 @@ export function CategoryDialog({ open, onOpenChange, category, categories, onSuc
     }
     setError(null)
     uploadProps.reset()
-  }, [category, open, uploadProps])
+  }, [category, open, uploadProps.reset])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
