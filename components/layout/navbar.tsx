@@ -41,6 +41,7 @@ import {
 
 interface NavbarProps {
   user: AuthUser | null
+  outOfStockCount?: number
 }
 
 const mainNavigation = [
@@ -71,7 +72,7 @@ const staffNavigation = [
   { title: "POS", href: "/pos", icon: ShoppingCart },
 ]
 
-export function Navbar({ user }: NavbarProps) {
+export function Navbar({ user, outOfStockCount = 0 }: NavbarProps) {
   const pathname = usePathname()
   const navigation = user?.role === "admin" ? [...mainNavigation, ...inventoryNavigation] : staffNavigation
 
@@ -210,13 +211,17 @@ export function Navbar({ user }: NavbarProps) {
             <>
               <GlobalSearch />
 
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground">
-                  3
-                </span>
+              <Button variant="ghost" size="icon" className="relative" asChild>
+                <Link href="/low-stock?status=out-of-stock">
+                  <Bell className="h-5 w-5" />
+                  {outOfStockCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground">
+                      {outOfStockCount > 9 ? "9+" : outOfStockCount}
+                    </span>
+                  )}
+                </Link>
               </Button>
-              </>
+            </>
           )}
 
           <DropdownMenu>

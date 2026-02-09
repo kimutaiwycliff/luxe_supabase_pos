@@ -2,6 +2,7 @@
 
 import useSWR from "swr"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -17,7 +18,15 @@ export function LowStockContent() {
     return result
   })
 
-  const items = data?.items || []
+  const searchParams = useSearchParams()
+  const statusFilter = searchParams.get("status")
+
+  const items = (data?.items || []).filter((item) => {
+    if (statusFilter === "out-of-stock") {
+      return item.quantity === 0
+    }
+    return true
+  })
 
   const columns: ColumnDef<Inventory>[] = [
     {

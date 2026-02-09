@@ -165,6 +165,28 @@ export async function getLowStockItems(locationId?: string) {
   return { items: lowStock as Inventory[], error: null }
 }
 
+export async function getOutOfStockCount(locationId?: string) {
+  const supabase = await getSupabaseServer()
+
+  let query = supabase
+    .from("inventory")
+    .select("quantity", { count: "exact", head: true })
+    .eq("quantity", 0)
+
+  if (locationId) {
+    query = query.eq("location_id", locationId)
+  }
+
+  const { count, error } = await query
+
+  if (error) {
+    console.error("Error fetching out of stock count:", error)
+    return { count: 0, error: error.message }
+  }
+
+  return { count: count || 0, error: null }
+}
+
 export async function adjustInventory(data: {
   product_id?: string
   variant_id?: string
