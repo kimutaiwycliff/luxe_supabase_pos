@@ -1,11 +1,11 @@
 import { Suspense } from "react"
 import { PageHeader } from "@/components/layout/page-header"
-import { ReorderContent } from "@/components/reorder/reorder-content"
+import { ReorderContentEnhanced } from "@/components/reorder/reorder-content-enhanced"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata = {
-  title: "Reorder Alerts | Luxe Collections",
-  description: "Low stock alerts and quick reordering",
+  title: "Smart Reorder | Luxe Collections",
+  description: "AI-powered inventory reordering and optimization",
 }
 
 function ReorderSkeleton() {
@@ -25,12 +25,12 @@ export default function ReorderPage() {
   return (
     <>
       <PageHeader
-        title="Reorder Alerts"
-        breadcrumbs={[{ label: "Inventory", href: "/inventory" }, { label: "Reorder Alerts" }]}
+        title="Smart Reorder"
+        breadcrumbs={[{ label: "Inventory", href: "/inventory" }, { label: "Smart Reorder" }]}
       />
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <Suspense fallback={<ReorderSkeleton />}>
-          <ReorderContent />
+          <ReorderContentEnhanced />
         </Suspense>
       </div>
     </>
