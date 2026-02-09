@@ -42,6 +42,12 @@ export interface CategorySales {
   quantity: number
 }
 
+export interface SupplierSales {
+  supplier: string
+  revenue: number
+  quantity: number
+}
+
 export async function getSalesAnalytics(
   dateFrom: string,
   dateTo: string,
@@ -428,6 +434,54 @@ export async function getCategorySales(
 
   return {
     data: Array.from(categoryMap.values()).sort((a, b) => b.revenue - a.revenue),
+    error: null,
+  }
+}
+
+export async function getSupplierSales(
+  dateFrom: string,
+  dateTo: string,
+): Promise<{ data: SupplierSales[]; error: string | null }> {
+  const supabase = await getSupabaseServer()
+
+  const { data: items, error } = await supabase
+    .from("order_items")
+    .select(`
+      quantity,
+      total_amount,
+      product:products(
+        supplier:suppliers(name)
+      ),
+      order:orders!inner(status, created_at)
+    `)
+    .gte("order.created_at", dateFrom)
+    .lte("order.created_at", dateTo)
+    .eq("order.status", "completed")
+
+  if (error) {
+    return { data: [], error: error.message }
+  }
+
+  const supplierMap = new Map<string, SupplierSales>()
+
+  items?.forEach((item) => {
+    const supplierName = (item.product as { supplier?: { name?: string } })?.supplier?.name || "Unknown Supplier"
+    const existing = supplierMap.get(supplierName)
+
+    if (existing) {
+      existing.revenue += item.total_amount || 0
+      existing.quantity += item.quantity
+    } else {
+      supplierMap.set(supplierName, {
+        supplier: supplierName,
+        revenue: item.total_amount || 0,
+        quantity: item.quantity,
+      })
+    }
+  })
+
+  return {
+    data: Array.from(supplierMap.values()).sort((a, b) => b.revenue - a.revenue),
     error: null,
   }
 }

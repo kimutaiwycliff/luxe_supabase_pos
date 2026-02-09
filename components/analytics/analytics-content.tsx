@@ -16,11 +16,13 @@ import {
   getTopProducts,
   getSalesTrend,
   getCategorySales,
+  getSupplierSales,
 } from "@/lib/actions/analytics"
 import { RevenueChart } from "./revenue-chart"
 import { PaymentChart } from "./payment-chart"
 import { TopProductsTable } from "./top-products-table"
 import { CategoryChart } from "./category-chart"
+import { SupplierChart } from "./supplier-chart"
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns"
 import { cn } from "@/lib/utils"
 import type { DateRange } from "react-day-picker"
@@ -121,6 +123,11 @@ export function AnalyticsContent() {
 
   const { data: categorySales } = useSWR(["category-sales", dateFrom, dateTo], async () => {
     const result = await getCategorySales(dateFrom, dateTo)
+    return result.data
+  })
+
+  const { data: supplierSales } = useSWR(["supplier-sales", dateFrom, dateTo], async () => {
+    const result = await getSupplierSales(dateFrom, dateTo)
     return result.data
   })
 
@@ -261,6 +268,17 @@ export function AnalyticsContent() {
           </CardHeader>
           <CardContent>
             <CategoryChart data={categorySales || []} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Sales by Supplier</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SupplierChart data={supplierSales || []} />
           </CardContent>
         </Card>
       </div>
