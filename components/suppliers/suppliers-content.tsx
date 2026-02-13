@@ -62,7 +62,7 @@ export function SuppliersContent() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       <AlgoliaProvider key={refreshKey} indexName={ALGOLIA_INDEXES.suppliers} hitsPerPage={50}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <AlgoliaSearchBox placeholder="Search suppliers..." className="max-w-sm" />

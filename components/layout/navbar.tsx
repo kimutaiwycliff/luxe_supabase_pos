@@ -84,7 +84,7 @@ export function Navbar({ user, outOfStockCount = 0 }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center px-4">
+      <div className="container flex h-16 items-center px-2 sm:px-4">
         {/* Mobile menu trigger */}
         <Sheet>
           <SheetTrigger asChild>
@@ -186,7 +186,7 @@ export function Navbar({ user, outOfStockCount = 0 }: NavbarProps) {
             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Store className="size-4" />
             </div>
-            <span className="font-semibold">Luxe Collections</span>
+            <span className="font-semibold truncate max-w-32 lg:max-w-none">Luxe Collections</span>
           </Link>
 
           <nav className="flex items-center gap-4">

@@ -126,9 +126,9 @@ export function LowStockContent() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Summary Cards */}
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
+      <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-3">
         <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-8 w-8 text-destructive" />

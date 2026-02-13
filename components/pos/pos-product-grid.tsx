@@ -133,7 +133,7 @@ function POSProductHitsInline({ onProductClick }: { onProductClick: (product: Al
 
   if (loading) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {Array.from({ length: 10 }).map((_, i) => (
           <Skeleton key={i} className="h-40 rounded-xl" />
         ))}
@@ -152,7 +152,7 @@ function POSProductHitsInline({ onProductClick }: { onProductClick: (product: Al
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 overflow-y-auto flex-1">
+    <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 overflow-y-auto flex-1">
       {hits.map((product) => (
         <Card
           key={product.objectID}

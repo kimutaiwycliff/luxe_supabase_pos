@@ -9,6 +9,10 @@ import { POSReceiptDialog } from "./pos-receipt-dialog"
 import { getDefaultLocation, type Location } from "@/lib/actions/locations"
 import { toast } from "sonner"
 import type { Product, ProductVariant, Customer, Order } from "@/lib/types"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { ShoppingCart } from "lucide-react"
+import { formatCurrency } from "@/lib/format"
 
 export interface CartItem {
   id: string
@@ -32,6 +36,7 @@ export function POSLayout() {
   const [locationError, setLocationError] = useState<string | null>(null)
   const [orderDiscount, setOrderDiscount] = useState<number>(0)
   const [discountType, setDiscountType] = useState<"fixed" | "percentage">("fixed")
+  const [cartSheetOpen, setCartSheetOpen] = useState(false)
 
   useEffect(() => {
     async function fetchLocation() {
@@ -179,12 +184,12 @@ export function POSLayout() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Product Grid */}
-        <div className="flex-1 overflow-auto p-4">
+        <div className="flex-1 overflow-auto p-2 sm:p-4 pb-20 lg:pb-4">
           <POSProductGrid searchQuery={searchQuery} onAddToCart={addToCart} locationId={location?.id} />
         </div>
 
-        {/* Cart Sidebar */}
-        <div className="w-96 border-l border-border bg-card">
+        {/* Desktop Cart Sidebar - Hidden on mobile/tablet */}
+        <div className="hidden lg:block w-96 border-l border-border bg-card">
           <POSCart
             items={cart}
             customer={customer}
@@ -206,6 +211,57 @@ export function POSLayout() {
           />
         </div>
       </div>
+
+      {/* Mobile Bottom Cart Summary Bar - Visible only on mobile/tablet */}
+      {cart.length > 0 && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-lg">
+          <Button
+            variant="ghost"
+            className="w-full h-16 flex items-center justify-between px-4 rounded-none hover:bg-accent"
+            onClick={() => setCartSheetOpen(true)}
+          >
+            <div className="flex items-center gap-2">
+              <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                {cart.reduce((sum, item) => sum + item.quantity, 0)}
+              </div>
+              <ShoppingCart className="h-5 w-5" />
+              <span className="font-medium">View Cart</span>
+            </div>
+            <span className="text-lg font-bold">{formatCurrency(total)}</span>
+          </Button>
+        </div>
+      )}
+
+      {/* Mobile Cart Sheet */}
+      <Sheet open={cartSheetOpen} onOpenChange={setCartSheetOpen}>
+        <SheetContent side="bottom" className="h-[90vh] p-0">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Shopping Cart</SheetTitle>
+          </SheetHeader>
+          <POSCart
+            items={cart}
+            customer={customer}
+            subtotal={subtotal}
+            itemDiscounts={itemDiscounts}
+            orderDiscount={calculatedOrderDiscount}
+            discountType={discountType}
+            discountValue={orderDiscount}
+            tax={tax}
+            total={total}
+            onUpdateQuantity={updateQuantity}
+            onUpdateItemDiscount={updateItemDiscount}
+            onRemoveItem={removeItem}
+            onClearCart={clearCart}
+            onSelectCustomer={setCustomer}
+            onCheckout={() => {
+              setCartSheetOpen(false)
+              setPaymentDialogOpen(true)
+            }}
+            onOrderDiscountChange={setOrderDiscount}
+            onDiscountTypeChange={setDiscountType}
+          />
+        </SheetContent>
+      </Sheet>
 
       {/* Payment Dialog */}
       <POSPaymentDialog

@@ -59,7 +59,7 @@ export function DashboardContent() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Stats Grid */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Overview</h2>
@@ -69,7 +69,7 @@ export function DashboardContent() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {statsLoading ? (
           <>
             {Array.from({ length: 4 }).map((_, i) => (
@@ -111,7 +111,7 @@ export function DashboardContent() {
       </div>
 
       {/* Charts and Tables */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+      <div className="mt-6 grid gap-6 grid-cols-1 lg:grid-cols-3">
         {/* Sales Chart */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -153,7 +153,7 @@ export function DashboardContent() {
         </Card>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-6 grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Layaway Summary */}
         {layawayStatsLoading || layawaysLoading ? (
           <Skeleton className="h-64 rounded-xl" />

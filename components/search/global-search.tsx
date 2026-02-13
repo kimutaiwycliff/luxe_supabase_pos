@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { InstantSearch, useHits, useSearchBox, Configure } from "react-instantsearch"
 import { searchClient, ALGOLIA_INDEXES } from "@/lib/algolia-client"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { CommandDialog, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { Search, Package, Users, Truck } from "lucide-react"
 import { formatCurrency } from "@/lib/format"
@@ -110,6 +111,18 @@ export function GlobalSearch() {
 
   return (
     <>
+      {/* Mobile Search Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        onClick={() => setOpen(true)}
+      >
+        <Search className="h-5 w-5" />
+        <span className="sr-only">Search</span>
+      </Button>
+
+      {/* Desktop Search Input */}
       <div className="relative hidden md:block">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input

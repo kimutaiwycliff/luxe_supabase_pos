@@ -80,11 +80,11 @@ export function CategoriesContent() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="mb-6 flex justify-end">
           <Skeleton className="h-10 w-36" />
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
@@ -94,7 +94,7 @@ export function CategoriesContent() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-6 flex justify-end">
         <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
@@ -113,7 +113,7 @@ export function CategoriesContent() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => (
             <Card key={category.id} className="group overflow-hidden">
               <CardContent className="p-0">

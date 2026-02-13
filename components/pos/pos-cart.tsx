@@ -138,7 +138,7 @@ export function POSCart({
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-7 w-7 bg-transparent"
+                      className="h-9 w-9 bg-transparent"
                       onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
                     >
                       <Minus className="h-3 w-3" />
@@ -147,13 +147,13 @@ export function POSCart({
                       type="number"
                       value={item.quantity}
                       onChange={(e) => onUpdateQuantity(item.id, Number.parseInt(e.target.value) || 0)}
-                      className="h-7 w-12 text-center"
+                      className="h-9 w-14 text-center"
                       min="1"
                     />
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-7 w-7 bg-transparent"
+                      className="h-9 w-9 bg-transparent"
                       onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
                     >
                       <Plus className="h-3 w-3" />
