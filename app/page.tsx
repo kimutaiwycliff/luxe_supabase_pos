@@ -1,817 +1,494 @@
-// PART 1: IMPORTS AND DATA CONSTANTS
-// Copy this section first
-
-import { ShoppingBag, Menu, ChevronRight, Star, Truck, Shield, Heart, Baby, Shirt, Bed, Sparkles, MapPin, Phone, Mail, Clock, Package, Award, Users, TrendingUp, Gift} from 'lucide-react';
+import {
+  ShoppingBag, Monitor, BarChart2, Package, Users, Receipt,
+  ClipboardList, Layers, Bell, Zap, Shield, ArrowRight,
+  ChevronRight, TrendingUp, RefreshCw, Truck, Settings,
+  LayoutDashboard, MapPin, Phone, Mail, CheckCircle2
+} from 'lucide-react';
 import { Suspense } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { AuthButton } from '@/components/auth-button';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
-export default function LuxeCollections() {
-  const categories = [
-    {
-      id: "african-fashion",
-      title: "African Fashion",
-      description: "Authentic Kitenge & African prints",
-      image: "https://images.unsplash.com/photo-1623693082369-24afc340e3ae?w=800&h=1000&fit=crop",
-      icon: <Shirt className="w-6 h-6" />,
-      badge: "Trending"
-    },
-    {
-      id: "baby-shop",
-      title: "Baby Essentials",
-      description: "Everything for your little one",
-      image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&h=1000&fit=crop",
-      icon: <Baby className="w-6 h-6" />,
-      badge: "New"
-    },
-    {
-      id: "bedding",
-      title: "Luxury Bedding",
-      description: "Premium comfort for better sleep",
-      image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=1000&fit=crop",
-      icon: <Bed className="w-6 h-6" />,
-      badge: "Popular"
-    },
-    {
-      id: "perfumes",
-      title: "Refillable Perfumes",
-      description: "Premium fragrances, eco-friendly",
-      image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&h=1000&fit=crop",
-      icon: <Sparkles className="w-6 h-6" />,
-      badge: "Exclusive"
-    }
-  ];
+const modules = [
+  {
+    icon: <Monitor className="w-7 h-7" />,
+    title: "POS Terminal",
+    description: "Lightning-fast checkout with barcode scanning, product search, and receipt generation built for high-volume retail.",
+    color: "from-amber-500 to-orange-500",
+    href: "/pos",
+    tag: "Core"
+  },
+  {
+    icon: <Package className="w-7 h-7" />,
+    title: "Inventory Control",
+    description: "Real-time stock tracking across every SKU. Get low-stock alerts before you run out and never miss a sale.",
+    color: "from-orange-500 to-red-500",
+    href: "/inventory",
+    tag: "Essential"
+  },
+  {
+    icon: <BarChart2 className="w-7 h-7" />,
+    title: "Analytics & Reports",
+    description: "Daily sales summaries, revenue trends, top-selling products, and automated email reports delivered at midnight.",
+    color: "from-yellow-500 to-amber-500",
+    href: "/analytics",
+    tag: "Insights"
+  },
+  {
+    icon: <Users className="w-7 h-7" />,
+    title: "Customer CRM",
+    description: "Track customer purchase history, manage loyalty, and build relationships that bring buyers back.",
+    color: "from-amber-600 to-yellow-500",
+    href: "/customers",
+    tag: "CRM"
+  },
+  {
+    icon: <Layers className="w-7 h-7" />,
+    title: "Layaway Management",
+    description: "Accept deposits and manage instalment plans. Customers save towards products while you secure the sale.",
+    color: "from-orange-600 to-amber-500",
+    href: "/layaways",
+    tag: "Finance"
+  },
+  {
+    icon: <ClipboardList className="w-7 h-7" />,
+    title: "Purchase Orders",
+    description: "Create, track, and receive supplier orders. Close the loop between purchasing and inventory automatically.",
+    color: "from-red-500 to-orange-500",
+    href: "/purchase-orders",
+    tag: "Procurement"
+  },
+  {
+    icon: <Bell className="w-7 h-7" />,
+    title: "Low Stock Alerts",
+    description: "Configurable reorder thresholds with instant alerts. Smart reorder suggestions based on your sales velocity.",
+    color: "from-yellow-600 to-orange-500",
+    href: "/low-stock",
+    tag: "Alerts"
+  },
+  {
+    icon: <Truck className="w-7 h-7" />,
+    title: "Supplier Management",
+    description: "Centralise all supplier contacts, pricing, and lead times in one place linked directly to your products.",
+    color: "from-amber-500 to-yellow-600",
+    href: "/suppliers",
+    tag: "Operations"
+  }
+];
 
-  const africanFashion = [
-    {
-      title: "Women's Kitenge Dresses",
-      image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800&h=1000&fit=crop",
-      price: "From KES 1,800",
-      description: "Vibrant patterns and modern cuts"
-    },
-    {
-      title: "Men's Ankara Shirts",
-      image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&h=1000&fit=crop",
-      price: "From KES 2,200",
-      description: "Bold prints, comfortable fit"
-    },
-    {
-      title: "Kids African Outfits",
-      image: "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=800&h=1000&fit=crop",
-      price: "From KES 1,200",
-      description: "Adorable prints for little ones"
-    },
-    {
-      title: "Traditional Kanga Sets",
-      image: "https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=800&h=1000&fit=crop",
-      price: "From KES 1,500",
-      description: "Authentic East African style"
-    }
-  ];
+const stats = [
+  { value: "8+", label: "Integrated Modules" },
+  { value: "Real-time", label: "Inventory Sync" },
+  { value: "M-Pesa", label: "Payment Ready" },
+  { value: "Daily", label: "Automated Reports" },
+];
 
-  const babyProducts = [
-    {
-      title: "Baby Clothing Sets",
-      image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&h=1000&fit=crop",
-      price: "From KES 800",
-      description: "Soft, gentle fabrics"
-    },
-    {
-      title: "Nursery Essentials",
-      image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&h=1000&fit=crop",
-      price: "From KES 1,500",
-      description: "Complete nursery setup"
-    },
-    {
-      title: "Baby Care Products",
-      image: "https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=800&h=1000&fit=crop",
-      price: "From KES 500",
-      description: "Safe & gentle skincare"
-    },
-    {
-      title: "Toys & Accessories",
-      image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&h=1000&fit=crop",
-      price: "From KES 600",
-      description: "Educational & fun"
-    }
-  ];
+const workflow = [
+  {
+    step: "01",
+    title: "Log In & Open Your Shift",
+    description: "Staff access the POS dashboard securely. Role-based permissions ensure cashiers see only what they need.",
+    icon: <Shield className="w-6 h-6" />
+  },
+  {
+    step: "02",
+    title: "Process Sales at Speed",
+    description: "Search or scan products, apply discounts, accept M-Pesa or card payments, and print receipts in seconds.",
+    icon: <Zap className="w-6 h-6" />
+  },
+  {
+    step: "03",
+    title: "Track Everything Automatically",
+    description: "Every sale updates inventory, customer records, and analytics in real time. Reports land in your inbox overnight.",
+    icon: <TrendingUp className="w-6 h-6" />
+  }
+];
 
-  const beddingCollection = [
-    {
-      title: "Egyptian Cotton Sheets",
-      image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=1000&fit=crop",
-      price: "From KES 4,500",
-      description: "Premium 800 thread count"
-    },
-    {
-      title: "Luxury Duvet Sets",
-      image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&h=1000&fit=crop",
-      price: "From KES 5,500",
-      description: "Hotel-quality comfort"
-    },
-    {
-      title: "Decorative Pillows",
-      image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&h=1000&fit=crop",
-      price: "From KES 1,200",
-      description: "Stylish home accents"
-    },
-    {
-      title: "Premium Bed Covers",
-      image: "https://images.unsplash.com/photo-1540574163026-643ea20ade25?w=800&h=1000&fit=crop",
-      price: "From KES 3,800",
-      description: "Elegant designs"
-    }
-  ];
+const highlights = [
+  "Barcode & product search checkout",
+  "Automated midnight sales reports via email",
+  "Layaway & deposit management",
+  "Supplier & purchase order tracking",
+  "Low-stock alerts with reorder suggestions",
+  "Customer purchase history & CRM",
+  "Role-based staff access control",
+  "Dark mode & mobile responsive",
+];
 
-  const perfumeCollection = [
-    {
-      title: "Signature Collection",
-      image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&h=1000&fit=crop",
-      price: "From KES 1,500",
-      description: "Designer fragrances"
-    },
-    {
-      title: "Floral & Fresh",
-      image: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&h=1000&fit=crop",
-      price: "From KES 1,200",
-      description: "Light & refreshing"
-    },
-    {
-      title: "Oriental & Woody",
-      image: "https://images.unsplash.com/photo-1588405748880-12d1d2a59ff9?w=800&h=1000&fit=crop",
-      price: "From KES 1,800",
-      description: "Rich & sophisticated"
-    },
-    {
-      title: "Unisex Classics",
-      image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=800&h=1000&fit=crop",
-      price: "From KES 1,600",
-      description: "Timeless scents"
-    }
-  ];
-
-  const clothingCategories = [
-    {
-      title: "Women's Clothing",
-      items: "Dresses, Tops, Skirts & More",
-      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&h=800&fit=crop",
-      price: "From KES 1,500"
-    },
-    {
-      title: "Men's Clothing",
-      items: "Shirts, Trousers, Suits & More",
-      image: "https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=600&h=800&fit=crop",
-      price: "From KES 2,000"
-    },
-    {
-      title: "Kids Fashion",
-      items: "Trendy outfits for boys & girls",
-      image: "https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=600&h=800&fit=crop",
-      price: "From KES 800"
-    }
-  ];
-
-  const testimonials = [
-    {
-      name: "Amina Mwangi",
-      location: "Nairobi",
-      text: "The kitenge dresses are absolutely stunning! Quality is top-notch and delivery was fast within Nairobi. I've ordered three times already!",
-      rating: 5
-    },
-    {
-      name: "John Kamau",
-      location: "Mombasa",
-      text: "Bought baby essentials and bedding for my newborn. Everything arrived in perfect condition. The customer service team was very helpful!",
-      rating: 5
-    },
-    {
-      name: "Grace Otieno",
-      location: "Kisumu",
-      text: "Love the refillable perfumes! Eco-friendly and affordable. The African print collection is my favorite. Will definitely shop again.",
-      rating: 5
-    },
-    {
-      name: "David Omondi",
-      location: "Nakuru",
-      text: "Best place to shop for quality bedding in Kenya. The Egyptian cotton sheets are worth every shilling. Highly recommend!",
-      rating: 5
-    },
-    {
-      name: "Sarah Wanjiku",
-      location: "Eldoret",
-      text: "Amazing selection of African fashion. I bought outfits for my whole family. The kids' section is fantastic too!",
-      rating: 5
-    },
-    {
-      name: "Michael Ngugi",
-      location: "Thika",
-      text: "Professional service and authentic products. The perfume refills save me so much money. Five stars all the way!",
-      rating: 5
-    }
-  ];
-
-  const features = [
-    {
-      icon: <Truck className="w-7 h-7" />,
-      title: "Nairobi Delivery",
-      desc: "Same-day delivery within Nairobi CBD"
-    },
-    {
-      icon: <Shield className="w-7 h-7" />,
-      title: "M-Pesa & Cards",
-      desc: "Secure payment options"
-    },
-    {
-      icon: <Heart className="w-7 h-7" />,
-      title: "Quality Guarantee",
-      desc: "100% authentic products"
-    },
-    {
-      icon: <MapPin className="w-7 h-7" />,
-      title: "Kenya-wide Shipping",
-      desc: "We deliver across all counties"
-    }
-  ];
-
-  const whyChooseUs = [
-    {
-      icon: <Award className="w-8 h-8" />,
-      title: "Premium Quality",
-      description: "Every product is carefully selected and quality-checked before shipping"
-    },
-    {
-      icon: <Users className="w-8 h-8" />,
-      title: "10,000+ Happy Customers",
-      description: "Join thousands of satisfied customers across Kenya"
-    },
-    {
-      icon: <Clock className="w-8 h-8" />,
-      title: "Fast Delivery",
-      description: "Same-day delivery in Nairobi, 2-5 days countrywide"
-    },
-    {
-      icon: <Package className="w-8 h-8" />,
-      title: "Easy Returns",
-      description: "7-day return policy for your peace of mind"
-    },
-    {
-      icon: <TrendingUp className="w-8 h-8" />,
-      title: "Latest Trends",
-      description: "Stay ahead with our constantly updated collections"
-    },
-    {
-      icon: <Gift className="w-8 h-8" />,
-      title: "Gift Wrapping",
-      description: "Free gift wrapping on all orders over KES 3,000"
-    }
-  ];
-
-  // PART 2: JSX RETURN - NAVIGATION TO FEATURES
-  // Copy this after Part 1, starting from the return statement
-
+export default function LuxePOSLanding() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Navigation */}
-      <nav className="fixed w-full z-50 bg-background/95 backdrop-blur-md border-b animate-slideDown">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+
+      {/* ── Navigation ─────────────────────────────────────────────── */}
+      <nav className="fixed w-full z-50 bg-background/95 backdrop-blur-md border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-2 group cursor-pointer">
-              <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300 group-hover:rotate-12" />
-              <span className="text-lg sm:text-2xl font-light tracking-wider">
-                LUXE <span className="font-semibold">COLLECTIONS</span>
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg">
+                <ShoppingBag className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-light tracking-wider">
+                LUXE <span className="font-bold">POS</span>
               </span>
             </Link>
 
-            <div className="hidden lg:flex items-center gap-6">
-              <a href="#african-fashion" className="text-sm tracking-wide transition-all duration-300 hover:opacity-70">
-                African Fashion
-              </a>
-              <a href="#baby-shop" className="text-sm tracking-wide transition-all duration-300 hover:opacity-70">
-                Baby Shop
-              </a>
-              <a href="#clothing" className="text-sm tracking-wide transition-all duration-300 hover:opacity-70">
-                Clothing
-              </a>
-              <a href="#bedding" className="text-sm tracking-wide transition-all duration-300 hover:opacity-70">
-                Bedding
-              </a>
-              <a href="#perfumes" className="text-sm tracking-wide transition-all duration-300 hover:opacity-70">
-                Perfumes
-              </a>
-              <a href="#testimonials" className="text-sm tracking-wide transition-all duration-300 hover:opacity-70">
-                Reviews
-              </a>
-              <Suspense fallback={<div className="w-20 h-10" />}>
+            <div className="hidden lg:flex items-center gap-8">
+              <a href="#modules" className="text-sm text-muted-foreground tracking-wide transition-colors hover:text-foreground">Modules</a>
+              <a href="#workflow" className="text-sm text-muted-foreground tracking-wide transition-colors hover:text-foreground">How It Works</a>
+              <a href="#features" className="text-sm text-muted-foreground tracking-wide transition-colors hover:text-foreground">Features</a>
+              <Suspense fallback={<div className="w-20 h-9 rounded-full bg-muted animate-pulse" />}>
                 <AuthButton />
               </Suspense>
             </div>
 
-            <Button variant="ghost" size="icon" className="lg:hidden">
-              <Menu className="h-5 w-5" />
-            </Button>
+            <div className="lg:hidden">
+              <Suspense fallback={null}>
+                <AuthButton />
+              </Suspense>
+            </div>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative min-h-[85vh] sm:h-screen flex items-center justify-center overflow-hidden pt-16">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-900 via-amber-800 to-yellow-900">
-          <Image
-            src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=1920&h=1080&fit=crop"
-            alt="African fashion and lifestyle"
-            fill
-            className="object-cover opacity-30 animate-slowZoom"
-            priority
-            sizes="100vw"
-          />
-        </div>
+      {/* ── Hero ───────────────────────────────────────────────────── */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
 
-        <div className="relative z-10 text-center px-4 sm:px-6 max-w-5xl animate-fadeIn">
-          <Badge variant="secondary" className="mb-4 sm:mb-6 text-xs sm:text-sm">
-            <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-            Proudly Kenyan 🇰🇪
+        {/* Layered background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-950 via-amber-900 to-yellow-900" />
+
+        {/* Grid pattern */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(251,191,36,0.4) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(251,191,36,0.4) 1px, transparent 1px)
+            `,
+            backgroundSize: '48px 48px'
+          }}
+        />
+
+        {/* Radial glow */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-amber-500/20 blur-[120px]" />
+
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center">
+          <Badge
+            variant="secondary"
+            className="mb-6 text-xs sm:text-sm bg-amber-500/20 text-amber-300 border-amber-500/30 backdrop-blur"
+          >
+            <MapPin className="w-3 h-3 mr-1" />
+            Built for Luxe Collections Kenya 🇰🇪
           </Badge>
-          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-white mb-4 sm:mb-6 tracking-wider animate-slideUp">
-            African <span className="font-semibold italic">Elegance</span> Meets Modern <span className="font-semibold italic">Style</span>
+
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-light text-white mb-6 tracking-tight leading-[1.05]">
+            The Smart POS for{' '}
+            <span className="font-extrabold bg-gradient-to-r from-amber-300 via-yellow-300 to-orange-300 bg-clip-text text-transparent">
+              Modern Retail
+            </span>
           </h1>
-          <p className="text-base sm:text-xl md:text-2xl text-gray-200 mb-6 sm:mb-8 font-light animate-slideUp animation-delay-200 max-w-3xl mx-auto">
-            From authentic Kitenge fashion to baby essentials, luxury bedding, and premium perfumes — all delivered across Kenya
+
+          <p className="text-lg sm:text-xl md:text-2xl text-amber-100/80 mb-10 font-light max-w-3xl mx-auto leading-relaxed">
+            Fast checkout, real-time inventory, customer management, layaway, analytics, and daily reports —
+            all in one system built for your store.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideUp animation-delay-400">
-            <Button size="lg" className="rounded-full px-6 sm:px-8 group hover:scale-105 transition-transform w-full sm:w-auto">
-              Shop Now
-              <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-2 transition-transform" />
-            </Button>
-            <Button size="lg" variant="outline" className="rounded-full px-6 sm:px-8 bg-white/10 backdrop-blur border-white/30 text-white hover:bg-white/20 w-full sm:w-auto">
-              Browse Collections
-            </Button>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/dashboard">
+              <Button
+                size="lg"
+                className="rounded-full px-8 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white border-0 shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all group w-full sm:w-auto"
+              >
+                <LayoutDashboard className="w-4 h-4 mr-2" />
+                Open Dashboard
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+            <a href="#modules">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full px-8 bg-white/10 backdrop-blur border-white/20 text-white hover:bg-white/20 w-full sm:w-auto"
+              >
+                Explore Modules
+              </Button>
+            </a>
+          </div>
+
+          {/* Floating stat pills */}
+          <div className="mt-14 flex flex-wrap justify-center gap-3">
+            {stats.map((s, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-full px-4 py-2 text-white"
+              >
+                <span className="font-bold text-amber-300">{s.value}</span>
+                <span className="text-xs text-white/70">{s.label}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 animate-bounce hidden sm:block">
-          <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center pt-2">
-            <div className="w-1 h-3 bg-white/50 rounded-full animate-scroll"></div>
-          </div>
-        </div>
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
       </section>
 
-      {/* Shop Categories Overview */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-secondary/20">
+      {/* ── Modules Grid ───────────────────────────────────────────── */}
+      <section id="modules" className="py-20 lg:py-28 scroll-mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-16 animate-fadeIn">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light mb-3 sm:mb-4">
-              Shop By <span className="font-semibold">Category</span>
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4 text-xs">
+              <Settings className="w-3 h-3 mr-1" />
+              All-in-One Platform
+            </Badge>
+            <h2 className="text-3xl sm:text-5xl font-light mb-4">
+              Every Module Your{' '}
+              <span className="font-bold">Store Needs</span>
             </h2>
-            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-              Discover our diverse collection of quality products for every need
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Eight integrated modules that cover every corner of retail operations — all talking to the same data.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {categories.map((category, i) => (
-              <a href={`#${category.id}`} key={i}>
-                <Card
-                  className="group cursor-pointer overflow-hidden border-none shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 animate-fadeIn"
-                  style={{ animationDelay: `${i * 100}ms` }}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {modules.map((mod, i) => (
+              <Link href={`/dashboard`} key={i}>
+                <div
+                  className="group relative rounded-2xl border bg-card p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden h-full"
+                  style={{ animationDelay: `${i * 60}ms` }}
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden">
-                    <Image
-                      src={category.image}
-                      alt={category.title}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    />
-                    <div className="absolute top-3 right-3">
-                      <Badge className="bg-primary/90 backdrop-blur">{category.badge}</Badge>
+                  {/* Subtle gradient top accent */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${mod.color} rounded-t-2xl`} />
+
+                  <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${mod.color} text-white mb-4 shadow-lg`}>
+                    {mod.icon}
+                  </div>
+
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-semibold text-base">{mod.title}</h3>
+                    <Badge variant="secondary" className="text-xs ml-2 shrink-0">{mod.tag}</Badge>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground leading-relaxed">{mod.description}</p>
+
+                  <div className="mt-4 flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Open module <ChevronRight className="w-3 h-3" />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Workflow ───────────────────────────────────────────────── */}
+      <section
+        id="workflow"
+        className="py-20 lg:py-28 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 scroll-mt-16"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4 text-xs">
+              <RefreshCw className="w-3 h-3 mr-1" />
+              Daily Workflow
+            </Badge>
+            <h2 className="text-3xl sm:text-5xl font-light mb-4">
+              How It <span className="font-bold">Works</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+              From opening the shift to overnight reports — the whole day in three steps.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Connecting line (desktop) */}
+            <div className="hidden md:block absolute top-10 left-1/3 right-1/3 h-px bg-gradient-to-r from-amber-300 to-orange-300 dark:from-amber-600 dark:to-orange-600" />
+
+            {workflow.map((step, i) => (
+              <div key={i} className="relative text-center">
+                <div className="relative inline-flex flex-col items-center">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-xl shadow-amber-500/20 mb-6">
+                    {step.icon}
+                  </div>
+                  <span className="absolute -top-2 -right-2 text-xs font-black text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/60 rounded-full w-6 h-6 flex items-center justify-center">
+                    {i + 1}
+                  </span>
+                </div>
+                <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Feature Highlights ─────────────────────────────────────── */}
+      <section id="features" className="py-20 lg:py-28 scroll-mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left: text */}
+            <div>
+              <Badge variant="outline" className="mb-4 text-xs">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Built-in Features
+              </Badge>
+              <h2 className="text-3xl sm:text-5xl font-light mb-6">
+                Everything Built{' '}
+                <span className="font-bold">Right In</span>
+              </h2>
+              <p className="text-muted-foreground text-lg mb-10 leading-relaxed">
+                No add-ons, no extra subscriptions. Every feature Luxe Collections needs to run day-to-day is
+                already here and talking to the same live data.
+              </p>
+
+              <ul className="space-y-3">
+                {highlights.map((item, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-3 h-3 text-white" />
                     </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
-                      <div className="flex items-center gap-2 mb-2">
-                        {category.icon}
-                        <h3 className="text-lg sm:text-xl font-semibold">{category.title}</h3>
-                      </div>
-                      <p className="text-xs sm:text-sm text-gray-200">{category.description}</p>
-                    </div>
-                  </div>
-                </Card>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+                    <span className="text-sm">{item}</span>
+                  </li>
+                ))}
+              </ul>
 
-      {/* Features */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {features.map((feature, i) => (
-              <Card
-                key={i}
-                className="text-center border-none shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300 animate-fadeIn bg-background/80 backdrop-blur"
-                style={{ animationDelay: `${i * 100}ms` }}
-              >
-                <CardContent className="pt-6 sm:pt-8 pb-6 sm:pb-8 px-4">
-                  <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-primary text-primary-foreground rounded-full mb-3 sm:mb-4">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">{feature.title}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground">{feature.desc}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+              <div className="mt-10">
+                <Link href="/dashboard">
+                  <Button
+                    size="lg"
+                    className="rounded-full px-8 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white border-0 shadow-xl shadow-amber-500/20 hover:scale-105 transition-all group"
+                  >
+                    Access the Dashboard
+                    <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
 
-      {/* PART 3: PRODUCT SECTIONS - African Fashion, Baby, Clothing, Bedding, Perfumes */}
-
-      {/* African Fashion Section */}
-      <section id="african-fashion" className="py-12 sm:py-16 lg:py-24 scroll-mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-16 animate-fadeIn">
-            <Badge variant="outline" className="mb-3 sm:mb-4 text-xs sm:text-sm">
-              <Shirt className="w-3 h-3 mr-1" />
-              African Fashion
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light mb-3 sm:mb-4">
-              Authentic <span className="font-semibold">Kitenge & African Prints</span>
-            </h2>
-            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-              Celebrate African heritage with our vibrant collection of traditional and contemporary designs
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {africanFashion.map((item, i) => (
-              <Card
-                key={i}
-                className="group cursor-pointer overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 animate-fadeIn"
-                style={{ animationDelay: `${i * 150}ms` }}
-              >
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-4 sm:p-6">
-                    <Button variant="secondary" className="rounded-full w-full text-sm sm:text-base">
-                      Shop Now
-                    </Button>
-                  </div>
+            {/* Right: visual mosaic */}
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { icon: <Receipt className="w-8 h-8" />, label: "Fast Checkout", color: "from-amber-500 to-orange-500", stat: "< 30s" },
+                { icon: <Package className="w-8 h-8" />, label: "Live Inventory", color: "from-orange-500 to-red-500", stat: "Real-time" },
+                { icon: <BarChart2 className="w-8 h-8" />, label: "Daily Reports", color: "from-yellow-500 to-amber-500", stat: "Automated" },
+                { icon: <Layers className="w-8 h-8" />, label: "Layaway Plans", color: "from-amber-600 to-yellow-500", stat: "Flexible" },
+              ].map((card, i) => (
+                <div
+                  key={i}
+                  className={`rounded-2xl bg-gradient-to-br ${card.color} p-6 text-white shadow-xl flex flex-col gap-2 ${i === 0 ? 'mt-6' : ''} ${i === 2 ? 'mt-6' : ''}`}
+                >
+                  {card.icon}
+                  <p className="font-semibold text-sm mt-2">{card.label}</p>
+                  <p className="text-2xl font-black">{card.stat}</p>
                 </div>
-                <CardContent className="pt-3 sm:pt-4 pb-3 sm:pb-4 px-4">
-                  <h3 className="text-base sm:text-lg font-semibold mb-1">{item.title}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-2">{item.description}</p>
-                  <p className="text-sm sm:text-base font-medium text-primary">{item.price}</p>
-                </CardContent>
-              </Card>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Baby Shop Section */}
-      <section id="baby-shop" className="py-12 sm:py-16 lg:py-24 bg-secondary/10 scroll-mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-16 animate-fadeIn">
-            <Badge variant="outline" className="mb-3 sm:mb-4 text-xs sm:text-sm">
-              <Baby className="w-3 h-3 mr-1" />
-              Baby Shop
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light mb-3 sm:mb-4">
-              Everything for Your <span className="font-semibold">Little One</span>
-            </h2>
-            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-              Safe, gentle, and adorable products for babies from newborn to toddler
-            </p>
-          </div>
+      {/* ── CTA ────────────────────────────────────────────────────── */}
+      <section className="py-20 lg:py-28 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-900 via-amber-800 to-yellow-900" />
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(251,191,36,0.4) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(251,191,36,0.4) 1px, transparent 1px)
+            `,
+            backgroundSize: '48px 48px'
+          }}
+        />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-amber-500/20 blur-[100px]" />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {babyProducts.map((item, i) => (
-              <Card
-                key={i}
-                className="group cursor-pointer overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 animate-fadeIn"
-                style={{ animationDelay: `${i * 150}ms` }}
-              >
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-4 sm:p-6">
-                    <Button variant="secondary" className="rounded-full w-full text-sm sm:text-base">
-                      Shop Now
-                    </Button>
-                  </div>
-                </div>
-                <CardContent className="pt-3 sm:pt-4 pb-3 sm:pb-4 px-4">
-                  <h3 className="text-base sm:text-lg font-semibold mb-1">{item.title}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-2">{item.description}</p>
-                  <p className="text-sm sm:text-base font-medium text-primary">{item.price}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Clothing Section */}
-      <section id="clothing" className="py-12 sm:py-16 lg:py-24 scroll-mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-16 animate-fadeIn">
-            <Badge variant="outline" className="mb-3 sm:mb-4 text-xs sm:text-sm">
-              Fashion for All
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light mb-3 sm:mb-4">
-              <span className="font-semibold">Clothing</span> for Everyone
-            </h2>
-            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-              Stylish and comfortable clothing for women, men, and kids
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {clothingCategories.map((item, i) => (
-              <Card
-                key={i}
-                className="group cursor-pointer overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 animate-fadeIn"
-                style={{ animationDelay: `${i * 150}ms` }}
-              >
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 className="text-2xl font-semibold mb-2">{item.title}</h3>
-                    <p className="text-sm text-gray-200 mb-3">{item.items}</p>
-                    <p className="text-base font-medium">{item.price}</p>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Bedding Section */}
-      <section id="bedding" className="py-12 sm:py-16 lg:py-24 bg-secondary/10 scroll-mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-16 animate-fadeIn">
-            <Badge variant="outline" className="mb-3 sm:mb-4 text-xs sm:text-sm">
-              <Bed className="w-3 h-3 mr-1" />
-              Premium Bedding
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light mb-3 sm:mb-4">
-              Luxury <span className="font-semibold">Bedding & Linens</span>
-            </h2>
-            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-              Transform your bedroom into a sanctuary with our premium bedding collection
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {beddingCollection.map((item, i) => (
-              <Card
-                key={i}
-                className="group cursor-pointer overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 animate-fadeIn"
-                style={{ animationDelay: `${i * 150}ms` }}
-              >
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-4 sm:p-6">
-                    <Button variant="secondary" className="rounded-full w-full text-sm sm:text-base">
-                      Shop Now
-                    </Button>
-                  </div>
-                </div>
-                <CardContent className="pt-3 sm:pt-4 pb-3 sm:pb-4 px-4">
-                  <h3 className="text-base sm:text-lg font-semibold mb-1">{item.title}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-2">{item.description}</p>
-                  <p className="text-sm sm:text-base font-medium text-primary">{item.price}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Perfumes Section */}
-      <section id="perfumes" className="py-12 sm:py-16 lg:py-24 scroll-mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-16 animate-fadeIn">
-            <Badge variant="outline" className="mb-3 sm:mb-4 text-xs sm:text-sm">
-              <Sparkles className="w-3 h-3 mr-1" />
-              Refillable Perfumes
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light mb-3 sm:mb-4">
-              Premium <span className="font-semibold">Fragrances</span>
-            </h2>
-            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-              Designer scents at affordable prices with our eco-friendly refill system
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {perfumeCollection.map((item, i) => (
-              <Card
-                key={i}
-                className="group cursor-pointer overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 animate-fadeIn"
-                style={{ animationDelay: `${i * 150}ms` }}
-              >
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-4 sm:p-6">
-                    <Button variant="secondary" className="rounded-full w-full text-sm sm:text-base">
-                      Shop Now
-                    </Button>
-                  </div>
-                </div>
-                <CardContent className="pt-3 sm:pt-4 pb-3 sm:pb-4 px-4">
-                  <h3 className="text-base sm:text-lg font-semibold mb-1">{item.title}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-2">{item.description}</p>
-                  <p className="text-sm sm:text-base font-medium text-primary">{item.price}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PART 4: FINAL SECTIONS - Why Choose Us, Testimonials, CTA, Footer */}
-
-      {/* Why Choose Us */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-16 animate-fadeIn">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light mb-3 sm:mb-4">
-              Why Choose <span className="font-semibold">Luxe Collections</span>
-            </h2>
-            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-              We&apos;re committed to providing the best shopping experience in Kenya
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {whyChooseUs.map((item, i) => (
-              <Card
-                key={i}
-                className="text-center border-none shadow-md hover:shadow-xl transition-all duration-300 animate-fadeIn"
-                style={{ animationDelay: `${i * 100}ms` }}
-              >
-                <CardContent className="pt-8 pb-8 px-6">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-primary text-primary-foreground rounded-full mb-4">
-                    {item.icon}
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-semibold mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section id="testimonials" className="py-12 sm:py-16 lg:py-24 bg-primary text-primary-foreground scroll-mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light mb-3 sm:mb-4">
-              What Our <span className="font-semibold">Customers Say</span>
-            </h2>
-            <p className="text-primary-foreground/80 text-base sm:text-lg">Trusted by families across Kenya</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {testimonials.map((testimonial, i) => (
-              <Card
-                key={i}
-                className="bg-primary-foreground/10 border-primary-foreground/20 backdrop-blur animate-fadeIn"
-                style={{ animationDelay: `${i * 150}ms` }}
-              >
-                <CardContent className="pt-6 sm:pt-8 pb-6 sm:pb-8 px-4 sm:px-6">
-                  <div className="flex justify-center mb-3 sm:mb-4">
-                    {[...Array(testimonial.rating)].map((_, j) => (
-                      <Star key={j} className="w-4 h-4 sm:w-5 sm:h-5 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-sm sm:text-base font-light mb-3 sm:mb-4 italic text-primary-foreground leading-relaxed">
-                    &ldquo;{testimonial.text}&rdquo;
-                  </p>
-                  <p className="text-primary-foreground font-semibold text-sm sm:text-base">{testimonial.name}</p>
-                  <p className="text-primary-foreground/70 text-xs sm:text-sm flex items-center justify-center gap-1 mt-1">
-                    <MapPin className="w-3 h-3" />
-                    {testimonial.location}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 dark:from-orange-950/30 dark:via-amber-950/20 dark:to-yellow-950/30">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light mb-4 sm:mb-6">
-            Ready to <span className="font-semibold">Shop?</span>
+        <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-3xl sm:text-5xl font-light text-white mb-6">
+            Ready to Run{' '}
+            <span className="font-extrabold bg-gradient-to-r from-amber-300 to-orange-300 bg-clip-text text-transparent">
+              Your Store Smarter?
+            </span>
           </h2>
-          <p className="text-base sm:text-xl text-muted-foreground mb-6 sm:mb-8">
-            Join thousands of satisfied customers across Kenya who trust Luxe Collections for quality products and excellent service
+          <p className="text-amber-100/80 text-lg mb-10">
+            Sign in to access your full dashboard — POS, inventory, analytics, customers, and more.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="rounded-full px-8 sm:px-10 hover:scale-105 transition-transform shadow-xl w-full sm:w-auto">
-              Start Shopping Now
-            </Button>
-            <Button size="lg" variant="outline" className="rounded-full px-8 sm:px-10 w-full sm:w-auto">
-              Contact Us
-            </Button>
+            <Link href="/dashboard">
+              <Button
+                size="lg"
+                className="rounded-full px-10 bg-white text-orange-900 hover:bg-amber-50 font-semibold hover:scale-105 transition-all shadow-2xl w-full sm:w-auto"
+              >
+                <LayoutDashboard className="w-4 h-4 mr-2" />
+                Go to Dashboard
+              </Button>
+            </Link>
+            <Link href="/pos">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full px-10 bg-white/10 backdrop-blur border-white/20 text-white hover:bg-white/20 w-full sm:w-auto"
+              >
+                <Monitor className="w-4 h-4 mr-2" />
+                Open POS Terminal
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t bg-secondary/20 py-8 sm:py-12">
+      {/* ── Footer ─────────────────────────────────────────────────── */}
+      <footer className="border-t bg-secondary/20 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-            {/* Brand */}
-            <div className="text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
-                <ShoppingBag className="w-6 h-6" />
-                <span className="text-xl sm:text-2xl font-light tracking-wider">
-                  LUXE <span className="font-semibold">COLLECTIONS</span>
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow">
+                  <ShoppingBag className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-xl font-light tracking-wider">
+                  LUXE <span className="font-bold">POS</span>
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Kenya&apos;s premier destination for African fashion, baby essentials, bedding, and luxury perfumes.
+              <p className="text-sm text-muted-foreground">
+                The complete point-of-sale system for Luxe Collections Kenya — inventory, sales, customers, and analytics in one place.
               </p>
             </div>
 
-            {/* Quick Links */}
-            <div className="text-center md:text-left">
-              <h4 className="font-semibold mb-4">Quick Links</h4>
+            <div>
+              <h4 className="font-semibold mb-4 text-sm">Modules</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#african-fashion" className="text-muted-foreground hover:text-foreground transition-colors">African Fashion</a></li>
-                <li><a href="#baby-shop" className="text-muted-foreground hover:text-foreground transition-colors">Baby Shop</a></li>
-                <li><a href="#bedding" className="text-muted-foreground hover:text-foreground transition-colors">Bedding</a></li>
-                <li><a href="#perfumes" className="text-muted-foreground hover:text-foreground transition-colors">Perfumes</a></li>
+                <li><Link href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">Dashboard</Link></li>
+                <li><Link href="/pos" className="text-muted-foreground hover:text-foreground transition-colors">POS Terminal</Link></li>
+                <li><Link href="/inventory" className="text-muted-foreground hover:text-foreground transition-colors">Inventory</Link></li>
+                <li><Link href="/analytics" className="text-muted-foreground hover:text-foreground transition-colors">Analytics</Link></li>
               </ul>
             </div>
 
-            {/* Customer Service */}
-            <div className="text-center md:text-left">
-              <h4 className="font-semibold mb-4">Customer Service</h4>
+            <div>
+              <h4 className="font-semibold mb-4 text-sm">Operations</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Shipping Info</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Returns Policy</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Size Guide</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">FAQs</a></li>
+                <li><Link href="/customers" className="text-muted-foreground hover:text-foreground transition-colors">Customers</Link></li>
+                <li><Link href="/layaways" className="text-muted-foreground hover:text-foreground transition-colors">Layaways</Link></li>
+                <li><Link href="/purchase-orders" className="text-muted-foreground hover:text-foreground transition-colors">Purchase Orders</Link></li>
+                <li><Link href="/suppliers" className="text-muted-foreground hover:text-foreground transition-colors">Suppliers</Link></li>
               </ul>
             </div>
 
-            {/* Contact */}
-            <div className="text-center md:text-left">
-              <h4 className="font-semibold mb-4">Contact Us</h4>
+            <div>
+              <h4 className="font-semibold mb-4 text-sm">Contact</h4>
               <ul className="space-y-3 text-sm">
-                <li className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground">
-                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="w-4 h-4 shrink-0" />
                   <span>Nairobi, Kenya</span>
                 </li>
-                <li className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground">
-                  <Phone className="w-4 h-4 flex-shrink-0" />
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Phone className="w-4 h-4 shrink-0" />
                   <span>+254 XXX XXX XXX</span>
                 </li>
-                <li className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground">
-                  <Mail className="w-4 h-4 flex-shrink-0" />
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Mail className="w-4 h-4 shrink-0" />
                   <span>info@luxecollections.ke</span>
                 </li>
               </ul>
@@ -821,15 +498,10 @@ export default function LuxeCollections() {
           <Separator className="mb-6" />
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
-              © 2024 Luxe Collections Kenya. All rights reserved.
+            <p className="text-xs text-muted-foreground">
+              © 2025 Luxe Collections Kenya. Internal POS System. All rights reserved.
             </p>
-            <div className="flex items-center gap-4 sm:gap-6">
-              <div className="flex gap-4 sm:gap-6 text-xs sm:text-sm">
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Privacy</a>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Terms</a>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Cookies</a>
-              </div>
+            <div className="flex items-center gap-4">
               <ThemeSwitcher />
             </div>
           </div>
