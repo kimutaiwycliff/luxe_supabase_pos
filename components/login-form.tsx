@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TillLoader } from "@/components/ui/till-loader";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function LoginForm({
@@ -25,8 +24,6 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
@@ -39,11 +36,11 @@ export function LoginForm({
         password,
       });
       if (error) throw error;
-      router.refresh();
-      router.push("/dashboard");
+      // Full navigation keeps the TillLoader visible until the new page loads.
+      // router.push() would kill isLoading before the navigation completes.
+      window.location.replace("/dashboard");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
-    } finally {
       setIsLoading(false);
     }
   };
