@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TillLoader } from "@/components/ui/till-loader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -49,6 +50,7 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      {isLoading && <TillLoader />}
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
