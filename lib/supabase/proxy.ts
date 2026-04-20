@@ -47,13 +47,24 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
+  const isAuthPage =
+    request.nextUrl.pathname.startsWith("/auth/login") ||
+    request.nextUrl.pathname.startsWith("/auth/sign-up");
+
+  // Authenticated user trying to access login/sign-up → send to dashboard
+  if (user && isAuthPage) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  // Unauthenticated user trying to access a protected page → send to login
   if (
-    request.nextUrl.pathname !== "/" &&
     !user &&
+    request.nextUrl.pathname !== "/" &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/auth")
   ) {
-    // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
