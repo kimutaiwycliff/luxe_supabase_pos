@@ -72,7 +72,8 @@ export async function GET(request: Request) {
 
     // ── Sales analytics ─────────────────────────────────────────────────────
     const calcMetrics = (orders: typeof currentOrdersRes.data) => {
-      let revenue = 0, cost = 0, count = orders?.length ?? 0
+      let revenue = 0, cost = 0
+      const count = orders?.length ?? 0
       orders?.forEach((o: any) => {
         if (o.status === "completed") revenue += o.total_amount ?? 0
         else if (o.status === "layaway") revenue += o.paid_amount ?? 0
