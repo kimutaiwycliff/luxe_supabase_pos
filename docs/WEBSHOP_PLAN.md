@@ -43,7 +43,9 @@ webshop proxy/middleware gates only `/account/*` — the storefront is fully pub
 |---|---|
 | Framework | Next.js 16 (App Router, proxy.ts middleware) |
 | Language | TypeScript 5 |
-| Styling | Tailwind CSS + shadcn/ui (separate design tokens from POS) |
+| Styling | Tailwind CSS v4 + shadcn/ui (separate design tokens from POS) |
+| Theme | `next-themes` — system-aware dark/light toggle, `class` strategy |
+| Design skills | `frontend-design` + `ui-ux-pro-max` applied to every UI phase |
 | Package manager | pnpm |
 | Auth | Supabase Auth — Magic Link (Email OTP) |
 | Cart state | Zustand + localStorage |
@@ -57,57 +59,435 @@ webshop proxy/middleware gates only `/account/*` — the storefront is fully pub
 
 ---
 
+## Design System
+
+> Generated with `ui-ux-pro-max` skill (`frontend-design` + `ui-ux-pro-max`).
+> Every UI phase must follow these tokens — no ad-hoc hex values in components.
+
+### Aesthetic Direction
+
+**Style:** Liquid Glass — flowing translucent surfaces, morphing elements, fluid 400–600 ms curves, dynamic `backdrop-filter` blur. Premium, editorial, unforgettable.
+
+**Differentiation:** The one thing visitors remember — layered glass cards floating over rich dark/warm-stone backgrounds with a persistent gold accent thread running from the navbar badge to the checkout CTA.
+
+---
+
+### Typography
+
+| Role | Font | Weights |
+|---|---|---|
+| Display / Heading | **Cormorant** (serif) | 400 500 600 700 |
+| Body / UI | **Montserrat** (sans-serif) | 300 400 500 600 700 |
+
+```css
+/* globals.css */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
+```
+
+```ts
+// tailwind.config.ts
+fontFamily: {
+  serif: ['Cormorant', 'serif'],
+  sans:  ['Montserrat', 'sans-serif'],
+}
+```
+
+**Rules:**
+- Page titles, product names, section headings → `font-serif`
+- All body copy, labels, buttons, nav → `font-sans`
+- Minimum body size: 16 px (avoids iOS auto-zoom)
+- Line-height: 1.5–1.75 for body; tight (1.1–1.2) for display headings
+
+---
+
+### Color Tokens — Light Mode
+
+| Token (CSS var) | Hex | Usage |
+|---|---|---|
+| `--background` | `#FAFAF9` | Page background (warm off-white) |
+| `--foreground` | `#0C0A09` | Primary text |
+| `--card` | `#FFFFFF` | Card surfaces |
+| `--card-foreground` | `#0C0A09` | Text on cards |
+| `--primary` | `#1C1917` | Primary actions, navbar |
+| `--primary-foreground` | `#FFFFFF` | Text on primary |
+| `--secondary` | `#44403C` | Secondary buttons, icons |
+| `--secondary-foreground` | `#FFFFFF` | Text on secondary |
+| `--accent` | `#A16207` | Gold — badges, prices, CTAs, highlights |
+| `--accent-foreground` | `#FFFFFF` | Text on accent |
+| `--muted` | `#E8ECF0` | Skeleton loaders, dividers |
+| `--muted-foreground` | `#64748B` | Placeholder text, captions |
+| `--border` | `#D6D3D1` | Card borders, input outlines |
+| `--destructive` | `#DC2626` | Error states, delete actions |
+| `--ring` | `#1C1917` | Focus rings |
+
+### Color Tokens — Dark Mode
+
+| Token (CSS var) | Hex | Usage |
+|---|---|---|
+| `--background` | `#0C0A09` | Page background (near-black warm) |
+| `--foreground` | `#FAFAF9` | Primary text |
+| `--card` | `#1C1917` | Card surfaces |
+| `--card-foreground` | `#F5F5F4` | Text on cards |
+| `--primary` | `#E7E5E4` | Primary actions (inverted) |
+| `--primary-foreground` | `#0C0A09` | Text on primary |
+| `--secondary` | `#292524` | Secondary buttons |
+| `--secondary-foreground` | `#E7E5E4` | Text on secondary |
+| `--accent` | `#CA8A04` | Gold — unchanged in dark (brighter) |
+| `--accent-foreground` | `#0C0A09` | Text on accent |
+| `--muted` | `#292524` | Subtle backgrounds |
+| `--muted-foreground` | `#A8A29E` | Captions, placeholders |
+| `--border` | `#44403C` | Borders (warm dark) |
+| `--destructive` | `#EF4444` | Errors |
+| `--ring` | `#A16207` | Gold focus ring in dark mode |
+
+> **Rule:** Never use raw hex values in components — always reference `hsl(var(--token))` via shadcn's convention.
+
+---
+
+### Dark / Light Mode Setup
+
+```tsx
+// app/layout.tsx — wrap with ThemeProvider
+import { ThemeProvider } from 'next-themes'
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  )
+}
+```
+
+- Strategy: `attribute="class"` — Tailwind's `dark:` variant
+- Default: `"system"` — respects OS preference on first visit
+- Toggle component: `components/shop/theme-toggle.tsx` — sun/moon icon in navbar
+- Persistence: `next-themes` stores in `localStorage` automatically
+
+---
+
+### shadcn/ui Component List
+
+Install during Task 1.1. All components use the Luxe design tokens above.
+
+```bash
+pnpm dlx shadcn@latest add \
+  button card input label badge separator \
+  sheet dialog toast skeleton \
+  dropdown-menu navigation-menu \
+  select checkbox radio-group \
+  tabs accordion \
+  avatar breadcrumb
+```
+
+Additional patterns:
+- **ProductCard** — glass card with image, name (`font-serif`), KES price in `--accent`, stock badge
+- **CartDrawer** — `Sheet` slide-over, items list, subtotal, gold CTA button
+- **ThemeToggle** — icon-only button with `aria-label`, sun/moon swap animation
+- **NavBar** — sticky, `backdrop-blur`, transitions to glass on scroll
+- **VariantPicker** — `RadioGroup` styled as pill buttons
+- **MpesaStep** — phone input + countdown ring animation
+- **SkeletonCard** — `Skeleton` placeholder matching ProductCard dimensions
+
+---
+
+### Motion & Animation Rules
+
+| Type | Duration | Easing |
+|---|---|---|
+| Micro-interactions (hover, badge) | 150 ms | `ease-out` |
+| Page elements, card reveals | 300 ms | `ease-out` |
+| Fluid glass morphing, sheet slides | 400–600 ms | cubic-bezier spring |
+| Staggered grid entrance | 30–50 ms per item offset | `ease-out` |
+
+- Use `transform` and `opacity` only — never animate `width`/`height`
+- `prefers-reduced-motion`: wrap all non-essential animations in `@media (prefers-reduced-motion: no-preference)`
+- Page load: stagger product cards with `animation-delay` (30 ms × index)
+- Cart icon: scale pulse (0.95 → 1.05 → 1) when item count increments
+
+---
+
+### Accessibility Baseline
+
+- Contrast: minimum 4.5:1 for body text (both themes verified)
+- Focus rings: 2 px, `--ring` token, visible on all interactive elements
+- Touch targets: minimum 44 × 44 px
+- Icon-only buttons: always include `aria-label`
+- No emoji as icons — use Lucide icons exclusively
+- `aria-live="polite"` on cart count, toast notifications, M-Pesa status
+- Form errors: `role="alert"`, positioned below the offending field
+
+---
+
+### Responsive Breakpoints
+
+| Breakpoint | Width | Notes |
+|---|---|---|
+| Mobile | 375 px | Design-first target |
+| Tablet | 768 px | 2-col product grid |
+| Laptop | 1024 px | 3-col grid, sidebar filters |
+| Desktop | 1440 px | 4-col grid, max-w-7xl content |
+
+---
+
+## Component Architecture & Caching Strategy
+
+### Guiding Principle
+
+**Pages are thin composers. Components own their data.**
+
+Every UI concern is a discrete Server Component that fetches and caches its own data using the Next.js 16 `use cache` directive. Pages compose these components inside `<Suspense>` boundaries — no top-level data waterfalls, no monolithic page fetches.
+
+Client Components (`'use client'`) are used only for interactivity: cart state, theme toggle, quantity pickers, payment polling. Everything else is a Server Component.
+
+---
+
+### Next.js 16 Cache Directives
+
+> Next.js 16 introduces first-class `use cache` as a stable directive (not experimental). It replaces the old `export const revalidate` pattern and enables **per-component** cache lifetimes, tagged invalidation, and streaming composition.
+
+#### `use cache` — component-level caching
+
+```tsx
+// components/shop/featured-products.tsx
+import { cacheLife, cacheTag } from 'next/cache'
+
+async function FeaturedProducts() {
+  'use cache'
+  cacheLife('hours')           // named profile: revalidates after 1 hour
+  cacheTag('products', 'featured')  // targeted invalidation via revalidateTag()
+
+  const products = await fetchFeaturedProducts()
+  return <ProductGrid products={products} />
+}
+```
+
+#### `cacheLife()` — named TTL profiles (configure in `next.config.ts`)
+
+| Profile | `stale` | `revalidate` | `expire` | Used by |
+|---|---|---|---|---|
+| `'seconds'` | 0 s | 30 s | 60 s | Live inventory badge |
+| `'minutes'` | 0 s | 5 min | 10 min | Product detail shell, category page |
+| `'hours'` | 0 s | 1 h | 2 h | Homepage hero, featured products |
+| `'days'` | 0 s | 24 h | 48 h | Static category list, sitemap data |
+
+```ts
+// next.config.ts
+const nextConfig = {
+  experimental: {
+    cacheHandlers: {},
+  },
+  cacheLife: {
+    seconds: { stale: 0,   revalidate: 30,    expire: 60     },
+    minutes: { stale: 0,   revalidate: 300,   expire: 600    },
+    hours:   { stale: 0,   revalidate: 3600,  expire: 7200   },
+    days:    { stale: 0,   revalidate: 86400, expire: 172800 },
+  },
+}
+```
+
+#### `cacheTag()` + `revalidateTag()` — on-demand invalidation
+
+Every cached component tags itself. The `/api/revalidate` route calls `revalidateTag('products')` when the POS updates a product — all components sharing that tag re-fetch on the next request.
+
+```ts
+// Tagging convention
+cacheTag('products')              // all product data
+cacheTag('products', slug)        // specific product
+cacheTag('categories')            // category list/nav
+cacheTag('inventory', productId)  // live stock only
+```
+
+---
+
+### Component Boundary Map
+
+| Component | Directive | `cacheLife` | `cacheTag` | Notes |
+|---|---|---|---|---|
+| `<FeaturedProducts>` | `use cache` | `'hours'` | `products`, `featured` | Composed into homepage |
+| `<CategoryNav>` | `use cache` | `'days'` | `categories` | In layout — shared across all pages |
+| `<ProductGrid>` | `use cache` | `'minutes'` | `products`, `categories` | Listing + category pages |
+| `<ProductDetail>` | `use cache` | `'minutes'` | `products`, slug | Static shell: name, desc, images |
+| `<ProductAvailability>` | Server Component, `cache: 'no-store'` | — | — | Live qty — never cached |
+| `<RelatedProducts>` | `use cache` | `'hours'` | `products`, category | Below-fold; lazy Suspense |
+| `<CategoryCards>` | `use cache` | `'days'` | `categories` | Homepage category grid |
+| `<OrderList>` | Server Component, no cache | — | — | Auth-gated, always fresh |
+| `<Navbar>` | Server Component | `'days'` | `categories` | Category links cached; cart count is client |
+| `<CartDrawer>` | `'use client'` | — | — | Zustand; pure client |
+| `<ThemeToggle>` | `'use client'` | — | — | Pure client |
+| `<VariantPicker>` | `'use client'` | — | — | Interactive; reads server-fetched options |
+| `<MpesaStep>` | `'use client'` | — | — | Polling, timers |
+| `<CheckoutForm>` | `'use client'` | — | — | Multi-step form state |
+
+---
+
+### Suspense + Streaming Pattern
+
+Pages stream in parallel component subtrees. Each cached or async Server Component is wrapped in `<Suspense>` with a matching skeleton:
+
+```tsx
+// app/(shop)/page.tsx  — homepage
+export default function HomePage() {
+  return (
+    <>
+      <HeroSection />                          {/* static, no fetch */}
+
+      <Suspense fallback={<ProductGridSkeleton count={8} />}>
+        <FeaturedProducts />                   {/* use cache + cacheLife('hours') */}
+      </Suspense>
+
+      <Suspense fallback={<CategoryCardsSkeleton />}>
+        <CategoryCards />                      {/* use cache + cacheLife('days') */}
+      </Suspense>
+    </>
+  )
+}
+```
+
+```tsx
+// app/(shop)/products/[slug]/page.tsx
+export default function ProductPage({ params }) {
+  return (
+    <>
+      <Suspense fallback={<ProductDetailSkeleton />}>
+        <ProductDetail slug={params.slug} />   {/* use cache + cacheLife('minutes') */}
+      </Suspense>
+
+      <Suspense fallback={<StockBadgeSkeleton />}>
+        <ProductAvailability slug={params.slug} />  {/* no-store — always live */}
+      </Suspense>
+
+      <Suspense fallback={<ProductGridSkeleton count={4} />}>
+        <RelatedProducts slug={params.slug} />  {/* use cache + cacheLife('hours') */}
+      </Suspense>
+    </>
+  )
+}
+```
+
+---
+
+### shadcn Component → Webshop Component Map
+
+Each shadcn primitive is extended into a domain component. No page imports shadcn directly — always via the domain wrapper.
+
+| shadcn Primitive | Domain Component | Location |
+|---|---|---|
+| `Card`, `CardContent` | `ProductCard` | `components/shop/product-card.tsx` |
+| `Card`, `Skeleton` | `SkeletonCard` | `components/shop/skeleton-card.tsx` |
+| `Sheet` | `CartDrawer` | `components/shop/cart-drawer.tsx` |
+| `NavigationMenu` | `Navbar`, `CategoryNav` | `components/shop/navbar.tsx` |
+| `Badge` | `StockBadge`, `OrderStatusBadge` | `components/shop/badges.tsx` |
+| `Button` | `AddToCartButton`, `CheckoutButton` | `components/shop/buttons.tsx` |
+| `Dialog` | `QuickViewModal` | `components/shop/quick-view-modal.tsx` |
+| `RadioGroup` | `VariantPicker` | `components/shop/variant-picker.tsx` |
+| `Tabs` | `PaymentTabs` | `components/checkout/payment-tabs.tsx` |
+| `Input`, `Label` | `CheckoutField` | `components/checkout/checkout-field.tsx` |
+| `Skeleton` (multiple) | `ProductDetailSkeleton`, `ProductGridSkeleton`, `StockBadgeSkeleton` | `components/shop/skeletons.tsx` |
+| `Avatar` | `AccountAvatar` | `components/account/account-avatar.tsx` |
+| `Breadcrumb` | `ProductBreadcrumb` | `components/shop/product-breadcrumb.tsx` |
+| `Toast` / `Sonner` | `useCartToast`, `usePriceChangedToast` | `lib/hooks/use-toasts.ts` |
+
+---
+
 ## Folder Structure
 
 ```
 luxe-webshop/
 ├── app/
 │   ├── (shop)/                         # Public — no auth required
-│   │   ├── layout.tsx                  # Navbar, footer, cart drawer
-│   │   ├── page.tsx                    # Homepage (ISR 1h)
+│   │   ├── layout.tsx                  # Navbar, footer, CartDrawer, TanStackQueryProvider
+│   │   ├── page.tsx                    # Composer: HeroSection + FeaturedProducts + CategoryCards
 │   │   ├── products/
-│   │   │   ├── page.tsx                # Catalogue (ISR 5min)
-│   │   │   └── [slug]/page.tsx         # Product detail (ISR 5min + live qty)
-│   │   ├── categories/[slug]/page.tsx
-│   │   ├── search/page.tsx             # Algolia (SSR)
-│   │   ├── cart/page.tsx               # CSR (Zustand)
+│   │   │   ├── page.tsx                # Composer: ProductGrid (use cache, 'minutes')
+│   │   │   └── [slug]/
+│   │   │       └── page.tsx            # Composer: ProductDetail + ProductAvailability + RelatedProducts
+│   │   ├── categories/[slug]/page.tsx  # Composer: ProductGrid filtered by category
+│   │   ├── search/page.tsx             # Algolia InstantSearch (CSR)
+│   │   ├── cart/page.tsx               # CSR — Zustand only
 │   │   └── checkout/
-│   │       ├── page.tsx                # Contact + shipping
-│   │       ├── payment/page.tsx        # M-Pesa / Card
-│   │       └── confirmation/page.tsx
+│   │       ├── page.tsx                # CheckoutForm (CSR, multi-step)
+│   │       ├── payment/page.tsx        # PaymentTabs: MpesaStep | CardStep
+│   │       └── confirmation/page.tsx   # Server — reads order by ID
 │   ├── (account)/                      # Auth-gated
-│   │   ├── account/page.tsx
-│   │   └── account/orders/[id]/page.tsx
+│   │   ├── account/page.tsx            # AccountProfile
+│   │   ├── account/orders/page.tsx     # OrderList
+│   │   └── account/orders/[id]/page.tsx # OrderDetail
 │   ├── auth/
-│   │   ├── login/page.tsx              # Magic link request form
-│   │   └── callback/route.ts           # Supabase Auth code exchange
+│   │   ├── login/page.tsx              # Magic link form
+│   │   └── callback/route.ts           # Supabase code exchange
 │   ├── api/
 │   │   ├── mpesa/stk-push/route.ts
 │   │   ├── mpesa/callback/route.ts
 │   │   ├── flutterwave/webhook/route.ts
 │   │   ├── orders/route.ts
 │   │   ├── orders/[id]/payment-status/route.ts
+│   │   ├── orders/dispatch-notify/route.ts
 │   │   ├── cart/abandon/route.ts       # Hourly cron
-│   │   └── revalidate/route.ts         # On-demand ISR
+│   │   └── revalidate/route.ts         # revalidateTag() on product/category update
 │   ├── sitemap.ts
 │   └── robots.ts
 ├── components/
-│   ├── ui/                             # shadcn/ui primitives
-│   ├── shop/                           # product-card, cart-drawer, etc.
-│   └── checkout/                       # mpesa-step, card-step, etc.
+│   ├── ui/                             # shadcn/ui primitives (auto-generated, never edit)
+│   ├── shop/
+│   │   ├── navbar.tsx                  # Server + client islands
+│   │   ├── category-nav.tsx            # use cache, cacheLife('days')
+│   │   ├── footer.tsx
+│   │   ├── theme-toggle.tsx            # 'use client'
+│   │   ├── cart-drawer.tsx             # 'use client' — Sheet + Zustand
+│   │   ├── product-card.tsx            # Server — Card primitive
+│   │   ├── skeleton-card.tsx           # Skeleton primitive
+│   │   ├── skeletons.tsx               # All skeleton variants
+│   │   ├── product-breadcrumb.tsx      # Breadcrumb primitive
+│   │   ├── stock-badge.tsx             # Badge primitive
+│   │   ├── variant-picker.tsx          # 'use client' — RadioGroup
+│   │   ├── quick-view-modal.tsx        # 'use client' — Dialog
+│   │   ├── add-to-cart-button.tsx      # 'use client'
+│   │   ├── featured-products.tsx       # Server — use cache
+│   │   ├── product-detail.tsx          # Server — use cache
+│   │   ├── product-availability.tsx    # Server — no-store
+│   │   ├── product-grid.tsx            # Server — use cache
+│   │   ├── related-products.tsx        # Server — use cache
+│   │   ├── category-cards.tsx          # Server — use cache
+│   │   └── hero-section.tsx            # Static Server Component
+│   ├── checkout/
+│   │   ├── checkout-form.tsx           # 'use client' — multi-step
+│   │   ├── checkout-field.tsx          # Input + Label wrapper
+│   │   ├── payment-tabs.tsx            # Tabs: MpesaStep | CardStep
+│   │   ├── mpesa-step.tsx              # 'use client' — polling + countdown
+│   │   └── card-step.tsx               # 'use client' — Flutterwave Inline
+│   └── account/
+│       ├── account-avatar.tsx          # Avatar primitive
+│       ├── account-profile.tsx         # Server
+│       ├── order-list.tsx              # Server — no cache (auth-gated)
+│       └── order-detail.tsx            # Server — no cache
 ├── lib/
 │   ├── supabase/client.ts              # Browser (anon key)
 │   ├── supabase/server.ts              # Server (anon key + cookie handler)
 │   ├── supabase/admin.ts               # Service role (webhooks only)
-│   ├── store/cart.ts                   # Zustand cart
-│   ├── actions/                        # products, orders, auth, categories
+│   ├── store/cart.ts                   # Zustand + localStorage persist
+│   ├── actions/
+│   │   ├── products.ts                 # fetchProduct, fetchProducts, fetchFeatured
+│   │   ├── categories.ts               # fetchCategories
+│   │   ├── orders.ts                   # createWebshopOrder, fetchOrderById
+│   │   └── auth.ts                     # signInWithOtp, signOut
+│   ├── hooks/
+│   │   ├── use-cart.ts                 # Zustand selector hooks
+│   │   └── use-toasts.ts               # Cart + price-change toast helpers
 │   ├── payments/mpesa.ts
 │   ├── payments/flutterwave.ts
 │   ├── email/resend.ts
 │   ├── email/templates/
+│   │   ├── order-confirmation.tsx
+│   │   ├── dispatch-notification.tsx
+│   │   └── abandoned-cart.tsx
 │   └── types.ts
-├── proxy.ts                            # Next.js 16 middleware (gates /account/*)
-├── next.config.ts
+├── proxy.ts                            # Next.js 16 Fluid compute middleware
+├── next.config.ts                      # cacheLife profiles
 ├── vercel.json
 └── .env.local
 ```
@@ -121,9 +501,16 @@ luxe-webshop/
 **Subtasks**
 - [ ] `pnpm create next-app@latest luxe-webshop --typescript --tailwind --app --no-src-dir`
 - [ ] Install core deps: `@supabase/ssr @supabase/supabase-js zustand @tanstack/react-query`
-- [ ] Install shadcn: `pnpm dlx shadcn@latest init` — use same config as POS (slate base, CSS variables)
-- [ ] Add essential shadcn components: button, card, input, label, badge, separator, sheet, dialog, toast
-- [ ] Configure `next.config.ts` — `remotePatterns` for Supabase Storage hostname, no `unoptimized`
+- [ ] Install theme support: `next-themes`
+- [ ] Install shadcn: `pnpm dlx shadcn@latest init` — **Luxe tokens** (stone base, CSS variables, dark mode `class`) — NOT the POS slate config
+- [ ] Add shadcn components (see Design System section for full list): `button card input label badge separator sheet dialog toast skeleton dropdown-menu navigation-menu select checkbox radio-group tabs accordion avatar breadcrumb`
+- [ ] Add Google Fonts import (`Cormorant` + `Montserrat`) to `app/globals.css`
+- [ ] Extend `tailwind.config.ts` with `fontFamily: { serif: ['Cormorant'], sans: ['Montserrat'] }`
+- [ ] Add all CSS color tokens (light + dark) to `app/globals.css` using `hsl(...)` format per shadcn convention
+- [ ] Wrap `app/layout.tsx` with `ThemeProvider` (attribute="class", defaultTheme="system")
+- [ ] Create `components/shop/theme-toggle.tsx` — sun/moon toggle button for the navbar
+- [ ] Apply `frontend-design` + `ui-ux-pro-max` skills when building any component or page (Liquid Glass aesthetic, Cormorant/Montserrat, gold accent)
+- [ ] Configure `next.config.ts` — `remotePatterns` for Supabase Storage hostname, no `unoptimized`; add `cacheLife` profiles (`seconds`, `minutes`, `hours`, `days`)
 - [ ] Create `proxy.ts` at root — gates `/account/*` only, allows all other paths
 - [ ] Copy `lib/supabase/client.ts`, `server.ts`, `admin.ts` from POS and adapt (anon key, not publishable key)
 - [ ] Copy `lib/types.ts` from POS as base, extend with `WebshopOrder`, `CartItem`, `AbandonedCart`
@@ -137,6 +524,12 @@ luxe-webshop/
 - [ ] `curl localhost:3000/products` returns 200 (public, no redirect)
 - [ ] TypeScript: `npx tsc --noEmit` exits 0
 - [ ] Supabase client can query `public_products` view from a test script
+- [ ] Dark mode toggle switches theme and persists across page refresh (localStorage)
+- [ ] All shadcn components render correctly in both light and dark mode with no raw hex overrides
+- [ ] Cormorant and Montserrat fonts load and apply (check in DevTools → Network → Fonts)
+- [ ] Contrast check: primary text passes 4.5:1 in both themes
+- [ ] `next.config.ts` `cacheLife` profiles present: `seconds`, `minutes`, `hours`, `days`
+- [ ] A component with `use cache` + `cacheLife('minutes')` renders without errors in dev mode
 
 ---
 
@@ -383,12 +776,17 @@ $$ LANGUAGE plpgsql;
 
 ### Task 3.1 — Layout (navbar, footer, cart drawer)
 
+> **Design:** Apply Liquid Glass aesthetic. Navbar uses `backdrop-blur` + semi-transparent background on scroll. Gold (`--accent`) for cart badge and active nav states. Theme toggle in navbar top-right.
+
 **Subtasks**
-- [ ] `components/shop/navbar.tsx` — logo, category nav, search icon, cart icon with item count badge, account icon
-- [ ] Cart icon opens a `Sheet` (slide-over) showing cart items from Zustand store
-- [ ] `components/shop/footer.tsx` — links, contact, copyright
+- [ ] `components/shop/navbar.tsx` — logo (`font-serif`), category nav, search icon, cart icon with gold item-count badge, account icon, `ThemeToggle`
+- [ ] Navbar: sticky, transparent at top → `backdrop-blur-md bg-background/80` on scroll (scroll event listener)
+- [ ] Cart icon opens a `Sheet` (slide-over) showing cart items from Zustand store; gold "Checkout" CTA button
+- [ ] `components/shop/footer.tsx` — links, contact, copyright; Cormorant brand name, Montserrat body
 - [ ] `components/shop/category-nav.tsx` — fetches categories from `public_products` JOIN
 - [ ] `app/(shop)/layout.tsx` — wraps all shop pages in navbar + footer + cart drawer + `TanStackQueryProvider`
+- [ ] Cart item count badge: scale pulse animation (0.95 → 1.05 → 1, 150 ms) on increment
+- [ ] All Lucide icons — no emoji; `aria-label` on every icon-only button
 
 **Tests**
 - [ ] Navbar renders on all shop pages
@@ -401,11 +799,14 @@ $$ LANGUAGE plpgsql;
 
 ### Task 3.2 — Homepage
 
+> **Design:** Full-bleed hero with editorial typography (`font-serif` display headline), glass-card featured products, staggered entrance animations (30 ms × index delay).
+
 **Subtasks**
-- [ ] Hero section with brand imagery and CTA
-- [ ] Featured products grid — fetches `SELECT * FROM public_products WHERE is_featured = true LIMIT 8`
-- [ ] Category cards grid — links to `/categories/[slug]`
+- [ ] Hero section — full-bleed image, `font-serif` display headline, gold accent CTA button; `priority` prop on hero image
+- [ ] Featured products grid — fetches `SELECT * FROM public_products WHERE is_featured = true LIMIT 8`; staggered card entrance (CSS `animation-delay`)
+- [ ] Category cards grid — glass-morphism cards with `backdrop-blur`, links to `/categories/[slug]`
 - [ ] `export const revalidate = 3600` (ISR — 1 hour)
+- [ ] All images: explicit `width`/`height` or `aspect-ratio` to prevent CLS
 
 **Tests**
 - [ ] Page returns 200 and renders without errors
@@ -418,13 +819,16 @@ $$ LANGUAGE plpgsql;
 
 ### Task 3.3 — Product listing page
 
+> **Design:** `ProductCard` uses glass border (`border border-border/60 backdrop-blur-sm`), product name in `font-serif`, KES price in `--accent` color, stock badge as shadcn `Badge`. Skeleton loader matches card dimensions.
+
 **Subtasks**
 - [ ] `app/(shop)/products/page.tsx` — grid of all active products
 - [ ] Pagination (offset-based, 24 per page)
 - [ ] Filter by category (query param `?category=slug`)
 - [ ] Filter by price range (query params `?min=&max=`)
 - [ ] Sort: newest, price low-high, price high-low
-- [ ] `components/shop/product-card.tsx` — image, name, price, stock badge
+- [ ] `components/shop/product-card.tsx` — image with `aspect-ratio: 4/5`, `font-serif` name, gold KES price, `Badge` for stock status; hover: scale(1.02) + shadow lift (300 ms ease-out)
+- [ ] `components/shop/skeleton-card.tsx` — `Skeleton` primitive matching ProductCard layout (prevents CLS)
 - [ ] `export const revalidate = 300` (ISR — 5 minutes)
 
 **Tests**
@@ -683,17 +1087,19 @@ $$ LANGUAGE plpgsql;
 
 ---
 
-### Task 7.2 — ISR on-demand revalidation
+### Task 7.2 — On-demand cache invalidation
 
 **Subtasks**
-- [ ] `app/api/revalidate/route.ts` — verifies `REVALIDATE_SECRET` header, calls `revalidatePath('/products/[slug]')`
-- [ ] Supabase Dashboard → Database Webhooks → `products` table UPDATE → POST to webshop `/api/revalidate`
+- [ ] `app/api/revalidate/route.ts` — verifies `REVALIDATE_SECRET` header; calls `revalidateTag('products')` and `revalidateTag(slug)` for targeted invalidation (replaces `revalidatePath` — tags are the Next.js 16 preferred mechanism)
+- [ ] Supabase Dashboard → Database Webhooks → `products` table UPDATE → POST to webshop `/api/revalidate` with `{ slug, tags: ['products'] }`
+- [ ] Same webhook for `categories` UPDATE → `revalidateTag('categories')`
 - [ ] Test by updating a product in the POS and checking the webshop cache is busted within 5 seconds
 
 **Tests**
 - [ ] Route rejects requests without valid `REVALIDATE_SECRET` header
-- [ ] Updating a product in POS → webshop product page shows updated data within 5 seconds
+- [ ] Updating a product in POS → `FeaturedProducts`, `ProductDetail`, and `ProductGrid` components all reflect updated data within 5 seconds (tag propagation confirmed)
 - [ ] Revalidation does not crash if slug doesn't exist
+- [ ] `CategoryNav` re-fetches after a category is updated (confirms `revalidateTag('categories')` works)
 
 ---
 
@@ -817,9 +1223,9 @@ DISPATCH_WEBHOOK_SECRET=
 
 | Phase | Gate condition before moving on |
 |---|---|
-| 1 | Build passes, all SQL tests pass, slugs are clean |
+| 1 | Build passes, all SQL tests pass, slugs are clean; dark/light toggle works; Cormorant + Montserrat load; contrast 4.5:1 both themes |
 | 2 | Full magic link flow works end-to-end, `/account` is gated |
-| 3 | All storefront pages render, no `cost_price` leaks, Lighthouse ≥ 80 mobile |
+| 3 | All storefront pages render, no `cost_price` leaks, Lighthouse ≥ 80 mobile; no raw hex in components; glass cards and gold accent visible in both themes |
 | 4 | Cart persists, checkout creates a `pending` order, inventory is reserved |
 | 5 | Sandbox M-Pesa payment updates order to `paid`, inventory decrements |
 | 6 | All 3 emails received correctly in test inbox |
