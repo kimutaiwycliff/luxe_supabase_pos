@@ -14,6 +14,7 @@ export const ALGOLIA_INDEXES = {
 export interface AlgoliaProduct {
   objectID: string
   name: string
+  slug?: string
   description?: string
   sku: string
   barcode: string
@@ -23,6 +24,7 @@ export interface AlgoliaProduct {
   supplier_name?: string
   cost_price: number
   selling_price: number
+  compare_at_price?: number
   tags?: string[]
   is_active: boolean
   has_variants: boolean

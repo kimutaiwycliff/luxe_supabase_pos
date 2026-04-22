@@ -11,6 +11,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin"
 export async function indexProduct(product: {
   id: string
   name: string
+  slug?: string | null
   description?: string | null
   sku: string
   barcode: string
@@ -18,6 +19,7 @@ export async function indexProduct(product: {
   supplier_id?: string | null
   cost_price: number
   selling_price: number
+  compare_at_price?: number | null
   tags?: string[] | null
   is_active: boolean
   has_variants: boolean
@@ -30,6 +32,7 @@ export async function indexProduct(product: {
   const algoliaProduct: AlgoliaProduct = {
     objectID: product.id,
     name: product.name,
+    slug: product.slug || undefined,
     description: product.description || undefined,
     sku: product.sku,
     barcode: product.barcode,
@@ -39,6 +42,7 @@ export async function indexProduct(product: {
     supplier_name: product.supplier?.name || undefined,
     cost_price: product.cost_price,
     selling_price: product.selling_price,
+    compare_at_price: product.compare_at_price || undefined,
     tags: product.tags || undefined,
     is_active: product.is_active,
     has_variants: product.has_variants,
@@ -217,6 +221,7 @@ export async function syncAllProductsToAlgolia() {
   const algoliaProducts: AlgoliaProduct[] = products.map((p) => ({
     objectID: p.id,
     name: p.name,
+    slug: (p as any).slug || undefined,
     description: p.description || undefined,
     sku: p.sku,
     barcode: p.barcode,
@@ -226,6 +231,7 @@ export async function syncAllProductsToAlgolia() {
     supplier_name: p.supplier?.name || undefined,
     cost_price: p.cost_price,
     selling_price: p.selling_price,
+    compare_at_price: (p as any).compare_at_price || undefined,
     tags: p.tags || undefined,
     is_active: p.is_active,
     has_variants: p.has_variants,
