@@ -499,7 +499,7 @@ export default function LuxePOSLanding() {
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-muted-foreground">
-              © 2025 Luxe Collections Kenya. Internal POS System. All rights reserved.
+              © {new Date().getFullYear()} Luxe Collections Kenya. Internal POS System. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
               <ThemeSwitcher />
