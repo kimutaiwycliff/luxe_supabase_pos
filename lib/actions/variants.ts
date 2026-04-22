@@ -1,6 +1,6 @@
 "use server"
 
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { revalidateTag } from "next/cache"
 
 export interface ProductVariant {
@@ -29,7 +29,7 @@ export interface ProductVariant {
 export async function getProductVariants(
   productId: string,
 ): Promise<{ variants: ProductVariant[]; error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("product_variants")
@@ -65,7 +65,7 @@ export async function updateVariant(
     gallery_paths?: string[]
   },
 ): Promise<{ error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { error } = await supabase
     .from("product_variants")
@@ -91,7 +91,7 @@ export async function updateVariantInventory(
   quantity: number,
   reason?: string,
 ): Promise<{ error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   // Get current inventory
   const { data: inventory, error: fetchError } = await supabase
@@ -187,7 +187,7 @@ export async function createVariant(
     gallery_paths?: string[]
   },
 ): Promise<{ variant: ProductVariant | null; error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   // Get product info for SKU generation
   const { data: product } = await supabase.from("products").select("sku").eq("id", productId).single()
@@ -226,7 +226,7 @@ export async function createVariant(
 }
 
 export async function deleteVariant(variantId: string): Promise<{ error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { error } = await supabase.from("product_variants").delete().eq("id", variantId)
 

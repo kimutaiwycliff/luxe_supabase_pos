@@ -1,6 +1,6 @@
 "use server"
 
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { revalidateTag } from "next/cache"
 import type { Order } from "@/lib/types"
 
@@ -107,7 +107,7 @@ export async function getOrders(options?: {
   limit?: number
   offset?: number
 }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   let query = supabase
     .from("orders")
@@ -165,7 +165,7 @@ export async function getOrders(options?: {
 }
 
 export async function getOrderById(id: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("orders")
@@ -186,7 +186,7 @@ export async function getOrderById(id: string) {
 }
 
 export async function createOrder(data: CreateOrderData) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   if (!data.location_id) {
     return { order: null, error: "Location ID is required. Please run the seed scripts to create a default location." }
@@ -387,7 +387,7 @@ export async function createOrder(data: CreateOrderData) {
 }
 
 export async function createLayawayOrder(data: CreateLayawayOrderData) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   if (!data.location_id) {
     return { order: null, error: "Location ID is required." }
@@ -533,7 +533,7 @@ export async function completeLayawayOrder(
     mpesa_receipt_number?: string
   },
 ) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   // Get the order
   const { data: order, error: orderError } = await supabase
@@ -631,7 +631,7 @@ export async function completeLayawayOrder(
 }
 
 export async function getLayawayOrders(options?: { limit?: number; overdue_only?: boolean }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   let query = supabase
     .from("orders")
@@ -661,7 +661,7 @@ export async function getLayawayOrders(options?: { limit?: number; overdue_only?
 }
 
 export async function getRecentOrders(limit = 10) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("orders")
@@ -681,7 +681,7 @@ export async function getRecentOrders(limit = 10) {
 }
 
 export async function getTodayStats(locationId?: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -739,7 +739,7 @@ export async function getTodayStats(locationId?: string) {
 }
 
 export async function updateOrderTracking(orderId: string, trackingNumber: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { error } = await supabase
     .from("orders")

@@ -1,6 +1,6 @@
 "use server"
 
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { revalidateTag } from "next/cache"
 import type { Product, ProductVariant } from "@/lib/types"
 import { indexProduct, deleteProductFromIndex } from "./algolia"
@@ -44,7 +44,7 @@ export async function getProducts(options?: {
   limit?: number
   offset?: number
 }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   if (options?.search && options.search.trim().length > 0) {
     try {
@@ -131,7 +131,7 @@ async function fallbackProductSearch(options?: {
   limit?: number
   offset?: number
 }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   let query = supabase
     .from("products")
@@ -172,7 +172,7 @@ async function fallbackProductSearch(options?: {
 }
 
 export async function searchProductsForPOS(search: string, categoryId?: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   if (!search || search.trim().length === 0) {
     const { data, error } = await supabase
@@ -226,7 +226,7 @@ export async function searchProductsForPOS(search: string, categoryId?: string) 
 }
 
 export async function getProductById(id: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("products")
@@ -246,7 +246,7 @@ export async function getProductById(id: string) {
 }
 
 export async function getProductByBarcode(barcode: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: product } = await supabase
     .from("products")
@@ -287,7 +287,7 @@ export async function getProductByBarcode(barcode: string) {
 }
 
 export async function createProduct(data: ProductFormData) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: product, error } = await supabase
     .from("products")
@@ -374,7 +374,7 @@ export async function createProduct(data: ProductFormData) {
 }
 
 export async function updateProduct(id: string, data: Partial<ProductFormData>) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: product, error } = await supabase
     .from("products")
@@ -407,7 +407,7 @@ export async function updateProduct(id: string, data: Partial<ProductFormData>) 
 }
 
 export async function deleteProduct(id: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { error } = await supabase.from("products").delete().eq("id", id)
 
@@ -428,7 +428,7 @@ export async function deleteProduct(id: string) {
 }
 
 export async function getProductVariants(productId: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("product_variants")
@@ -444,7 +444,7 @@ export async function getProductVariants(productId: string) {
 }
 
 export async function createProductVariant(data: VariantFormData) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: variant, error } = await supabase
     .from("product_variants")
@@ -507,7 +507,7 @@ export async function createProductVariant(data: VariantFormData) {
 }
 
 export async function updateProductVariant(id: string, data: Partial<VariantFormData>) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: variant, error } = await supabase
     .from("product_variants")
@@ -528,7 +528,7 @@ export async function updateProductVariant(id: string, data: Partial<VariantForm
 }
 
 export async function deleteProductVariant(id: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { error } = await supabase.from("product_variants").delete().eq("id", id)
 

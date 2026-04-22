@@ -2,7 +2,7 @@
 
 import { algoliaClient, ALGOLIA_INDEXES } from "@/lib/algolia"
 import type { AlgoliaProduct, AlgoliaCustomer, AlgoliaSupplier, AlgoliaInventory } from "@/lib/algolia"
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 
 // ============================================
 // Product Indexing
@@ -201,7 +201,7 @@ export async function indexInventoryItem(item: {
 // ============================================
 
 export async function syncAllProductsToAlgolia() {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: products, error } = await supabase.from("products").select(`
       *,
@@ -248,7 +248,7 @@ export async function syncAllProductsToAlgolia() {
 }
 
 export async function syncAllCustomersToAlgolia() {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: customers, error } = await supabase.from("customers").select("*")
 
@@ -286,7 +286,7 @@ export async function syncAllCustomersToAlgolia() {
 }
 
 export async function syncAllSuppliersToAlgolia() {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: suppliers, error } = await supabase.from("suppliers").select("*")
 
@@ -322,7 +322,7 @@ export async function syncAllSuppliersToAlgolia() {
 }
 
 export async function syncAllInventoryToAlgolia() {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: inventory, error } = await supabase.from("inventory").select(`
       *,

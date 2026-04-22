@@ -1,12 +1,12 @@
 "use server"
 
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { revalidateTag } from "next/cache"
 
 export type PurchaseOrderStatus = "pending" | "ordered" | "partial" | "received" | "cancelled"
 
 export async function getPurchaseOrders(status?: PurchaseOrderStatus) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   let query = supabase
     .from("purchase_orders")
@@ -35,7 +35,7 @@ export async function getPurchaseOrders(status?: PurchaseOrderStatus) {
 }
 
 export async function getPurchaseOrder(id: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("purchase_orders")
@@ -65,7 +65,7 @@ export async function createPurchaseOrder(
   }>,
   notes?: string,
 ) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   // Generate PO number
   const { data: lastPo } = await supabase
@@ -115,7 +115,7 @@ export async function createPurchaseOrder(
 }
 
 export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrderStatus) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const updateData: Record<string, unknown> = { status }
 
@@ -141,7 +141,7 @@ export async function receivePurchaseOrder(
   }>,
   locationId: string,
 ) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   // Get purchase order with items
   const { data: po, error: poError } = await supabase
@@ -235,7 +235,7 @@ export async function receivePurchaseOrder(
 }
 
 export async function getReorderAlerts() {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("reorder_alerts")
@@ -258,7 +258,7 @@ export async function getReorderAlerts() {
 }
 
 export async function resolveReorderAlert(id: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { error } = await supabase
     .from("reorder_alerts")
@@ -271,7 +271,7 @@ export async function resolveReorderAlert(id: string) {
 }
 
 export async function getLowStockProducts() {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   // Get products where any inventory is below reorder point
   const { data, error } = await supabase

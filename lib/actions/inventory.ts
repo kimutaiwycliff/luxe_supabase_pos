@@ -1,6 +1,6 @@
 "use server"
 
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { revalidateTag } from "next/cache"
 import type { Inventory, Location } from "@/lib/types"
 import { searchInventory as algoliaSearchInventory } from "@/lib/algolia-search"
@@ -13,7 +13,7 @@ export async function getInventory(options?: {
   limit?: number
   offset?: number
 }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const selectQuery = `
     *,
@@ -93,7 +93,7 @@ async function fallbackInventorySearch(options?: {
   limit?: number
   offset?: number
 }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const selectQuery = `
     *,
@@ -137,7 +137,7 @@ async function fallbackInventorySearch(options?: {
 }
 
 export async function getLowStockItems(locationId?: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   let query = supabase.from("inventory").select(`
       *,
@@ -166,7 +166,7 @@ export async function getLowStockItems(locationId?: string) {
 }
 
 export async function getOutOfStockCount(locationId?: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   let query = supabase
     .from("inventory")
@@ -195,7 +195,7 @@ export async function adjustInventory(data: {
   movement_type: "adjustment" | "damage" | "return"
   notes?: string
 }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   // Get current inventory
   let query = supabase.from("inventory").select("*").eq("location_id", data.location_id)
@@ -288,7 +288,7 @@ export async function adjustInventory(data: {
 }
 
 export async function getLocations() {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("locations")
@@ -309,7 +309,7 @@ export async function getStockMovements(options?: {
   location_id?: string
   limit?: number
 }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   let query = supabase
     .from("stock_movements")
@@ -347,7 +347,7 @@ export async function getStockMovements(options?: {
 }
 
 export async function getInventoryItemById(id: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("inventory")
@@ -368,7 +368,7 @@ export async function getInventoryItemById(id: string) {
 }
 
 export async function getProductStock(productId: string, locationId: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("inventory")
@@ -395,7 +395,7 @@ export async function getProductStock(productId: string, locationId: string) {
 }
 
 export async function getVariantStock(variantId: string, locationId: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("inventory")
@@ -421,7 +421,7 @@ export async function getVariantStock(variantId: string, locationId: string) {
 }
 
 export async function getInventoryInsights(locationId?: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   let query = supabase.from("inventory").select(`
     quantity,
@@ -493,7 +493,7 @@ export async function getInventoryInsights(locationId?: string) {
 }
 
 export async function getAllInventory(locationId?: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const selectQuery = `
     *,

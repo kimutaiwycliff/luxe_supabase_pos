@@ -1,11 +1,11 @@
 "use server"
 
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { revalidateTag } from "next/cache"
 import type { Category } from "@/lib/types"
 
 export async function getCategories(options?: { is_active?: boolean }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   let query = supabase.from("categories").select("*").order("sort_order")
 
@@ -28,7 +28,7 @@ export async function createCategory(data: {
   parent_id?: string
   image_path?: string
 }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const slug = data.name
     .toLowerCase()
@@ -66,7 +66,7 @@ export async function updateCategory(
     sort_order: number
   }>,
 ) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const updateData: Record<string, unknown> = { ...data, updated_at: new Date().toISOString() }
 
@@ -88,7 +88,7 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(id: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { error } = await supabase.from("categories").delete().eq("id", id)
 

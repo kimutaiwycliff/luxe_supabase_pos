@@ -1,6 +1,6 @@
 "use server"
 
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 
 export interface Location {
   id: string
@@ -12,7 +12,7 @@ export interface Location {
 }
 
 export async function getLocations() {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("locations")
@@ -29,7 +29,7 @@ export async function getLocations() {
 }
 
 export async function getDefaultLocation() {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("locations")

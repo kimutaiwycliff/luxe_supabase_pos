@@ -1,6 +1,6 @@
 "use server"
 
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { revalidateTag } from "next/cache"
 import type { Customer } from "@/lib/types"
 import { indexCustomer } from "./algolia"
@@ -11,7 +11,7 @@ export async function getCustomers(options?: {
   is_active?: boolean
   limit?: number
 }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   if (options?.search && options.search.trim().length > 0) {
     try {
@@ -68,7 +68,7 @@ async function fallbackCustomerSearch(options?: {
   is_active?: boolean
   limit?: number
 }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   let query = supabase.from("customers").select("*").order("created_at", { ascending: false })
 
@@ -96,7 +96,7 @@ async function fallbackCustomerSearch(options?: {
 }
 
 export async function getCustomerById(id: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase.from("customers").select("*").eq("id", id).single()
 
@@ -116,7 +116,7 @@ export async function createCustomer(data: {
   city?: string
   notes?: string
 }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: customer, error } = await supabase
     .from("customers")
@@ -148,7 +148,7 @@ export async function createCustomer(data: {
 }
 
 export async function searchCustomerByPhone(phone: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   // Try Algolia first
   try {

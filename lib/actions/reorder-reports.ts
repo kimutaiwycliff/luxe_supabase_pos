@@ -1,6 +1,6 @@
 "use server"
 
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 
 export interface ReorderReport {
     id: string
@@ -19,7 +19,7 @@ export interface ReorderReport {
 }
 
 export async function getReorderReports(limit = 10) {
-    const supabase = await getSupabaseServer()
+    const supabase = getSupabaseAdmin()
 
     const { data, error } = await supabase
         .from("reorder_reports")
@@ -36,7 +36,7 @@ export async function getReorderReports(limit = 10) {
 }
 
 export async function getReorderReport(id: string) {
-    const supabase = await getSupabaseServer()
+    const supabase = getSupabaseAdmin()
 
     const { data, error } = await supabase
         .from("reorder_reports")
@@ -53,7 +53,7 @@ export async function getReorderReport(id: string) {
 }
 
 export async function deleteReorderReport(id: string) {
-    const supabase = await getSupabaseServer()
+    const supabase = getSupabaseAdmin()
 
     const { error } = await supabase
         .from("reorder_reports")

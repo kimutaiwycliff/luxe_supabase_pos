@@ -1,6 +1,6 @@
 "use server"
 
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 
 export interface DashboardStats {
   todayRevenue: number
@@ -43,7 +43,7 @@ export interface LayawayOrderSummary {
 }
 
 export async function getDashboardStats(): Promise<{ data: DashboardStats | null; error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -186,7 +186,7 @@ export async function getDashboardStats(): Promise<{ data: DashboardStats | null
 }
 
 export async function getWeeklySales(): Promise<{ data: WeeklySalesData[]; error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const today = new Date()
   const sevenDaysAgo = new Date(today)
@@ -239,7 +239,7 @@ export async function getWeeklySales(): Promise<{ data: WeeklySalesData[]; error
 }
 
 export async function getLowStockItems(limit = 5): Promise<{ data: LowStockItem[]; error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   // Get low stock products without variants
   const { data: lowStockProducts, error: productsError } = await supabase
@@ -344,7 +344,7 @@ export async function getLowStockItems(limit = 5): Promise<{ data: LowStockItem[
 }
 
 export async function getRecentOrdersForDashboard(limit = 5) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("orders")
@@ -387,7 +387,7 @@ export async function getLayawayStats(): Promise<{
   } | null
   error: string | null
 }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: layaways, error } = await supabase
     .from("orders")
@@ -427,7 +427,7 @@ export async function getRecentLayaways(limit = 5): Promise<{
   data: LayawayOrderSummary[]
   error: string | null
 }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("orders")

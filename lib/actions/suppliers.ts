@@ -3,10 +3,10 @@
 import { revalidateTag } from "next/cache"
 import { indexSupplier, deleteSupplierFromIndex } from "./algolia"
 import { searchSuppliers as algoliaSearchSuppliers } from "@/lib/algolia-search"
-import { getSupabaseServer } from "../supabase/server"
+import { getSupabaseAdmin } from "../supabase/admin"
 
 export async function getSuppliers(options?: { search?: string }) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   if (options?.search && options.search.trim().length > 0) {
     try {
@@ -56,7 +56,7 @@ export async function getSuppliers(options?: { search?: string }) {
 }
 
 export async function getSupplier(id: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("suppliers")
@@ -79,7 +79,7 @@ export async function getSupplier(id: string) {
 }
 
 export async function createSupplier(formData: FormData) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const supplierData = {
     name: formData.get("name") as string,
@@ -109,7 +109,7 @@ export async function createSupplier(formData: FormData) {
 }
 
 export async function updateSupplier(id: string, formData: FormData) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const supplierData = {
     name: formData.get("name") as string,
@@ -139,7 +139,7 @@ export async function updateSupplier(id: string, formData: FormData) {
 }
 
 export async function deleteSupplier(id: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { error } = await supabase.from("suppliers").delete().eq("id", id)
 
@@ -156,7 +156,7 @@ export async function deleteSupplier(id: string) {
 }
 
 export async function getSupplierById(id: string) {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from("suppliers")

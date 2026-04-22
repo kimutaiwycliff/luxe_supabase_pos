@@ -1,6 +1,6 @@
 "use server"
 
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 
 export interface SalesAnalytics {
   totalRevenue: number
@@ -54,7 +54,7 @@ export async function getSalesAnalytics(
   compareDateFrom?: string,
   compareDateTo?: string,
 ): Promise<{ data: SalesAnalytics | null; error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   // Get current period data
   const { data: currentOrders, error } = await supabase
@@ -188,7 +188,7 @@ export async function getPaymentBreakdown(
   dateFrom: string,
   dateTo: string,
 ): Promise<{ data: PaymentBreakdown | null; error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: payments, error } = await supabase
     .from("payments")
@@ -237,7 +237,7 @@ export async function getTopProducts(
   dateTo: string,
   limit = 10,
 ): Promise<{ data: TopProduct[]; error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: items, error } = await supabase
     .from("order_items")
@@ -311,7 +311,7 @@ export async function getSalesTrend(
   dateTo: string,
   groupBy: "day" | "week" | "month" = "day",
 ): Promise<{ data: SalesTrend[]; error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: orders, error } = await supabase
     .from("orders")
@@ -394,7 +394,7 @@ export async function getCategorySales(
   dateFrom: string,
   dateTo: string,
 ): Promise<{ data: CategorySales[]; error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: items, error } = await supabase
     .from("order_items")
@@ -442,7 +442,7 @@ export async function getSupplierSales(
   dateFrom: string,
   dateTo: string,
 ): Promise<{ data: SupplierSales[]; error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const { data: items, error } = await supabase
     .from("order_items")
@@ -489,7 +489,7 @@ export async function getSupplierSales(
 export async function getHourlySales(
   date: string,
 ): Promise<{ data: { hour: number; orders: number; revenue: number }[]; error: string | null }> {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseAdmin()
 
   const startDate = new Date(date)
   startDate.setHours(0, 0, 0, 0)
