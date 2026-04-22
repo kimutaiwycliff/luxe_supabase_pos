@@ -8,6 +8,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { AuthButton } from '@/components/auth-button';
 import { ThemeSwitcher } from '@/components/theme-switcher';
+import { CurrentYear } from '@/components/ui/current-year';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -499,7 +500,7 @@ export default function LuxePOSLanding() {
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} Luxe Collections Kenya. Internal POS System. All rights reserved.
+              © <CurrentYear /> Luxe Collections Kenya. Internal POS System. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
               <ThemeSwitcher />
