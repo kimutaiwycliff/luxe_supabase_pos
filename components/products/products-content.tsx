@@ -67,6 +67,8 @@ export function ProductsContent() {
     if (result.product) {
       setEditingProduct(result.product)
       setDialogOpen(true)
+    } else {
+      toast.error("Could not load product", { description: result.error ?? "Unknown error" })
     }
   }, [])
 
@@ -75,6 +77,8 @@ export function ProductsContent() {
     if (result.product) {
       setVariantEditingProduct(result.product)
       setVariantDialogOpen(true)
+    } else {
+      toast.error("Could not load product", { description: result.error ?? "Unknown error" })
     }
   }, [])
 
