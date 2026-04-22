@@ -15,7 +15,7 @@ import { Combobox } from "@/components/ui/combobox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createProduct, updateProduct } from "@/lib/actions/products"
 import type { Product, Category, Supplier } from "@/lib/types"
-import { Loader2, X } from "lucide-react"
+import { Loader2, X, Star, ImagePlus } from "lucide-react"
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/dropzone"
 import { useSupabaseUpload } from "@/hooks/use-supabase-upload"
 
@@ -31,7 +31,8 @@ interface ProductDialogProps {
 export function ProductDialog({ open, onOpenChange, product, categories, suppliers, onSuccess }: ProductDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined)
+  // allImages[0] = primary/hero, rest = gallery. Flat array is the source of truth.
+  const [allImages, setAllImages] = useState<string[]>([])
 
   const [formData, setFormData] = useState({
     name: "",
@@ -55,12 +56,10 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
     bucketName: "products",
     path: "images",
     allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
-    maxFiles: 1,
-    maxFileSize: 5 * 1024 * 1024, // 5MB
+    maxFiles: 10,
+    maxFileSize: 5 * 1024 * 1024,
     onUploadComplete: (urls) => {
-      if (urls.length > 0) {
-        setImageUrl(urls[0])
-      }
+      setAllImages((prev) => [...prev, ...urls])
     },
   })
 
@@ -85,7 +84,7 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
         allow_backorder: product.allow_backorder,
         low_stock_threshold: product.low_stock_threshold,
       })
-      setImageUrl(product.image_url || undefined)
+      setAllImages([...(product.image_url ? [product.image_url] : []), ...(product.gallery_paths ?? [])])
     } else {
       setFormData({
         name: "",
@@ -104,7 +103,7 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
         allow_backorder: false,
         low_stock_threshold: 5,
       })
-      setImageUrl(undefined)
+      setAllImages([])
     }
     setError(null)
     setError(null)
@@ -119,7 +118,8 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
     try {
       const submitData = {
         ...formData,
-        image_url: imageUrl,
+        image_url: allImages[0] ?? undefined,
+        gallery_paths: allImages.slice(1),
       }
       const result = product ? await updateProduct(product.id, submitData) : await createProduct(submitData)
 
@@ -135,9 +135,17 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
     }
   }
 
-  const handleRemoveImage = () => {
-    setImageUrl(undefined)
-    resetUpload()
+  const handleRemoveImage = (idx: number) => {
+    setAllImages((prev) => prev.filter((_, i) => i !== idx))
+  }
+
+  const handleSetPrimary = (idx: number) => {
+    setAllImages((prev) => {
+      const next = [...prev]
+      const [item] = next.splice(idx, 1)
+      next.unshift(item)
+      return next
+    })
   }
 
   const profit = formData.selling_price - formData.cost_price
@@ -247,29 +255,66 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
             </TabsContent>
 
             <TabsContent value="image" className="mt-4 space-y-4">
-              <div className="space-y-2">
-                <Label>Product Image</Label>
-                {imageUrl && !uploadProps.isSuccess ? (
-                  <div className="relative w-full aspect-square max-w-[200px] rounded-lg overflow-hidden border">
-                    <Image src={imageUrl || "/placeholder.svg"} alt="Product" fill className="object-cover" />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 h-8 w-8"
-                      onClick={handleRemoveImage}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+              {/* Existing images grid */}
+              {allImages.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Product Images</Label>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    {allImages.map((src, idx) => (
+                      <div key={src + idx} className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted">
+                        <Image src={src} alt={`Image ${idx + 1}`} fill className="object-cover" />
+                        {/* Primary badge */}
+                        {idx === 0 && (
+                          <span className="absolute top-1 left-1 flex items-center gap-0.5 bg-accent text-accent-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                            <Star className="h-2.5 w-2.5 fill-current" />
+                            Primary
+                          </span>
+                        )}
+                        {/* Overlay actions */}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
+                          {idx !== 0 && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              className="h-7 text-xs px-2"
+                              onClick={() => handleSetPrimary(idx)}
+                            >
+                              <Star className="h-3 w-3 mr-1" />
+                              Set Primary
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="destructive"
+                            className="h-7 w-7"
+                            onClick={() => handleRemoveImage(idx)}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ) : (
-                  <Dropzone {...uploadProps}>
-                    {uploadProps.files.length === 0 && <DropzoneEmptyState />}
-                    <DropzoneContent />
-                  </Dropzone>
-                )}
+                  <p className="text-xs text-muted-foreground">
+                    The image marked <strong>Primary</strong> appears on product cards and social previews. Hover an image to reorder or delete it.
+                  </p>
+                </div>
+              )}
+
+              {/* Upload new images */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <ImagePlus className="h-4 w-4" />
+                  {allImages.length === 0 ? "Add Images" : "Add More Images"}
+                </Label>
+                <Dropzone {...uploadProps}>
+                  {uploadProps.files.length === 0 && <DropzoneEmptyState />}
+                  <DropzoneContent />
+                </Dropzone>
                 <p className="text-xs text-muted-foreground">
-                  Upload a product image. Recommended size: 800x800px. Max 5MB.
+                  Upload up to 10 images. Recommended 800×800 px, max 5 MB each. First image becomes the primary.
                 </p>
               </div>
             </TabsContent>

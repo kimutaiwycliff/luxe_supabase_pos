@@ -14,7 +14,8 @@ export interface ProductVariant {
   compare_at_price: number | null
   tax_rate: number | null
   weight: number | null
-  image_path: string | null
+  image_url: string | null
+  gallery_paths: string[]
   is_active: boolean
   option_values: Record<string, string> | null
   inventory?: {
@@ -60,6 +61,8 @@ export async function updateVariant(
     compare_at_price?: number
     tax_rate?: number | null
     is_active?: boolean
+    image_url?: string | null
+    gallery_paths?: string[]
   },
 ): Promise<{ error: string | null }> {
   const supabase = await getSupabaseServer()
@@ -180,6 +183,8 @@ export async function createVariant(
     tax_rate?: number | null
     option_values?: Record<string, string>
     is_active?: boolean
+    image_url?: string | null
+    gallery_paths?: string[]
   },
 ): Promise<{ variant: ProductVariant | null; error: string | null }> {
   const supabase = await getSupabaseServer()
@@ -205,6 +210,8 @@ export async function createVariant(
       tax_rate: data.tax_rate,
       option_values: data.option_values,
       is_active: data.is_active ?? true,
+      image_url: data.image_url ?? null,
+      gallery_paths: data.gallery_paths ?? [],
     })
     .select()
     .single()

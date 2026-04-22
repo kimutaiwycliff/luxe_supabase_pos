@@ -51,7 +51,7 @@ export interface Product {
   allow_backorder: boolean
   low_stock_threshold: number
   image_url: string | null
-  images: string[]
+  gallery_paths: string[]
   tags: string[]
   meta_title: string | null
   meta_description: string | null
@@ -86,6 +86,7 @@ export interface ProductVariant {
   compare_at_price: number | null
   weight: number | null
   image_url: string | null
+  gallery_paths: string[]
   is_active: boolean
   created_at: string
   updated_at: string

@@ -24,7 +24,7 @@ export interface ProductFormData {
   allow_backorder?: boolean
   low_stock_threshold?: number
   image_url?: string
-  images?: string[]
+  gallery_paths?: string[]
   tags?: string[]
 }
 
@@ -308,7 +308,7 @@ export async function createProduct(data: ProductFormData) {
       allow_backorder: data.allow_backorder ?? false,
       low_stock_threshold: data.low_stock_threshold || 5,
       image_url: data.image_url || null,
-      // images: data.images || [],
+      gallery_paths: data.gallery_paths || [],
       tags: data.tags || [],
     })
     .select(`

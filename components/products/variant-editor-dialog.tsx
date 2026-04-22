@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useState, useEffect, useMemo } from "react"
 import useSWR from "swr"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -10,7 +11,7 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Plus, Pencil, Trash2, Save, X, Package } from "lucide-react"
+import { Loader2, Plus, Pencil, Trash2, Save, X, Package, ImagePlus, Star, Images } from "lucide-react"
 import { formatCurrency } from "@/lib/format"
 import {
   getProductVariants,
@@ -23,6 +24,8 @@ import {
 import { getDefaultLocation } from "@/lib/actions/locations"
 import { toast } from "sonner"
 import type { Product } from "@/lib/types"
+import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/dropzone"
+import { useSupabaseUpload } from "@/hooks/use-supabase-upload"
 
 interface VariantEditorDialogProps {
   open: boolean
@@ -52,6 +55,11 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
     tax_rate: product.tax_rate || 16,
   })
   const [locationId, setLocationId] = useState<string | null>(null)
+  // Images tab: which variant is being edited
+  const [imageEditingVariantId, setImageEditingVariantId] = useState<string | null>(null)
+  // Tracks allImages per variant while editing (variantId → ordered image array)
+  const [variantImages, setVariantImages] = useState<Record<string, string[]>>({})
+  const [savingImages, setSavingImages] = useState<string | null>(null)
 
   const { data: variantsData, mutate } = useSWR(open ? ["product-variants", product.id] : null, async () =>
     getProductVariants(product.id),
@@ -77,6 +85,21 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
         initial[v.id] = v.inventory?.quantity || 0
       })
       setInventoryForm(initial)
+    }
+  }, [variants])
+
+  // Initialize variantImages map when variants load
+  useEffect(() => {
+    if (variants.length > 0) {
+      setVariantImages((prev) => {
+        const next = { ...prev }
+        variants.forEach((v) => {
+          if (!next[v.id]) {
+            next[v.id] = [...(v.image_url ? [v.image_url] : []), ...(v.gallery_paths ?? [])]
+          }
+        })
+        return next
+      })
     }
   }, [variants])
 
@@ -173,6 +196,23 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
     setIsLoading(false)
   }
 
+  const handleSaveVariantImages = async (variantId: string) => {
+    setSavingImages(variantId)
+    const imgs = variantImages[variantId] ?? []
+    const { error } = await updateVariant(variantId, {
+      image_url: imgs[0] ?? null,
+      gallery_paths: imgs.slice(1),
+    })
+    if (error) {
+      toast.error("Error saving images", { description: error })
+    } else {
+      toast.success("Images saved")
+      setImageEditingVariantId(null)
+      mutate()
+    }
+    setSavingImages(null)
+  }
+
   const profit = (variant: ProductVariant) => {
     const cost = variant.cost_price || product.cost_price
     const price = variant.selling_price || product.selling_price
@@ -197,9 +237,10 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
         </DialogHeader>
 
         <Tabs defaultValue="pricing" className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="pricing">Pricing & Tax</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
+            <TabsTrigger value="images">Images</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pricing" className="mt-4">
@@ -489,6 +530,114 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
               </TableBody>
             </Table>
           </TabsContent>
+          <TabsContent value="images" className="mt-4 space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Manage images for each variant. The first image is shown as the primary. Images swap in the webshop when a customer selects that variant.
+            </p>
+            {variants.length === 0 ? (
+              <div className="flex flex-col items-center py-12 text-muted-foreground gap-2">
+                <Package className="h-8 w-8 opacity-40" />
+                <p className="text-sm">No variants yet</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {variants.map((variant) => {
+                  const imgs = variantImages[variant.id] ?? []
+                  const isEditing = imageEditingVariantId === variant.id
+
+                  return (
+                    <div key={variant.id} className="rounded-lg border border-border p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-sm">{variant.name || variant.sku}</p>
+                          <p className="text-xs text-muted-foreground">{imgs.length} image{imgs.length !== 1 ? "s" : ""}</p>
+                        </div>
+                        {!isEditing ? (
+                          <Button size="sm" variant="outline" onClick={() => setImageEditingVariantId(variant.id)}>
+                            <Images className="h-3.5 w-3.5 mr-1.5" />
+                            Edit Images
+                          </Button>
+                        ) : (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleSaveVariantImages(variant.id)}
+                              disabled={savingImages === variant.id}
+                            >
+                              {savingImages === variant.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => setImageEditingVariantId(null)}>
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Thumbnail strip (always visible) */}
+                      {imgs.length > 0 && (
+                        <div className="flex gap-2 flex-wrap">
+                          {imgs.map((src, idx) => (
+                            <div key={src + idx} className="relative group w-16 h-16 rounded-md overflow-hidden border border-border bg-muted flex-shrink-0">
+                              <Image src={src} alt="" fill className="object-cover" />
+                              {idx === 0 && (
+                                <span className="absolute bottom-0 left-0 right-0 bg-accent/80 text-accent-foreground text-[9px] text-center py-0.5">
+                                  Primary
+                                </span>
+                              )}
+                              {isEditing && (
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                                  {idx !== 0 && (
+                                    <button
+                                      type="button"
+                                      className="text-[10px] text-white bg-accent/80 hover:bg-accent rounded px-1.5 py-0.5"
+                                      onClick={() => {
+                                        setVariantImages((prev) => {
+                                          const next = [...(prev[variant.id] ?? [])]
+                                          const [item] = next.splice(idx, 1)
+                                          next.unshift(item)
+                                          return { ...prev, [variant.id]: next }
+                                        })
+                                      }}
+                                    >
+                                      <Star className="h-2.5 w-2.5" />
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    className="text-white bg-destructive/80 hover:bg-destructive rounded p-0.5"
+                                    onClick={() => {
+                                      setVariantImages((prev) => ({
+                                        ...prev,
+                                        [variant.id]: (prev[variant.id] ?? []).filter((_, i) => i !== idx),
+                                      }))
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Upload zone — only shown in edit mode */}
+                      {isEditing && (
+                        <VariantImageUploader
+                          onUploaded={(urls) =>
+                            setVariantImages((prev) => ({
+                              ...prev,
+                              [variant.id]: [...(prev[variant.id] ?? []), ...urls],
+                            }))
+                          }
+                        />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
 
         <div className="mt-6 flex justify-end">
@@ -504,5 +653,28 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function VariantImageUploader({ onUploaded }: { onUploaded: (urls: string[]) => void }) {
+  const uploadProps = useSupabaseUpload({
+    bucketName: "products",
+    path: "images",
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+    maxFiles: 10,
+    maxFileSize: 5 * 1024 * 1024,
+    onUploadComplete: (urls) => {
+      onUploaded(urls)
+      uploadProps.reset()
+    },
+  })
+  return (
+    <div className="space-y-1">
+      <Dropzone {...uploadProps}>
+        {uploadProps.files.length === 0 && <DropzoneEmptyState />}
+        <DropzoneContent />
+      </Dropzone>
+      <p className="text-xs text-muted-foreground">Up to 10 images, max 5 MB each.</p>
+    </div>
   )
 }
