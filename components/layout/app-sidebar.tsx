@@ -19,6 +19,7 @@ import {
   ChevronUp,
   LogOut,
   UserCircle,
+  ReceiptText,
 } from "lucide-react"
 
 import {
@@ -62,6 +63,7 @@ const inventoryNavigation = [
 ]
 
 const operationsNavigation = [
+  { title: "Orders", href: "/orders", icon: ReceiptText },
   { title: "Suppliers", href: "/suppliers", icon: Truck },
   { title: "Reorder Alerts", href: "/reorder", icon: AlertTriangle },
   { title: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },

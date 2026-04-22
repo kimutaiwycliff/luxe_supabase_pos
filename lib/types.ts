@@ -187,6 +187,22 @@ export interface Order {
   layaway_customer_phone?: string | null
   layaway_due_date: string | null
   layaway_deposit_percent: number | null
+  // Webshop-specific fields (added in migration)
+  source?: "pos" | "webshop"
+  customer_email?: string | null
+  shipping_address?: {
+    firstName: string
+    lastName: string
+    addressLine1: string
+    addressLine2?: string
+    city: string
+    county: string
+    phone?: string
+  } | null
+  tracking_number?: string | null
+  shipped_at?: string | null
+  delivery_method?: "pickup" | "delivery" | null
+  meta_data?: Record<string, unknown> | null
 }
 
 export interface OrderItem {

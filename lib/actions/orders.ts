@@ -103,6 +103,7 @@ export async function getOrders(options?: {
   date_from?: string
   date_to?: string
   customer_id?: string
+  source?: "pos" | "webshop"
   limit?: number
   offset?: number
 }) {
@@ -131,6 +132,10 @@ export async function getOrders(options?: {
 
   if (options?.customer_id) {
     query = query.eq("customer_id", options.customer_id)
+  }
+
+  if (options?.source) {
+    query = query.eq("source", options.source)
   }
 
   if (options?.date_from) {
@@ -731,4 +736,18 @@ export async function getTodayStats(locationId?: string) {
   })
 
   return { revenue, orders, cash, mpesa, card, error: null }
+}
+
+export async function updateOrderTracking(orderId: string, trackingNumber: string) {
+  const supabase = await getSupabaseServer()
+
+  const { error } = await supabase
+    .from("orders")
+    .update({ tracking_number: trackingNumber, updated_at: new Date().toISOString() })
+    .eq("id", orderId)
+    .eq("source", "webshop")
+
+  if (error) return { error: error.message }
+  ;(revalidateTag as any)("orders", "max")
+  return { error: null }
 }

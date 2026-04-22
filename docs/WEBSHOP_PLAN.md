@@ -1244,3 +1244,124 @@ DISPATCH_WEBHOOK_SECRET=
 | `lib/services/email.ts` | Resend integration pattern and `formatKES` |
 | `supabase/migrations/` | Follow the same file naming and SQL conventions |
 | `components/ui/till-loader.tsx` | Reuse the loading overlay in the webshop auth flow |
+
+---
+
+## Manual Setup Steps (post-deploy checklist)
+
+These cannot be done in code — complete them after the webshop is deployed to Vercel.
+
+---
+
+### 1. Supabase Dispatch Webhook
+
+Fires `sendDispatchEmail` when a webshop order status changes to `completed`.
+
+**Go to:** `https://supabase.com/dashboard/project/cqznlauqkconcrurqeaf/database/hooks`
+
+Click **Create a new hook** and fill in:
+
+| Field | Value |
+|---|---|
+| Name | `webshop_order_dispatch` |
+| Table | `orders` |
+| Events | `UPDATE` |
+| Type | HTTP Request |
+| Method | `POST` |
+| URL | `https://shop.luxecollections.co.ke/api/orders/dispatch-notify` |
+
+Under **HTTP Headers**, add:
+```
+x-webhook-secret   <value of DISPATCH_WEBHOOK_SECRET from .env.local>
+```
+
+> **Local dev:** use ngrok (`ngrok http 3000`) and temporarily set the URL to your ngrok HTTPS URL.
+
+**Test:** In Supabase Table Editor, update a webshop order's `status` to `completed` — confirm the dispatch email arrives in Resend logs.
+
+---
+
+### 2. Resend — Verify `luxecollections.co.ke` and Add Sender
+
+**Step 1 — Add the domain:**
+
+Go to `https://resend.com/domains` → **Add Domain** → enter `luxecollections.co.ke`.
+
+Resend will give you DNS records to add in your domain provider (Cloudflare, Namecheap, etc.):
+
+| Type | Name | Value |
+|---|---|---|
+| TXT | `@` | `v=spf1 include:amazonses.com ~all` |
+| CNAME | `resend._domainkey` | *(exact value shown by Resend)* |
+| TXT | `_dmarc` | `v=DMARC1; p=none;` |
+
+**Step 2 — Verify:** Back in Resend dashboard, click **Verify DNS**. All three records must go green (can take up to 30 minutes to propagate).
+
+**Step 3 — No code change needed.** `lib/email/resend.ts` already uses `FROM = "Luxe Collections <orders@luxecollections.co.ke>"`.
+
+**Test:**
+```bash
+cd ~/Desktop/Shop/luxe-webshop
+node -e "
+const { Resend } = require('resend');
+const r = new Resend('<your RESEND_API_KEY>');
+r.emails.send({
+  from: 'orders@luxecollections.co.ke',
+  to: 'kimutaiwycliff90@gmail.com',
+  subject: 'Sender test',
+  html: '<p>Resend sender verified.</p>'
+}).then(console.log);
+"
+```
+
+---
+
+### 3. Safaricom Daraja — M-Pesa Production Approval
+
+Allow **1–4 weeks**. Start this immediately after launch.
+
+**Step 1 — Prerequisites:**
+- Registered Kenyan business (sole trader or limited company) with a KRA PIN
+- Paybill or Till number (apply through your bank or Safaricom Business if you don't have one — bring: business registration certificate, KRA PIN, national ID)
+
+**Step 2 — Register on Daraja:**
+- Go to `https://developer.safaricom.co.ke` → Sign Up
+- Dashboard → **My Apps** → **Add a new app** → select `Lipa na M-Pesa Online` (STK Push)
+- Fill in business details and your Paybill/Till number; submit for review
+
+**Step 3 — On approval, collect your production credentials:**
+
+```
+MPESA_CONSUMER_KEY=       # production key
+MPESA_CONSUMER_SECRET=    # production secret
+MPESA_SHORTCODE=          # your Paybill or Till number
+MPESA_PASSKEY=            # from Daraja dashboard → app settings
+```
+
+**Step 4 — Set production env vars in Vercel:**
+
+In your Vercel project (webshop) → Settings → Environment Variables, set for **Production** only:
+
+```
+MPESA_ENV=production
+MPESA_CONSUMER_KEY=<prod key>
+MPESA_CONSUMER_SECRET=<prod secret>
+MPESA_SHORTCODE=<shortcode>
+MPESA_PASSKEY=<passkey>
+MPESA_CALLBACK_URL=https://shop.luxecollections.co.ke/api/mpesa/callback
+```
+
+> **While waiting for approval:** keep `MPESA_ENV=sandbox` in Vercel Preview. Use Daraja sandbox test credentials and test phone `254708374149` with any 4-digit PIN.
+
+---
+
+### Manual Steps Status
+
+| Step | Status |
+|---|---|
+| Supabase dispatch webhook | ⬜ Pending |
+| Resend domain DNS verification | ⬜ Pending |
+| Resend sender test | ⬜ Pending |
+| Daraja Paybill/Till application | ⬜ Pending |
+| Daraja production app created | ⬜ Pending |
+| Production M-Pesa env vars set in Vercel | ⬜ Pending |
