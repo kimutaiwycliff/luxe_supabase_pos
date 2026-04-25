@@ -166,8 +166,8 @@ export interface Order {
   order_number: string
   customer_id: string | null
   location_id: string
-  status: "pending" | "processing" | "completed" | "cancelled" | "refunded"
-  payment_status: "pending" | "partial" | "paid" | "refunded"
+  status: "draft" | "pending" | "processing" | "completed" | "cancelled" | "voided" | "refunded" | "partially_refunded" | "layaway"
+  payment_status: "pending" | "partial" | "paid" | "completed" | "failed" | "refunded"
   subtotal: number
   discount_amount: number
   tax_amount: number

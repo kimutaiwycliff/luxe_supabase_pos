@@ -738,6 +738,30 @@ export async function getTodayStats(locationId?: string) {
   return { revenue, orders, cash, mpesa, card, error: null }
 }
 
+export async function updateOrderStatus(
+  orderId: string,
+  updates: {
+    status?: Order["status"]
+    payment_status?: Order["payment_status"]
+    notes?: string
+  },
+) {
+  const supabase = getSupabaseAdmin()
+
+  const payload: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (updates.status) payload.status = updates.status
+  if (updates.payment_status) payload.payment_status = updates.payment_status
+  if (updates.notes !== undefined) payload.notes = updates.notes
+  if (updates.status === "completed") payload.completed_at = new Date().toISOString()
+
+  const { error } = await supabase.from("orders").update(payload).eq("id", orderId)
+
+  if (error) return { error: error.message }
+  ;(revalidateTag as any)("orders", "max")
+  ;(revalidateTag as any)("analytics", "max")
+  return { error: null }
+}
+
 export async function updateOrderTracking(orderId: string, trackingNumber: string) {
   const supabase = getSupabaseAdmin()
 

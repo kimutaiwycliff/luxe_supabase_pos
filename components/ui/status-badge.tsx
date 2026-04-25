@@ -5,11 +5,14 @@ type Status =
   | "processing"
   | "completed"
   | "cancelled"
+  | "voided"
   | "refunded"
+  | "partially_refunded"
   | "paid"
   | "partial"
   | "failed"
   | "draft"
+  | "layaway"
   | "sent"
   | "received"
   | "ordered"
@@ -24,11 +27,14 @@ const statusStyles: Record<Status, string> = {
   processing: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   completed: "bg-success/10 text-success border-success/20",
   cancelled: "bg-muted text-muted-foreground border-border",
+  voided: "bg-muted text-muted-foreground border-border",
   refunded: "bg-muted text-muted-foreground border-border",
+  partially_refunded: "bg-warning/10 text-warning border-warning/20",
   paid: "bg-success/10 text-success border-success/20",
   partial: "bg-warning/10 text-warning border-warning/20",
   failed: "bg-destructive/10 text-destructive border-destructive/20",
   draft: "bg-muted text-muted-foreground border-border",
+  layaway: "bg-purple-500/10 text-purple-500 border-purple-500/20",
   sent: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   received: "bg-success/10 text-success border-success/20",
   ordered: "bg-blue-500/10 text-blue-400 border-blue-500/20",
