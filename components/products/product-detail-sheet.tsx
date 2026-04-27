@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Combobox } from "@/components/ui/combobox"
 import {
-  Loader2, Plus, Pencil, Trash2, Save, X, Star, ImagePlus, Printer, Package, Barcode,
+  Loader2, Plus, Pencil, Trash2, Save, X, Star, ImagePlus, Printer, Package,
   Copy, Check, ShoppingCart,
 } from "lucide-react"
 import { createProduct, updateProduct } from "@/lib/actions/products"
@@ -49,6 +49,7 @@ interface ProductDetailSheetProps {
   suppliers: Supplier[]
   onSuccess: () => void
   onRestock?: (product: Product) => void
+  onDelete?: () => void
 }
 
 // ── Barcode copy button ──────────────────────────────────────────────────────
@@ -98,6 +99,7 @@ export function ProductDetailSheet({
   suppliers,
   onSuccess,
   onRestock,
+  onDelete,
 }: ProductDetailSheetProps) {
   // ── Product form state ──────────────────────────────────────────────
   const [isSaving, setIsSaving] = useState(false)
@@ -314,21 +316,27 @@ export function ProductDetailSheet({
               </div>
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
+              {product && onDelete && (
+                <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:border-destructive/60" onClick={onDelete}>
+                  <Trash2 className="h-3.5 w-3.5 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Delete</span>
+                </Button>
+              )}
               {product && (
                 <Button size="sm" variant="outline" onClick={() => setPrintOpen(true)}>
-                  <Printer className="h-3.5 w-3.5 mr-1.5" />
-                  Print Labels
+                  <Printer className="h-3.5 w-3.5 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Print Labels</span>
                 </Button>
               )}
               {product && onRestock && (
                 <Button size="sm" variant="outline" onClick={() => onRestock(product)}>
-                  <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                  Restock
+                  <ShoppingCart className="h-3.5 w-3.5 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Restock</span>
                 </Button>
               )}
               <Button size="sm" onClick={handleSaveProduct} disabled={isSaving}>
-                {isSaving && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
-                Save
+                {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin sm:mr-1.5" /> : <Save className="h-3.5 w-3.5 sm:mr-1.5" />}
+                <span className="hidden sm:inline">Save</span>
               </Button>
             </div>
           </SheetHeader>

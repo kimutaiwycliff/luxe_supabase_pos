@@ -4,34 +4,30 @@ import { useHits, useInstantSearch } from "react-instantsearch"
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/format"
-import { Package, Filter } from "lucide-react"
+import { Package, Filter, Trash2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { AlgoliaProduct } from "@/lib/algolia"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Pencil, Trash2, Layers } from "lucide-react"
 
 interface ProductHitsProps {
   viewMode: "grid" | "list"
-  onEdit?: (product: AlgoliaProduct) => void
-  onEditVariants?: (product: AlgoliaProduct) => void
+  onOpen: (product: AlgoliaProduct) => void
   onDelete?: (product: AlgoliaProduct) => void
   onAdd?: () => void
-  isLoading?: boolean
 }
 
-export function ProductHits({ viewMode, onEdit, onEditVariants, onDelete, onAdd, isLoading }: ProductHitsProps) {
+export function ProductHits({ viewMode, onOpen, onDelete, onAdd }: ProductHitsProps) {
   const { hits } = useHits<AlgoliaProduct>()
   const { status } = useInstantSearch()
 
-  const loading = status === "loading" || status === "stalled" || isLoading
+  const loading = status === "loading" || status === "stalled"
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-64 rounded-xl" />
+          <Skeleton key={i} className="h-60 rounded-xl" />
         ))}
       </div>
     )
@@ -41,7 +37,7 @@ export function ProductHits({ viewMode, onEdit, onEditVariants, onDelete, onAdd,
     return (
       <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-border">
         <Filter className="h-10 w-10 text-muted-foreground" />
-        <p className="mt-4 text-lg font-medium text-foreground">No products found</p>
+        <p className="mt-4 text-lg font-medium">No products found</p>
         <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
         {onAdd && (
           <Button className="mt-4" onClick={onAdd}>
@@ -54,73 +50,54 @@ export function ProductHits({ viewMode, onEdit, onEditVariants, onDelete, onAdd,
 
   if (viewMode === "grid") {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {hits.map((product) => (
-          <Card key={product.objectID} className="overflow-hidden">
+          <Card
+            key={product.objectID}
+            className="group overflow-hidden cursor-pointer hover:border-primary/60 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
+            onClick={() => onOpen(product)}
+          >
             <div className="relative aspect-square bg-secondary">
               {product.image_url ? (
-                <Image
-                  src={product.image_url || "/placeholder.svg"}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
+                <Image src={product.image_url} alt={product.name} fill className="object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center">
-                  <Package className="h-12 w-12 text-muted-foreground/30" />
+                  <Package className="h-10 w-10 text-muted-foreground/30" />
                 </div>
               )}
-              {product.has_variants && (
-                <Badge className="absolute bottom-2 right-2" variant="secondary">
-                  Variants
-                </Badge>
-              )}
-            </div>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium truncate">{product.name}</h3>
-                  <p className="text-sm text-muted-foreground">{product.sku}</p>
-                  {product.category_name && (
-                    <Badge variant="outline" className="mt-1">
-                      {product.category_name}
-                    </Badge>
-                  )}
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {onEdit && (
-                      <DropdownMenuItem onClick={() => onEdit(product)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                    )}
-                    {product.has_variants && onEditVariants && (
-                      <DropdownMenuItem onClick={() => onEditVariants(product)}>
-                        <Layers className="mr-2 h-4 w-4" />
-                        Edit Variants
-                      </DropdownMenuItem>
-                    )}
-                    {onDelete && (
-                      <DropdownMenuItem onClick={() => onDelete(product)} className="text-destructive">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div className="mt-3 flex items-center justify-between">
-                <span className="font-semibold text-primary">{formatCurrency(product.selling_price)}</span>
-                <Badge variant={product.is_active ? "default" : "secondary"}>
+
+              {/* Badges */}
+              <div className="absolute top-2 left-2 flex gap-1 flex-wrap">
+                <Badge variant={product.is_active ? "default" : "secondary"} className="text-[10px] px-1.5 py-0 shadow-sm">
                   {product.is_active ? "Active" : "Inactive"}
                 </Badge>
+                {product.has_variants && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-background/80 shadow-sm">
+                    Variants
+                  </Badge>
+                )}
               </div>
+
+              {/* Quick-delete — hover only on desktop */}
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onDelete(product) }}
+                  className="absolute top-2 right-2 h-7 w-7 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-white hover:border-destructive transition-all duration-150"
+                  aria-label="Delete product"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            <CardContent className="p-3">
+              <h3 className="font-medium text-sm leading-snug truncate">{product.name}</h3>
+              <p className="text-[11px] text-muted-foreground truncate">{product.sku}</p>
+              {product.category_name && (
+                <p className="text-[11px] text-muted-foreground truncate">{product.category_name}</p>
+              )}
+              <p className="mt-1.5 font-semibold text-sm text-primary">{formatCurrency(product.selling_price)}</p>
             </CardContent>
           </Card>
         ))}
@@ -130,73 +107,58 @@ export function ProductHits({ viewMode, onEdit, onEditVariants, onDelete, onAdd,
 
   // List view
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       {hits.map((product) => (
-        <Card key={product.objectID} className="p-4">
-          <div className="flex items-center gap-4">
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-secondary">
-              {product.image_url ? (
-                <Image
-                  src={product.image_url || "/placeholder.svg"}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <Package className="h-6 w-6 text-muted-foreground/30" />
-                </div>
+        <div
+          key={product.objectID}
+          onClick={() => onOpen(product)}
+          className="group flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-all duration-150 active:bg-muted/50"
+        >
+          {/* Thumbnail */}
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-secondary">
+            {product.image_url ? (
+              <Image src={product.image_url} alt={product.name} fill className="object-cover" />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <Package className="h-5 w-5 text-muted-foreground/30" />
+              </div>
+            )}
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="font-medium text-sm truncate">{product.name}</p>
+              {product.has_variants && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">Variants</Badge>
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium truncate">{product.name}</h3>
-                {product.has_variants && (
-                  <Badge variant="secondary" className="shrink-0">
-                    Variants
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {product.sku} • {product.category_name || "Uncategorized"}
-              </p>
-            </div>
+            <p className="text-xs text-muted-foreground truncate">
+              {product.sku}{product.category_name ? ` · ${product.category_name}` : ""}
+            </p>
+          </div>
+
+          {/* Right side */}
+          <div className="flex items-center gap-2 shrink-0">
             <div className="text-right">
-              <p className="font-semibold text-primary">{formatCurrency(product.selling_price)}</p>
-              <p className="text-sm text-muted-foreground">Cost: {formatCurrency(product.cost_price)}</p>
+              <p className="font-semibold text-sm text-primary">{formatCurrency(product.selling_price)}</p>
+              <p className="text-xs text-muted-foreground hidden sm:block">Cost: {formatCurrency(product.cost_price)}</p>
             </div>
-            <Badge variant={product.is_active ? "default" : "secondary"}>
+            <Badge variant={product.is_active ? "default" : "secondary"} className="text-[10px] px-1.5 hidden sm:flex">
               {product.is_active ? "Active" : "Inactive"}
             </Badge>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {onEdit && (
-                  <DropdownMenuItem onClick={() => onEdit(product)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-                )}
-                {product.has_variants && onEditVariants && (
-                  <DropdownMenuItem onClick={() => onEditVariants(product)}>
-                    <Layers className="mr-2 h-4 w-4" />
-                    Edit Variants
-                  </DropdownMenuItem>
-                )}
-                {onDelete && (
-                  <DropdownMenuItem onClick={() => onDelete(product)} className="text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onDelete(product) }}
+                className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all duration-150"
+                aria-label="Delete product"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
-        </Card>
+        </div>
       ))}
     </div>
   )

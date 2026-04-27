@@ -36,7 +36,7 @@ export function ProductsContent() {
 
   // Delete dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [productToDelete, setProductToDelete] = useState<AlgoliaProduct | null>(null)
+  const [productToDelete, setProductToDelete] = useState<Product | AlgoliaProduct | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   // Restock PO dialog
@@ -78,17 +78,26 @@ export function ProductsContent() {
 
   const confirmDelete = async () => {
     if (!productToDelete) return
+    const id = "objectID" in productToDelete ? productToDelete.objectID : productToDelete.id
     setIsDeleting(true)
     try {
-      await deleteProduct(productToDelete.objectID)
-      await deleteProductFromIndex(productToDelete.objectID)
+      await deleteProduct(id)
+      await deleteProductFromIndex(id)
       toast.success("Product deleted")
       setRefreshKey((k) => k + 1)
       setDeleteDialogOpen(false)
       setProductToDelete(null)
+      setSheetOpen(false)
+      setEditingProduct(null)
     } catch { toast.error("Failed to delete product") }
     finally { setIsDeleting(false) }
   }
+
+  const handleDeleteFromSheet = useCallback(() => {
+    if (!editingProduct) return
+    setProductToDelete(editingProduct)
+    setDeleteDialogOpen(true)
+  }, [editingProduct])
 
   const restockInitialItems = restockProduct
     ? [{ product_id: restockProduct.id, product_name: restockProduct.name, sku: restockProduct.sku, quantity: restockProduct.low_stock_threshold || 10, unit_cost: restockProduct.cost_price }]
@@ -105,18 +114,30 @@ export function ProductsContent() {
         <Configure key={`${filters}-20`} filters={filters} hitsPerPage={20} />
 
         {/* Toolbar */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 items-center gap-3">
-            <AlgoliaSearchBox placeholder="Search products..." className="flex-1 max-w-sm" />
+        <div className="mb-6 space-y-3">
+          {/* Row 1: search + view toggle + add */}
+          <div className="flex items-center gap-2">
+            <AlgoliaSearchBox placeholder="Search products..." className="flex-1" />
+            <div className="flex items-center rounded-lg border border-border p-1 shrink-0">
+              <Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={() => setViewMode("grid")}><Grid3X3 className="h-4 w-4" /></Button>
+              <Button variant={viewMode === "list" ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={() => setViewMode("list")}><List className="h-4 w-4" /></Button>
+            </div>
+            <Button onClick={() => openSheet()} className="shrink-0">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Add Product</span>
+            </Button>
+          </div>
+          {/* Row 2: filters */}
+          <div className="flex items-center gap-2">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-40"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectTrigger className="flex-1 sm:w-48 sm:flex-none"><SelectValue placeholder="All Categories" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((cat) => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-32"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectTrigger className="flex-1 sm:w-36 sm:flex-none"><SelectValue placeholder="All Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
@@ -124,22 +145,11 @@ export function ProductsContent() {
               </SelectContent>
             </Select>
           </div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex items-center rounded-lg border border-border p-1">
-              <Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={() => setViewMode("grid")}><Grid3X3 className="h-4 w-4" /></Button>
-              <Button variant={viewMode === "list" ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={() => setViewMode("list")}><List className="h-4 w-4" /></Button>
-            </div>
-            <Button onClick={() => openSheet()}>
-              <Plus className="mr-2 h-4 w-4" />Add Product
-            </Button>
-          </div>
         </div>
 
         <ProductHits
           viewMode={viewMode}
-          onEdit={openSheet}
-          onEditVariants={openSheet}
+          onOpen={openSheet}
           onDelete={handleDelete}
           onAdd={() => openSheet()}
         />
@@ -155,6 +165,7 @@ export function ProductsContent() {
         suppliers={suppliers}
         onSuccess={() => { setRefreshKey((k) => k + 1); setSheetOpen(false); setEditingProduct(null) }}
         onRestock={handleRestock}
+        onDelete={handleDeleteFromSheet}
       />
 
       {/* Restock / quick PO */}
