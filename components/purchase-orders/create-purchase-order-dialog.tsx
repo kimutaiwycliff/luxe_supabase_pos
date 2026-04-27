@@ -36,13 +36,23 @@ interface OrderItem {
   unit_cost: number
 }
 
+interface InitialItem {
+  product_id: string
+  product_name: string
+  sku: string
+  quantity: number
+  unit_cost: number
+}
+
 interface CreatePurchaseOrderDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  initialSupplierId?: string
+  initialItems?: InitialItem[]
 }
 
-export function CreatePurchaseOrderDialog({ open, onOpenChange, onSuccess }: CreatePurchaseOrderDialogProps) {
+export function CreatePurchaseOrderDialog({ open, onOpenChange, onSuccess, initialSupplierId, initialItems }: CreatePurchaseOrderDialogProps) {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [selectedSupplier, setSelectedSupplier] = useState<string>("")
@@ -61,6 +71,8 @@ export function CreatePurchaseOrderDialog({ open, onOpenChange, onSuccess }: Cre
       const [suppliersData, productsResult] = await Promise.all([getSuppliers(), getProducts()])
       setSuppliers(suppliersData || [])
       setProducts(productsResult.products || [])
+      if (initialSupplierId) setSelectedSupplier(initialSupplierId)
+      if (initialItems && initialItems.length > 0) setItems(initialItems)
     } catch (error) {
       console.error("Failed to load data:", error)
     }
