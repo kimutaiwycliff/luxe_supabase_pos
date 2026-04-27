@@ -9,6 +9,9 @@ export interface Collection {
   slug: string
   description: string | null
   image_path: string | null
+  hero_tagline: string | null
+  story_text: string | null
+  story_image_path: string | null
   is_active: boolean
   is_featured: boolean
   sort_order: number
@@ -52,6 +55,9 @@ export async function createCollection(input: {
   name: string
   description?: string
   image_path?: string
+  hero_tagline?: string
+  story_text?: string
+  story_image_path?: string
   is_featured?: boolean
   sort_order?: number
 }) {
@@ -73,6 +79,9 @@ export async function updateCollection(
     name: string
     description: string
     image_path: string
+    hero_tagline: string
+    story_text: string
+    story_image_path: string
     is_active: boolean
     is_featured: boolean
     sort_order: number
