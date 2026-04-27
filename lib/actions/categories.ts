@@ -27,6 +27,9 @@ export async function createCategory(data: {
   description?: string
   parent_id?: string
   image_path?: string
+  hero_image_path?: string
+  hero_tagline?: string
+  sort_order?: number
 }) {
   const supabase = getSupabaseAdmin()
 
@@ -43,6 +46,9 @@ export async function createCategory(data: {
       description: data.description || null,
       parent_id: data.parent_id || null,
       image_path: data.image_path || null,
+      hero_image_path: data.hero_image_path || null,
+      hero_tagline: data.hero_tagline || null,
+      sort_order: data.sort_order ?? 0,
     })
     .select()
     .single()
@@ -62,6 +68,8 @@ export async function updateCategory(
     description: string
     parent_id: string
     image_path: string
+    hero_image_path: string
+    hero_tagline: string
     is_active: boolean
     sort_order: number
   }>,
