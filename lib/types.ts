@@ -88,7 +88,7 @@ export interface ProductVariant {
   selling_price: number | null
   compare_at_price: number | null
   weight: number | null
-  image_url: string | null
+  image_path: string | null
   gallery_paths: string[]
   is_active: boolean
   created_at: string

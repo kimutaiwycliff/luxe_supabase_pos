@@ -95,7 +95,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
         const next = { ...prev }
         variants.forEach((v) => {
           if (!next[v.id]) {
-            next[v.id] = [...(v.image_url ? [v.image_url] : []), ...(v.gallery_paths ?? [])]
+            next[v.id] = [...(v.image_path ? [v.image_path] : []), ...(v.gallery_paths ?? [])]
           }
         })
         return next
@@ -200,7 +200,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
     setSavingImages(variantId)
     const imgs = variantImages[variantId] ?? []
     const { error } = await updateVariant(variantId, {
-      image_url: imgs[0] ?? null,
+      image_path: imgs[0] ?? null,
       gallery_paths: imgs.slice(1),
     })
     if (error) {
