@@ -20,6 +20,7 @@ import {
   LogOut,
   UserCircle,
   ReceiptText,
+  Sparkles,
 } from "lucide-react"
 
 import {
@@ -58,6 +59,7 @@ const mainNavigation = [
 const inventoryNavigation = [
   { title: "Products", href: "/products", icon: Package },
   { title: "Categories", href: "/categories", icon: Tags },
+  { title: "Collections", href: "/collections", icon: Sparkles },
   { title: "Inventory", href: "/inventory", icon: Store },
   { title: "Low Stock Alerts", href: "/low-stock", icon: AlertTriangle },
 ]
