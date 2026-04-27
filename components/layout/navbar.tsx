@@ -15,7 +15,12 @@ import {
   Store,
   ClipboardList,
   Bell,
-  Menu
+  Menu,
+  ReceiptText,
+  CalendarClock,
+  Sparkles,
+  RefreshCw,
+  Warehouse,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -44,39 +49,67 @@ interface NavbarProps {
   outOfStockCount?: number
 }
 
-const mainNavigation = [
+// Desktop top-bar: only the two highest-traffic destinations
+const primaryNav = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "POS", href: "/pos", icon: ShoppingCart },
 ]
 
-const inventoryNavigation = [
-  { title: "Products", href: "/products", icon: Package },
-  { title: "Categories", href: "/categories", icon: Tags },
-  { title: "Inventory", href: "/inventory", icon: Store },
-  { title: "Low Stock Alerts", href: "/low-stock", icon: AlertTriangle },
+// Full navigation shown in the mobile slide-out sheet
+const navGroups = [
+  {
+    label: "Main",
+    items: [
+      { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { title: "POS Terminal", href: "/pos", icon: ShoppingCart },
+    ],
+  },
+  {
+    label: "Inventory",
+    items: [
+      { title: "Products", href: "/products", icon: Package },
+      { title: "Categories", href: "/categories", icon: Tags },
+      { title: "Collections", href: "/collections", icon: Sparkles },
+      { title: "Inventory", href: "/inventory", icon: Warehouse },
+      { title: "Low Stock", href: "/low-stock", icon: AlertTriangle },
+    ],
+  },
+  {
+    label: "Sales",
+    items: [
+      { title: "Orders", href: "/orders", icon: ReceiptText },
+      { title: "Layaways", href: "/layaways", icon: CalendarClock },
+      { title: "Customers", href: "/customers", icon: Users },
+    ],
+  },
+  {
+    label: "Purchasing",
+    items: [
+      { title: "Suppliers", href: "/suppliers", icon: Truck },
+      { title: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
+      { title: "Smart Reorder", href: "/reorder", icon: RefreshCw },
+    ],
+  },
+  {
+    label: "Reports",
+    items: [
+      { title: "Analytics", href: "/analytics", icon: BarChart3 },
+      { title: "Settings", href: "/settings", icon: Settings },
+    ],
+  },
 ]
 
-const operationsNavigation = [
-  { title: "Suppliers", href: "/suppliers", icon: Truck },
-  { title: "Reorder Alerts", href: "/reorder", icon: AlertTriangle },
-  { title: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
-  { title: "Customers", href: "/customers", icon: Users },
-]
-
-const analyticsNavigation = [
-  { title: "Analytics", href: "/analytics", icon: BarChart3 },
-  { title: "Settings", href: "/settings", icon: Settings },
-]
-
-const staffNavigation = [
-  { title: "POS", href: "/pos", icon: ShoppingCart },
+// Staff only sees POS
+const staffNav = [
+  { title: "POS Terminal", href: "/pos", icon: ShoppingCart },
 ]
 
 export function Navbar({ user, outOfStockCount = 0 }: NavbarProps) {
   const pathname = usePathname()
-  const navigation = user?.role === "admin" ? [...mainNavigation, ...inventoryNavigation] : staffNavigation
+  const isAdmin = user?.role === "admin"
 
-  const checkIsActive = (href: string) => pathname === href || (href !== "/" && pathname.startsWith(href))
+  const checkIsActive = (href: string) =>
+    pathname === href || (href !== "/" && pathname.startsWith(href))
 
   const handleSignOut = async () => {
     await signOut()
@@ -85,16 +118,17 @@ export function Navbar({ user, outOfStockCount = 0 }: NavbarProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center px-2 sm:px-4">
-        {/* Mobile menu trigger */}
+
+        {/* Mobile hamburger — triggers the Sheet opened by the parent Sheet wrapper */}
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden mr-2">
+            <Button variant="ghost" size="icon" className="md:hidden mr-2 shrink-0">
               <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
+              <span className="sr-only">Open menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            <SheetHeader className="p-4 border-b">
+          <SheetContent side="left" className="w-72 p-0 flex flex-col">
+            <SheetHeader className="px-4 py-3 border-b shrink-0">
               <SheetTitle>
                 <Link href="/" className="flex items-center gap-2">
                   <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -108,111 +142,81 @@ export function Navbar({ user, outOfStockCount = 0 }: NavbarProps) {
               </SheetTitle>
               <SheetDescription className="sr-only">Main navigation</SheetDescription>
             </SheetHeader>
-            <div className="flex flex-col gap-4 p-4">
-              <nav className="flex flex-col gap-2">
-                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Main</div>
-                {mainNavigation.map((item) => (
-                  <Link
-                    key={item.title}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                      checkIsActive(item.href) && "bg-accent text-accent-foreground"
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.title}
-                  </Link>
-                ))}
-              </nav>
 
-              <nav className="flex flex-col gap-2">
-                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Inventory</div>
-                {inventoryNavigation.map((item) => (
-                  <Link
-                    key={item.title}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                      checkIsActive(item.href) && "bg-accent text-accent-foreground"
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.title}
-                  </Link>
-                ))}
-              </nav>
-
-              <nav className="flex flex-col gap-2">
-                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Operations</div>
-                {operationsNavigation.map((item) => (
-                  <Link
-                    key={item.title}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                      checkIsActive(item.href) && "bg-accent text-accent-foreground"
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.title}
-                  </Link>
-                ))}
-              </nav>
-
-              <nav className="flex flex-col gap-2">
-                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Reports</div>
-                {analyticsNavigation.map((item) => (
-                  <Link
-                    key={item.title}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                      checkIsActive(item.href) && "bg-accent text-accent-foreground"
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.title}
-                  </Link>
-                ))}
-              </nav>
+            <div className="flex-1 overflow-y-auto py-3 px-3 space-y-4">
+              {(isAdmin ? navGroups : [{ label: "Main", items: staffNav }]).map((group) => (
+                <nav key={group.label}>
+                  <p className="mb-1 px-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                    {group.label}
+                  </p>
+                  <div className="space-y-0.5">
+                    {group.items.map((item) => {
+                      const active = checkIsActive(item.href)
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={cn(
+                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                            active
+                              ? "bg-primary/10 text-primary"
+                              : "text-foreground/70 hover:bg-muted hover:text-foreground"
+                          )}
+                        >
+                          {active && (
+                            <span className="absolute left-3 h-5 w-1 rounded-r-full bg-primary" />
+                          )}
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          {item.title}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </nav>
+              ))}
             </div>
           </SheetContent>
         </Sheet>
 
-        {/* Desktop navigation */}
+        {/* Logo + desktop primary nav */}
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Store className="size-4" />
             </div>
-            <span className="font-semibold truncate max-w-32 lg:max-w-none">Luxe Collections</span>
+            <span className="font-semibold">Luxe Collections</span>
           </Link>
 
-          <nav className="flex items-center gap-4">
-            {navigation.map((item) => (
-              <Link
-                key={item.title}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
-                  checkIsActive(item.href) ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.title}</span>
-              </Link>
-            ))}
+          <nav className="flex items-center gap-1">
+            {(isAdmin ? primaryNav : staffNav).map((item) => {
+              const active = checkIsActive(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.title}</span>
+                </Link>
+              )
+            })}
           </nav>
         </div>
 
-        <div className="flex flex-1 items-center justify-end gap-4">
-          {user?.role === "admin" && (
+        {/* Right side: search, alerts, avatar */}
+        <div className="flex flex-1 items-center justify-end gap-2">
+          {isAdmin && (
             <>
               <GlobalSearch />
 
-              <Button variant="ghost" size="icon" className="relative" asChild>
-                <Link href="/low-stock?status=out-of-stock">
+              <Button variant="ghost" size="icon" className="relative shrink-0" asChild>
+                <Link href="/low-stock">
                   <Bell className="h-5 w-5" />
                   {outOfStockCount > 0 && (
                     <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground">
@@ -226,35 +230,34 @@ export function Navbar({ user, outOfStockCount = 0 }: NavbarProps) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <Button variant="ghost" size="icon" className="rounded-full shrink-0">
                 <Avatar className="h-8 w-8">
                   {user?.avatarUrl && (
-                    <AvatarImage src={user.avatarUrl || "/placeholder.svg"} alt={user.fullName || user.email} />
+                    <AvatarImage src={user.avatarUrl} alt={user.fullName || user.email} />
                   )}
                   <AvatarFallback>{user?.initials || "?"}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                <div>
+                  <p className="font-medium">{user?.fullName || "Guest"}</p>
+                  <p className="text-xs text-muted-foreground font-normal">{user?.email}</p>
+                </div>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/settings">Profile</Link>
-              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/settings">Settings</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {user ? (
-                <DropdownMenuItem
-                  onClick={handleSignOut}
-                  className="text-destructive focus:text-destructive"
-                >
+                <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
                   Sign out
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem asChild>
-                  <Link href="/login">Sign in</Link>
+                  <Link href="/auth/login">Sign in</Link>
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>

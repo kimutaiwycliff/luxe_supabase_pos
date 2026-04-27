@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -20,7 +19,10 @@ import {
   LogOut,
   UserCircle,
   ReceiptText,
+  CalendarClock,
   Sparkles,
+  RefreshCw,
+  Warehouse,
 } from "lucide-react"
 
 import {
@@ -51,36 +53,65 @@ interface AppSidebarProps {
   user: AuthUser | null
 }
 
-const mainNavigation = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "POS", href: "/pos", icon: ShoppingCart },
+const navGroups = [
+  {
+    label: "Main",
+    items: [
+      { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { title: "POS Terminal", href: "/pos", icon: ShoppingCart },
+    ],
+  },
+  {
+    label: "Inventory",
+    items: [
+      { title: "Products", href: "/products", icon: Package },
+      { title: "Categories", href: "/categories", icon: Tags },
+      { title: "Collections", href: "/collections", icon: Sparkles },
+      { title: "Inventory", href: "/inventory", icon: Warehouse },
+      { title: "Low Stock", href: "/low-stock", icon: AlertTriangle },
+    ],
+  },
+  {
+    label: "Sales",
+    items: [
+      { title: "Orders", href: "/orders", icon: ReceiptText },
+      { title: "Layaways", href: "/layaways", icon: CalendarClock },
+      { title: "Customers", href: "/customers", icon: Users },
+    ],
+  },
+  {
+    label: "Purchasing",
+    items: [
+      { title: "Suppliers", href: "/suppliers", icon: Truck },
+      { title: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
+      { title: "Smart Reorder", href: "/reorder", icon: RefreshCw },
+    ],
+  },
+  {
+    label: "Reports",
+    items: [
+      { title: "Analytics", href: "/analytics", icon: BarChart3 },
+      { title: "Settings", href: "/settings", icon: Settings },
+    ],
+  },
 ]
 
-const inventoryNavigation = [
-  { title: "Products", href: "/products", icon: Package },
-  { title: "Categories", href: "/categories", icon: Tags },
-  { title: "Collections", href: "/collections", icon: Sparkles },
-  { title: "Inventory", href: "/inventory", icon: Store },
-  { title: "Low Stock Alerts", href: "/low-stock", icon: AlertTriangle },
-]
-
-const operationsNavigation = [
-  { title: "Orders", href: "/orders", icon: ReceiptText },
-  { title: "Suppliers", href: "/suppliers", icon: Truck },
-  { title: "Reorder Alerts", href: "/reorder", icon: AlertTriangle },
-  { title: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
-  { title: "Customers", href: "/customers", icon: Users },
-]
-
-const analyticsNavigation = [
-  { title: "Analytics", href: "/analytics", icon: BarChart3 },
-  { title: "Settings", href: "/settings", icon: Settings },
+const staffNavGroups = [
+  {
+    label: "Main",
+    items: [
+      { title: "POS Terminal", href: "/pos", icon: ShoppingCart },
+    ],
+  },
 ]
 
 function NavItem({
   item,
   isActive,
-}: { item: { title: string; href: string; icon: React.ComponentType<{ className?: string }> }; isActive: boolean }) {
+}: {
+  item: { title: string; href: string; icon: React.ComponentType<{ className?: string }> }
+  isActive: boolean
+}) {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -90,9 +121,10 @@ function NavItem({
         className={cn("relative", isActive && "bg-sidebar-accent text-sidebar-accent-foreground font-medium")}
       >
         <Link href={item.href}>
-          {/* Active indicator bar */}
-          {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full" />}
-          <item.icon className={cn("ml-1", isActive && "text-primary")} />
+          {isActive && (
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full" />
+          )}
+          <item.icon className={cn("ml-1 shrink-0", isActive && "text-primary")} />
           <span>{item.title}</span>
         </Link>
       </SidebarMenuButton>
@@ -102,12 +134,16 @@ function NavItem({
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
+  const isAdmin = user?.role === "admin"
 
-  const checkIsActive = (href: string) => pathname === href || (href !== "/" && pathname.startsWith(href))
+  const checkIsActive = (href: string) =>
+    pathname === href || (href !== "/" && pathname.startsWith(href))
 
   const handleSignOut = async () => {
     await signOut()
   }
+
+  const groups = isAdmin ? navGroups : staffNavGroups
 
   return (
     <Sidebar collapsible="icon">
@@ -130,49 +166,18 @@ export function AppSidebar({ user }: AppSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainNavigation.map((item) => (
-                <NavItem key={item.title} item={item} isActive={checkIsActive(item.href)} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Inventory</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {inventoryNavigation.map((item) => (
-                <NavItem key={item.title} item={item} isActive={checkIsActive(item.href)} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Operations</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {operationsNavigation.map((item) => (
-                <NavItem key={item.title} item={item} isActive={checkIsActive(item.href)} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Reports</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {analyticsNavigation.map((item) => (
-                <NavItem key={item.title} item={item} isActive={checkIsActive(item.href)} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {groups.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <NavItem key={item.href} item={item} isActive={checkIsActive(item.href)} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter>
@@ -186,7 +191,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
                     {user?.avatarUrl && (
-                      <AvatarImage src={user.avatarUrl || "/placeholder.svg"} alt={user.fullName || user.email} />
+                      <AvatarImage src={user.avatarUrl} alt={user.fullName || user.email} />
                     )}
                     <AvatarFallback className="rounded-lg">{user?.initials || "?"}</AvatarFallback>
                   </Avatar>
@@ -222,7 +227,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   </>
                 ) : (
                   <DropdownMenuItem asChild>
-                    <Link href="/login" className="cursor-pointer">
+                    <Link href="/auth/login" className="cursor-pointer">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Sign in</span>
                     </Link>
