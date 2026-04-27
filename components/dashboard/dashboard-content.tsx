@@ -10,6 +10,7 @@ import { RecentOrdersTable } from "./recent-orders-table"
 import { LowStockAlert } from "./low-stock-alert"
 import { SalesChart } from "./sales-chart"
 import { LayawaySummary } from "./layaway-summary"
+import { QuickActions } from "./quick-actions"
 import useSWR from "swr"
 import {
   getDashboardStats,
@@ -60,6 +61,9 @@ export function DashboardContent() {
 
   return (
     <div className="p-4 sm:p-6">
+      {/* Quick Actions */}
+      <QuickActions />
+
       {/* Stats Grid */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Overview</h2>

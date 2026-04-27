@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { ImageField } from "@/components/ui/image-field"
 import { Loader2 } from "lucide-react"
 import { createCollection, updateCollection, type Collection } from "@/lib/actions/collections"
 import { toast } from "sonner"
@@ -32,20 +33,20 @@ export function CollectionDialog({ open, onOpenChange, collection, onSuccess }: 
   })
 
   useEffect(() => {
-    if (collection) {
-      setForm({
-        name: collection.name,
-        description: collection.description ?? "",
-        image_path: collection.image_path ?? "",
-        hero_tagline: collection.hero_tagline ?? "",
-        story_text: collection.story_text ?? "",
-        story_image_path: collection.story_image_path ?? "",
-        is_featured: collection.is_featured,
-        sort_order: collection.sort_order,
-      })
-    } else {
-      setForm({ name: "", description: "", image_path: "", hero_tagline: "", story_text: "", story_image_path: "", is_featured: false, sort_order: 0 })
-    }
+    setForm(
+      collection
+        ? {
+            name: collection.name,
+            description: collection.description ?? "",
+            image_path: collection.image_path ?? "",
+            hero_tagline: collection.hero_tagline ?? "",
+            story_text: collection.story_text ?? "",
+            story_image_path: collection.story_image_path ?? "",
+            is_featured: collection.is_featured,
+            sort_order: collection.sort_order,
+          }
+        : { name: "", description: "", image_path: "", hero_tagline: "", story_text: "", story_image_path: "", is_featured: false, sort_order: 0 }
+    )
   }, [collection, open])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -55,10 +56,10 @@ export function CollectionDialog({ open, onOpenChange, collection, onSuccess }: 
     const payload = {
       name: form.name.trim(),
       description: form.description.trim() || undefined,
-      image_path: form.image_path.trim() || undefined,
+      image_path: form.image_path || undefined,
       hero_tagline: form.hero_tagline.trim() || undefined,
       story_text: form.story_text.trim() || undefined,
-      story_image_path: form.story_image_path.trim() || undefined,
+      story_image_path: form.story_image_path || undefined,
       is_featured: form.is_featured,
       sort_order: form.sort_order,
     }
@@ -72,69 +73,97 @@ export function CollectionDialog({ open, onOpenChange, collection, onSuccess }: 
     toast.success(collection ? "Collection updated" : "Collection created")
   }
 
-  const field = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }))
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{collection ? "Edit Collection" : "New Collection"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
 
+        <form onSubmit={handleSubmit} className="space-y-5 pt-1">
           {/* Core */}
           <div className="space-y-1.5">
             <Label>Name *</Label>
-            <Input value={form.name} onChange={field("name")} placeholder="e.g. Summer Picks" required />
+            <Input
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="e.g. Summer Picks"
+              required
+            />
           </div>
 
           <div className="space-y-1.5">
             <Label>Short description</Label>
-            <Textarea value={form.description} onChange={field("description")} placeholder="Shown below the title on the webshop…" rows={2} />
+            <Textarea
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="Brief description shown below the hero on the webshop…"
+              rows={2}
+            />
           </div>
 
-          {/* Media */}
-          <div className="border-t border-border pt-4 space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Media</p>
+          {/* Images */}
+          <div className="border-t border-border pt-4 space-y-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Images</p>
 
-            <div className="space-y-1.5">
-              <Label>Hero / card image URL</Label>
-              <Input value={form.image_path} onChange={field("image_path")} placeholder="https://images.unsplash.com/…" />
-              <p className="text-xs text-muted-foreground">Used for the hero banner and the homepage card.</p>
-            </div>
+            <ImageField
+              label="Hero / card image"
+              value={form.image_path}
+              onChange={(url) => setForm((f) => ({ ...f, image_path: url }))}
+              bucket="collections"
+              path="hero"
+              hint="Full-bleed banner on the collection page and thumbnail on the collections grid."
+            />
 
-            <div className="space-y-1.5">
-              <Label>Story image URL</Label>
-              <Input value={form.story_image_path} onChange={field("story_image_path")} placeholder="https://images.unsplash.com/…" />
-              <p className="text-xs text-muted-foreground">Lifestyle shot shown in the editorial story block.</p>
-            </div>
+            <ImageField
+              label="Story image"
+              value={form.story_image_path}
+              onChange={(url) => setForm((f) => ({ ...f, story_image_path: url }))}
+              bucket="collections"
+              path="story"
+              hint="Lifestyle shot shown beside the editorial paragraph below the hero."
+            />
           </div>
 
           {/* Editorial copy */}
           <div className="border-t border-border pt-4 space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Editorial copy</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Editorial copy</p>
 
             <div className="space-y-1.5">
               <Label>Hero tagline</Label>
-              <Input value={form.hero_tagline} onChange={field("hero_tagline")} placeholder="e.g. Where heritage meets style" />
-              <p className="text-xs text-muted-foreground">Short punchy line overlaid on the hero image.</p>
+              <Input
+                value={form.hero_tagline}
+                onChange={(e) => setForm((f) => ({ ...f, hero_tagline: e.target.value }))}
+                placeholder="e.g. Where heritage meets modern elegance"
+              />
+              <p className="text-xs text-muted-foreground">Short punchy line overlaid on the hero image. ~50 chars max.</p>
             </div>
 
             <div className="space-y-1.5">
               <Label>Story paragraph</Label>
-              <Textarea value={form.story_text} onChange={field("story_text")} placeholder="Tell the story behind this collection…" rows={4} />
-              <p className="text-xs text-muted-foreground">Shown in the editorial block below the hero.</p>
+              <Textarea
+                value={form.story_text}
+                onChange={(e) => setForm((f) => ({ ...f, story_text: e.target.value }))}
+                placeholder="Tell the story behind this collection…"
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground">Shown beside the story image below the hero. 2–4 sentences works well.</p>
             </div>
           </div>
 
           {/* Settings */}
           <div className="border-t border-border pt-4 space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Settings</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Settings</p>
 
             <div className="space-y-1.5">
               <Label>Sort order</Label>
-              <Input type="number" value={form.sort_order} onChange={field("sort_order")} min={0} />
+              <Input
+                type="number"
+                value={form.sort_order}
+                onChange={(e) => setForm((f) => ({ ...f, sort_order: Number(e.target.value) }))}
+                min={0}
+                className="w-28"
+              />
               <p className="text-xs text-muted-foreground">Lower numbers appear first.</p>
             </div>
 
