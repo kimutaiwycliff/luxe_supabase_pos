@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { ImageField } from "@/components/ui/image-field"
+import { MultiImageField } from "@/components/ui/multi-image-field"
+
 import { Loader2 } from "lucide-react"
 import { createCollection, updateCollection, type Collection } from "@/lib/actions/collections"
 import { toast } from "sonner"
@@ -25,6 +27,7 @@ export function CollectionDialog({ open, onOpenChange, collection, onSuccess }: 
     name: "",
     description: "",
     image_path: "",
+    hero_image_paths: [] as string[],
     hero_tagline: "",
     story_text: "",
     story_image_path: "",
@@ -39,13 +42,14 @@ export function CollectionDialog({ open, onOpenChange, collection, onSuccess }: 
             name: collection.name,
             description: collection.description ?? "",
             image_path: collection.image_path ?? "",
+            hero_image_paths: collection.hero_image_paths ?? [],
             hero_tagline: collection.hero_tagline ?? "",
             story_text: collection.story_text ?? "",
             story_image_path: collection.story_image_path ?? "",
             is_featured: collection.is_featured,
             sort_order: collection.sort_order,
           }
-        : { name: "", description: "", image_path: "", hero_tagline: "", story_text: "", story_image_path: "", is_featured: false, sort_order: 0 }
+        : { name: "", description: "", image_path: "", hero_image_paths: [], hero_tagline: "", story_text: "", story_image_path: "", is_featured: false, sort_order: 0 }
     )
   }, [collection, open])
 
@@ -57,6 +61,7 @@ export function CollectionDialog({ open, onOpenChange, collection, onSuccess }: 
       name: form.name.trim(),
       description: form.description.trim() || undefined,
       image_path: form.image_path || undefined,
+      hero_image_paths: form.hero_image_paths,
       hero_tagline: form.hero_tagline.trim() || undefined,
       story_text: form.story_text.trim() || undefined,
       story_image_path: form.story_image_path || undefined,
@@ -107,12 +112,21 @@ export function CollectionDialog({ open, onOpenChange, collection, onSuccess }: 
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Images</p>
 
             <ImageField
-              label="Hero / card image"
+              label="Card image"
               value={form.image_path}
               onChange={(url) => setForm((f) => ({ ...f, image_path: url }))}
               bucket="collections"
+              path="card"
+              hint="Square thumbnail shown on the collections grid."
+            />
+
+            <MultiImageField
+              label="Hero images"
+              values={form.hero_image_paths}
+              onChange={(urls) => setForm((f) => ({ ...f, hero_image_paths: urls }))}
+              bucket="collections"
               path="hero"
-              hint="Full-bleed banner on the collection page and thumbnail on the collections grid."
+              hint="Up to 5 images — crossfade slowly on the hero banner. First image shows first."
             />
 
             <ImageField

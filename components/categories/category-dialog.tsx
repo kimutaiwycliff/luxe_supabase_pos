@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ImageField } from "@/components/ui/image-field"
+import { MultiImageField } from "@/components/ui/multi-image-field"
+
 import { createCategory, updateCategory } from "@/lib/actions/categories"
 import type { Category } from "@/lib/types"
 import { Loader2 } from "lucide-react"
@@ -43,6 +45,7 @@ export function CategoryDialog({
     sort_order: 0,
     image_path: "",
     hero_image_path: "",
+    hero_image_paths: [] as string[],
     hero_tagline: "",
   })
 
@@ -56,6 +59,7 @@ export function CategoryDialog({
         sort_order: category.sort_order,
         image_path: category.image_path ?? "",
         hero_image_path: category.hero_image_path ?? "",
+        hero_image_paths: category.hero_image_paths ?? [],
         hero_tagline: category.hero_tagline ?? "",
       })
     } else {
@@ -67,6 +71,7 @@ export function CategoryDialog({
         sort_order: 0,
         image_path: "",
         hero_image_path: "",
+        hero_image_paths: [],
         hero_tagline: "",
       })
     }
@@ -91,6 +96,7 @@ export function CategoryDialog({
       sort_order: form.sort_order,
       image_path: form.image_path || undefined,
       hero_image_path: form.hero_image_path || undefined,
+      hero_image_paths: form.hero_image_paths,
       hero_tagline: form.hero_tagline.trim() || undefined,
     }
 
@@ -182,12 +188,21 @@ export function CategoryDialog({
             />
 
             <ImageField
-              label="Hero image"
+              label="Hero image (single)"
               value={form.hero_image_path}
               onChange={set("hero_image_path") as (url: string) => void}
               bucket="categories"
               path="hero"
-              hint="Wide editorial photo used as the full-bleed banner on the category page."
+              hint="Primary hero photo — used as fallback when no slideshow images are set."
+            />
+
+            <MultiImageField
+              label="Hero slideshow images"
+              values={form.hero_image_paths}
+              onChange={(urls) => setForm((f) => ({ ...f, hero_image_paths: urls }))}
+              bucket="categories"
+              path="hero"
+              hint="Up to 5 images — crossfade on the category hero banner. First image shows first."
             />
           </div>
 
