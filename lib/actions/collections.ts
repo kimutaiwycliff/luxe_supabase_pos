@@ -10,6 +10,7 @@ export interface Collection {
   description: string | null
   image_path: string | null
   hero_tagline: string | null
+  hero_image_paths: string[]
   story_text: string | null
   story_image_path: string | null
   is_active: boolean
@@ -56,6 +57,7 @@ export async function createCollection(input: {
   description?: string
   image_path?: string
   hero_tagline?: string
+  hero_image_paths?: string[]
   story_text?: string
   story_image_path?: string
   is_featured?: boolean
@@ -80,6 +82,7 @@ export async function updateCollection(
     description: string
     image_path: string
     hero_tagline: string
+    hero_image_paths: string[]
     story_text: string
     story_image_path: string
     is_active: boolean

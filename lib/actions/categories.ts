@@ -28,6 +28,7 @@ export async function createCategory(data: {
   parent_id?: string
   image_path?: string
   hero_image_path?: string
+  hero_image_paths?: string[]
   hero_tagline?: string
   sort_order?: number
 }) {
@@ -47,6 +48,7 @@ export async function createCategory(data: {
       parent_id: data.parent_id || null,
       image_path: data.image_path || null,
       hero_image_path: data.hero_image_path || null,
+      hero_image_paths: data.hero_image_paths ?? [],
       hero_tagline: data.hero_tagline || null,
       sort_order: data.sort_order ?? 0,
     })
@@ -69,6 +71,7 @@ export async function updateCategory(
     parent_id: string
     image_path: string
     hero_image_path: string
+    hero_image_paths: string[]
     hero_tagline: string
     is_active: boolean
     sort_order: number

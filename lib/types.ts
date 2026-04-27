@@ -6,6 +6,7 @@ export interface Category {
   parent_id: string | null
   image_path: string | null
   hero_image_path: string | null
+  hero_image_paths: string[]
   hero_tagline: string | null
   sort_order: number
   is_active: boolean
