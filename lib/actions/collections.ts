@@ -63,7 +63,7 @@ export async function createCollection(input: {
     .select()
     .single()
   if (error) return { collection: null, error: error.message }
-  revalidateTag("collections")
+  ;(revalidateTag as any)("collections", "max")
   return { collection: data as Collection, error: null }
 }
 
@@ -86,7 +86,7 @@ export async function updateCollection(
     .select()
     .single()
   if (error) return { collection: null, error: error.message }
-  revalidateTag("collections")
+  ;(revalidateTag as any)("collections", "max")
   return { collection: data as Collection, error: null }
 }
 
@@ -94,7 +94,7 @@ export async function deleteCollection(id: string) {
   const supabase = getSupabaseAdmin()
   const { error } = await supabase.from("collections").delete().eq("id", id)
   if (error) return { success: false, error: error.message }
-  revalidateTag("collections")
+  ;(revalidateTag as any)("collections", "max")
   return { success: true, error: null }
 }
 
@@ -108,7 +108,7 @@ export async function addProductToCollection(collectionId: string, productId: st
     .from("collection_products")
     .insert({ collection_id: collectionId, product_id: productId, sort_order: count ?? 0 })
   if (error) return { error: error.message }
-  revalidateTag("collections")
+  ;(revalidateTag as any)("collections", "max")
   return { error: null }
 }
 
@@ -120,6 +120,6 @@ export async function removeProductFromCollection(collectionId: string, productI
     .eq("collection_id", collectionId)
     .eq("product_id", productId)
   if (error) return { error: error.message }
-  revalidateTag("collections")
+  ;(revalidateTag as any)("collections", "max")
   return { error: null }
 }
