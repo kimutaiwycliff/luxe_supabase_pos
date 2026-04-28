@@ -43,17 +43,36 @@ export function PrintLabelsDialog({ open, onOpenChange, items }: PrintLabelsDial
           <DialogTitle>Print Barcode Labels</DialogTitle>
         </DialogHeader>
 
-        {/* CSS injected into the document for @media print */}
+        {/*
+          Print isolation via visibility rather than display:none.
+          display:none on an ancestor prevents children from overriding it;
+          visibility:hidden can be overridden by descendants with visibility:visible.
+          The Dialog renders inside a Radix portal (direct child of <body>), so
+          display:none on body > * was hiding the portal and making the area blank.
+        */}
         <style>{`
           @media print {
-            body > * { display: none !important; }
-            #print-labels-area { display: flex !important; }
+            @page { margin: 6mm; }
+            body * { visibility: hidden !important; }
+            #print-labels-area,
+            #print-labels-area * { visibility: visible !important; }
             #print-labels-area {
-              position: fixed; top: 0; left: 0; width: 100%;
-              flex-wrap: wrap; gap: 3mm; padding: 8mm;
-              background: white;
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              display: flex !important;
+              flex-wrap: wrap;
+              gap: 3mm;
+              padding: 8mm;
+              background: white !important;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
-            .barcode-label { page-break-inside: avoid; }
+            .barcode-label {
+              break-inside: avoid;
+              page-break-inside: avoid;
+            }
           }
         `}</style>
 
