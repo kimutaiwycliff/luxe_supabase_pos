@@ -52,7 +52,7 @@ export function PrintLabelsDialog({ open, onOpenChange, items }: PrintLabelsDial
         */}
         <style>{`
           @media print {
-            @page { margin: 6mm; }
+            @page { margin: 4mm; }
             body * { visibility: hidden !important; }
             #print-labels-area,
             #print-labels-area * { visibility: visible !important; }
@@ -61,10 +61,12 @@ export function PrintLabelsDialog({ open, onOpenChange, items }: PrintLabelsDial
               top: 0;
               left: 0;
               width: 100%;
+              height: 100%;
               display: flex !important;
               flex-wrap: wrap;
-              gap: 3mm;
-              padding: 8mm;
+              align-content: flex-start;
+              gap: 1.5mm;
+              padding: 0;
               background: white !important;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
