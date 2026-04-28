@@ -255,21 +255,21 @@ export async function createOrder(data: CreateOrderData) {
   }
 
   const orderItems = data.items.map((item) => {
-    const itemSubtotal = item.unit_price * item.quantity - (item.discount_amount || 0)
+    const itemSubtotal = item.unit_price * item.quantity - (item.discount_amount ?? 0)
     const itemTaxRate = item.tax_rate ?? 0
-    const itemTax = itemSubtotal * (itemTaxRate / 100) * discountRatio // Convert percentage to decimal
+    const itemTax = itemSubtotal * (itemTaxRate / 100) * discountRatio
 
     return {
       order_id: order.id,
-      product_id: item.product_id || null,
-      variant_id: item.variant_id || null,
+      product_id: item.product_id ?? null,
+      variant_id: item.variant_id ?? null,
       product_name: item.product_name,
-      variant_name: item.variant_name || null,
+      variant_name: item.variant_name ?? null,
       sku: item.sku,
       quantity: item.quantity,
       unit_price: item.unit_price,
-      cost_price: item.cost_price,
-      discount_amount: item.discount_amount || 0,
+      cost_price: item.cost_price ?? 0,
+      discount_amount: item.discount_amount ?? 0,
       tax_amount: itemTax,
       total_amount: itemSubtotal + itemTax,
     }
@@ -279,6 +279,9 @@ export async function createOrder(data: CreateOrderData) {
 
   if (itemsError) {
     console.error("Error creating order items:", itemsError)
+    // Delete the orphaned order so the cashier can retry cleanly
+    await supabase.from("orders").delete().eq("id", order.id)
+    return { order: null, error: `Failed to record order items: ${itemsError.message}` }
   }
 
   // Create payments

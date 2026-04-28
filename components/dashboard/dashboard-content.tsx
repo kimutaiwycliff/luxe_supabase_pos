@@ -21,8 +21,13 @@ import {
   getRecentLayaways,
 } from "@/lib/actions/dashboard"
 import { Skeleton } from "@/components/ui/skeleton"
+import { OrderDetailSheet } from "@/components/orders/order-detail-sheet"
+import type { Order } from "@/lib/types"
+import { useState } from "react"
 
 export function DashboardContent() {
+  const [detailOrder, setDetailOrder] = useState<Order | null>(null)
+
   const {
     data: statsData,
     isLoading: statsLoading,
@@ -177,10 +182,23 @@ export function DashboardContent() {
             </Button>
           </CardHeader>
           <CardContent>
-            {ordersLoading ? <Skeleton className="h-48 w-full" /> : <RecentOrdersTable orders={recentOrders} />}
+            {ordersLoading ? (
+              <Skeleton className="h-48 w-full" />
+            ) : (
+              <RecentOrdersTable
+                orders={recentOrders}
+                onOrderClick={(o) => setDetailOrder(o as unknown as Order)}
+              />
+            )}
           </CardContent>
         </Card>
       </div>
+
+      <OrderDetailSheet
+        order={detailOrder}
+        open={!!detailOrder}
+        onOpenChange={(open) => { if (!open) setDetailOrder(null) }}
+      />
     </div>
   )
 }

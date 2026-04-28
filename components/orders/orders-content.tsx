@@ -26,6 +26,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getOrders, updateOrderTracking } from "@/lib/actions/orders"
 import { formatCurrency, formatRelativeTime } from "@/lib/format"
 import { OrderStatusDialog } from "@/components/orders/order-status-dialog"
+import { OrderDetailSheet } from "@/components/orders/order-detail-sheet"
 import type { Order } from "@/lib/types"
 
 type TabValue = "all" | "pos" | "online"
@@ -93,6 +94,7 @@ function TrackingCell({ order, onSave }: { order: Order; onSave: (orderId: strin
 export function OrdersContent() {
   const [tab, setTab] = useState<TabValue>("all")
   const [statusDialogOrder, setStatusDialogOrder] = useState<Order | null>(null)
+  const [detailOrder, setDetailOrder] = useState<Order | null>(null)
 
   const source = tab === "all" ? undefined : tab === "online" ? "webshop" : "pos"
 
@@ -200,19 +202,21 @@ export function OrdersContent() {
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">Actions</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setStatusDialogOrder(row.original)}>
-              Update status
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">Actions</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setStatusDialogOrder(row.original)}>
+                Update status
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       ),
     },
   ]
@@ -248,6 +252,7 @@ export function OrdersContent() {
         isLoading={isLoading}
         searchColumn="order_number"
         searchPlaceholder="Search by order number…"
+        onRowClick={(order) => setDetailOrder(order)}
       />
 
       {statusDialogOrder && (
@@ -258,6 +263,12 @@ export function OrdersContent() {
           onSuccess={() => mutate()}
         />
       )}
+
+      <OrderDetailSheet
+        order={detailOrder}
+        open={!!detailOrder}
+        onOpenChange={(open) => { if (!open) setDetailOrder(null) }}
+      />
     </div>
   )
 }

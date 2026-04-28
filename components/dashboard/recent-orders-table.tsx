@@ -7,20 +7,38 @@ import { formatCurrency, formatRelativeTime } from "@/lib/format"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
 
+interface RecentOrderItem {
+  id: string
+  product_name: string
+  variant_name: string | null
+  quantity: number
+  unit_price: number
+  cost_price: number
+  discount_amount: number
+  tax_amount: number
+  total_amount: number
+}
+
 interface RecentOrder {
   id: string
   order_number: string
   total_amount: number
+  subtotal?: number
+  discount_amount?: number
+  tax_amount?: number
+  paid_amount?: number
+  change_amount?: number
   status: string
   payment_status: string
   created_at: string
   customer: { first_name: string; last_name: string } | null
-  items: { id: string }[]
+  items: RecentOrderItem[]
   payments: { payment_method: string; amount: number }[]
 }
 
 interface RecentOrdersTableProps {
   orders: RecentOrder[]
+  onOrderClick?: (order: RecentOrder) => void
 }
 
 function getPaymentDisplay(payments: { payment_method: string; amount: number }[] | undefined) {
@@ -120,7 +138,7 @@ const columns: ColumnDef<RecentOrder>[] = [
   },
 ]
 
-export function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
+export function RecentOrdersTable({ orders, onOrderClick }: RecentOrdersTableProps) {
   return (
     <DataTable
       columns={columns}
@@ -129,6 +147,7 @@ export function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
       showColumnToggle={false}
       showPagination={false}
       emptyMessage="No recent orders"
+      onRowClick={onOrderClick}
     />
   )
 }

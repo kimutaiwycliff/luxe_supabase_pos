@@ -356,7 +356,7 @@ export async function getRecentOrdersForDashboard(limit = 5) {
       payment_status,
       created_at,
       customer:customers!customer_id(first_name, last_name),
-      items:order_items(id),
+      items:order_items(id, product_name, variant_name, quantity, unit_price, cost_price, discount_amount, tax_amount, total_amount),
       payments(payment_method, amount)
     `)
     .order("created_at", { ascending: false })
