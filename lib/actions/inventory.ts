@@ -420,6 +420,72 @@ export async function getVariantStock(variantId: string, locationId: string) {
   }
 }
 
+export async function updateProductInventory(
+  productId: string,
+  locationId: string,
+  quantity: number,
+): Promise<{ error: string | null }> {
+  const supabase = getSupabaseAdmin()
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("inventory")
+    .select("id, quantity")
+    .eq("product_id", productId)
+    .eq("location_id", locationId)
+    .is("variant_id", null)
+    .single()
+
+  if (fetchError && fetchError.code !== "PGRST116") {
+    return { error: fetchError.message }
+  }
+
+  if (existing) {
+    const diff = quantity - existing.quantity
+    const { error: updateError } = await supabase
+      .from("inventory")
+      .update({ quantity, updated_at: new Date().toISOString() })
+      .eq("id", existing.id)
+
+    if (updateError) return { error: updateError.message }
+
+    if (diff !== 0) {
+      await supabase.from("stock_movements").insert({
+        product_id: productId,
+        variant_id: null,
+        location_id: locationId,
+        movement_type: diff > 0 ? "adjustment_in" : "adjustment_out",
+        quantity: diff,
+        reason: "Manual adjustment",
+        reference_type: "manual",
+      })
+    }
+  } else {
+    const { error: insertError } = await supabase.from("inventory").insert({
+      product_id: productId,
+      variant_id: null,
+      location_id: locationId,
+      quantity,
+    })
+
+    if (insertError) return { error: insertError.message }
+
+    if (quantity > 0) {
+      await supabase.from("stock_movements").insert({
+        product_id: productId,
+        variant_id: null,
+        location_id: locationId,
+        movement_type: "initial",
+        quantity,
+        reason: "Initial stock",
+        reference_type: "manual",
+      })
+    }
+  }
+
+  ;(revalidateTag as any)("inventory", "max")
+  return { error: null }
+}
+
 export async function getInventoryInsights(locationId?: string) {
   const supabase = getSupabaseAdmin()
 

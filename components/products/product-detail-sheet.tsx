@@ -33,6 +33,7 @@ import {
   type ProductVariant,
 } from "@/lib/actions/variants"
 import { getDefaultLocation } from "@/lib/actions/locations"
+import { getProductStock, updateProductInventory } from "@/lib/actions/inventory"
 import { formatCurrency } from "@/lib/format"
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/dropzone"
 import { useSupabaseUpload } from "@/hooks/use-supabase-upload"
@@ -179,6 +180,15 @@ export function ProductDetailSheet({
     finally { setIsSaving(false) }
   }
 
+  const handleSaveProductInventory = async () => {
+    if (!locationId || !product) return
+    setSavingProductStock(true)
+    const { error } = await updateProductInventory(product.id, locationId, productStockForm)
+    if (error) { toast.error(error) }
+    else { mutateProductStock(); toast.success(`Stock set to ${productStockForm}`) }
+    setSavingProductStock(false)
+  }
+
   // ── Variant state ──────────────────────────────────────────────────
   const { data: variantsData, mutate: mutateVariants } = useSWR(
     open && product ? ["product-variants", product.id] : null,
@@ -190,6 +200,17 @@ export function ProductDetailSheet({
   useEffect(() => {
     if (open) getDefaultLocation().then((r) => r.location && setLocationId(r.location.id))
   }, [open])
+
+  // ── Simple product (no-variant) inventory ─────────────────────────
+  const { data: productStockData, mutate: mutateProductStock } = useSWR(
+    open && product && !formData.has_variants && locationId ? ["product-stock", product.id, locationId] : null,
+    () => getProductStock(product!.id, locationId!),
+  )
+  const [productStockForm, setProductStockForm] = useState(0)
+  const [savingProductStock, setSavingProductStock] = useState(false)
+  useEffect(() => {
+    if (productStockData) setProductStockForm(productStockData.quantity)
+  }, [productStockData])
 
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null)
   const [variantEditForm, setVariantEditForm] = useState<{
@@ -435,6 +456,49 @@ export function ProductDetailSheet({
                   </div>
                 </div>
               </div>
+
+              {/* ── Inventory (simple products only) ── */}
+              {product && !formData.has_variants && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Inventory</p>
+                  <div className="rounded-lg border border-border p-4 space-y-4">
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div>
+                        <p className="text-2xl font-bold">{productStockData?.quantity ?? 0}</p>
+                        <p className="text-xs text-muted-foreground">In Stock</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-muted-foreground">{productStockData?.reserved_quantity ?? 0}</p>
+                        <p className="text-xs text-muted-foreground">Reserved</p>
+                      </div>
+                      <div>
+                        <p className={cn("text-2xl font-bold", (productStockData?.available_quantity ?? 0) > 0 ? "text-green-600" : "text-destructive")}>
+                          {productStockData?.available_quantity ?? 0}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Available</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm whitespace-nowrap">Set Stock</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={productStockForm}
+                        onChange={(e) => setProductStockForm(parseInt(e.target.value) || 0)}
+                        className="w-24 h-8"
+                      />
+                      {productStockForm !== (productStockData?.quantity ?? 0) && (
+                        <Button size="sm" onClick={handleSaveProductInventory} disabled={savingProductStock}>
+                          {savingProductStock
+                            ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                            : <Save className="h-3.5 w-3.5 mr-1" />}
+                          Save
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {formError && <p className="text-sm text-destructive">{formError}</p>}
             </TabsContent>
