@@ -1,6 +1,7 @@
 "use server"
 
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import { getDefaultLocation } from "@/lib/actions/locations"
 import { revalidateTag } from "next/cache"
 
 export type PurchaseOrderStatus = "pending" | "ordered" | "partial" | "received" | "cancelled"
@@ -64,8 +65,17 @@ export async function createPurchaseOrder(
     unit_cost: number
   }>,
   notes?: string,
+  locationId?: string,
 ) {
   const supabase = getSupabaseAdmin()
+
+  // Resolve location — use provided id or fall back to the default location
+  let resolvedLocationId = locationId
+  if (!resolvedLocationId) {
+    const { location, error: locErr } = await getDefaultLocation()
+    if (locErr || !location) throw new Error("No active location found. Please create a location first.")
+    resolvedLocationId = location.id
+  }
 
   // Generate PO number
   const { data: lastPo } = await supabase
@@ -87,6 +97,7 @@ export async function createPurchaseOrder(
     .insert({
       po_number: poNumber,
       supplier_id: supplierId,
+      location_id: resolvedLocationId,
       status: "pending",
       total_amount: totalAmount,
       notes,
@@ -96,7 +107,7 @@ export async function createPurchaseOrder(
 
   if (poError) throw poError
 
-  // Create order items
+  // Create order items — total_cost is required by the table
   const orderItems = items.map((item) => ({
     purchase_order_id: po.id,
     product_id: item.product_id,
@@ -104,13 +115,14 @@ export async function createPurchaseOrder(
     quantity_ordered: item.quantity_ordered,
     quantity_received: 0,
     unit_cost: item.unit_cost,
+    total_cost: item.quantity_ordered * item.unit_cost,
   }))
 
   const { error: itemsError } = await supabase.from("purchase_order_items").insert(orderItems)
 
   if (itemsError) throw itemsError
 
-    ; (revalidateTag as any)("purchase-orders", "max")
+  ;(revalidateTag as any)("purchase-orders", "max")
   return po
 }
 
@@ -119,10 +131,8 @@ export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrde
 
   const updateData: Record<string, unknown> = { status }
 
-  if (status === "ordered") {
-    updateData.sent_at = new Date().toISOString()
-  } else if (status === "received") {
-    updateData.received_at = new Date().toISOString()
+  if (status === "received") {
+    updateData.received_date = new Date().toISOString().split("T")[0]
   }
 
   const { data, error } = await supabase.from("purchase_orders").update(updateData).eq("id", id).select().single()
@@ -225,7 +235,7 @@ export async function receivePurchaseOrder(
   if (allReceived) {
     await supabase
       .from("purchase_orders")
-      .update({ status: "received", received_at: new Date().toISOString() })
+      .update({ status: "received", received_date: new Date().toISOString().split("T")[0] })
       .eq("id", id)
   }
 

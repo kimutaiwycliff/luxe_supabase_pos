@@ -8,7 +8,7 @@ import { Plus, Grid3X3, List, Printer, ShoppingCart, X, Loader2 } from "lucide-r
 import { ProductDetailSheet } from "./product-detail-sheet"
 import { DeleteProductDialog } from "./delete-product-dialog"
 import { PrintLabelsDialog, type LabelItem } from "./print-labels-dialog"
-import { CreatePurchaseOrderDialog } from "@/components/purchase-orders/create-purchase-order-dialog"
+import { RestockSheet } from "@/components/purchase-orders/restock-sheet"
 import { getCategories } from "@/lib/actions/categories"
 import { getSuppliers } from "@/lib/actions/suppliers"
 import { getProductById, deleteProduct, getProductVariants } from "@/lib/actions/products"
@@ -39,7 +39,7 @@ export function ProductsContent() {
   const [productToDelete, setProductToDelete] = useState<Product | AlgoliaProduct | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Restock PO dialog
+  // Restock sheet
   const [restockOpen, setRestockOpen] = useState(false)
   const [restockProduct, setRestockProduct] = useState<Product | null>(null)
   const [bulkRestockItems, setBulkRestockItems] = useState<{ product_id: string; product_name: string; sku: string; quantity: number; unit_cost: number }[] | undefined>(undefined)
@@ -274,12 +274,11 @@ export function ProductsContent() {
         onDelete={handleDeleteFromSheet}
       />
 
-      {/* Restock / quick PO */}
-      <CreatePurchaseOrderDialog
+      {/* Restock sheet */}
+      <RestockSheet
         open={restockOpen}
         onOpenChange={setRestockOpen}
-        onSuccess={() => { setRestockOpen(false); toast.success("Purchase order created") }}
-        initialSupplierId={restockProduct?.supplier_id ?? undefined}
+        onSuccess={() => { setRestockOpen(false) }}
         initialItems={restockInitialItems}
       />
 
