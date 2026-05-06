@@ -11,6 +11,7 @@ import { LowStockAlert } from "./low-stock-alert"
 import { SalesChart } from "./sales-chart"
 import { LayawaySummary } from "./layaway-summary"
 import { QuickActions } from "./quick-actions"
+import { RestockWidget } from "./restock-widget"
 import useSWR from "swr"
 import {
   getDashboardStats,
@@ -162,7 +163,10 @@ export function DashboardContent() {
         </Card>
       </div>
 
-      <div className="mt-6 grid gap-6 grid-cols-1 lg:grid-cols-2">
+      <div className="mt-6 grid gap-6 grid-cols-1 lg:grid-cols-3">
+        {/* Restock Widget */}
+        <RestockWidget />
+
         {/* Layaway Summary */}
         {layawayStatsLoading || layawaysLoading ? (
           <Skeleton className="h-64 rounded-xl" />

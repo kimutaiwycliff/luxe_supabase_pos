@@ -8,10 +8,12 @@ import {
   Users,
   BarChart2,
   Boxes,
+  ListChecks,
 } from "lucide-react"
 
 const ACTIONS = [
   { href: "/pos",         label: "New Sale",       sub: "Open the POS",           icon: ShoppingCart, color: "text-emerald-500" },
+  { href: "/restock",     label: "Restock",         sub: "Shopping checklist",     icon: ListChecks,   color: "text-teal-500" },
   { href: "/orders",      label: "Orders",          sub: "View & manage",          icon: ClipboardList, color: "text-blue-500" },
   { href: "/products",    label: "Products",        sub: "Add or edit products",   icon: Package,      color: "text-orange-500" },
   { href: "/collections", label: "Collections",     sub: "Curate & edit",          icon: Sparkles,     color: "text-violet-500" },
@@ -25,7 +27,7 @@ export function QuickActions() {
   return (
     <div className="mb-6">
       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Access</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-3">
         {ACTIONS.map(({ href, label, sub, icon: Icon, color }) => (
           <Link
             key={href}
