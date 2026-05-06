@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react"
 import useSWR from "swr"
-import { Search, Plus, Minus, DollarSign, TrendingUp, AlertTriangle, PackageX, RefreshCw } from "lucide-react"
+import Link from "next/link"
+import { Search, Plus, Minus, DollarSign, TrendingUp, AlertTriangle, PackageX, RefreshCw, ListChecks } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -171,6 +172,12 @@ export function InventoryContent() {
 
         <Button variant="outline" size="icon" onClick={handleRefresh}>
           <RefreshCw className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" asChild>
+          <Link href="/restock">
+            <ListChecks className="h-4 w-4 mr-2" />
+            Restock List
+          </Link>
         </Button>
       </div>
 

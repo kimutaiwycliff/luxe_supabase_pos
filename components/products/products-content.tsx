@@ -2,17 +2,18 @@
 
 import { useState, useCallback, useMemo } from "react"
 import useSWR from "swr"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Grid3X3, List, Printer, ShoppingCart, X, Loader2 } from "lucide-react"
+import { Plus, Grid3X3, List, Printer, X, Loader2, ListChecks } from "lucide-react"
 import { ProductDetailSheet } from "./product-detail-sheet"
 import { DeleteProductDialog } from "./delete-product-dialog"
 import { PrintLabelsDialog, type LabelItem } from "./print-labels-dialog"
-import { RestockSheet } from "@/components/purchase-orders/restock-sheet"
 import { getCategories } from "@/lib/actions/categories"
 import { getSuppliers } from "@/lib/actions/suppliers"
 import { getProductById, deleteProduct, getProductVariants } from "@/lib/actions/products"
 import { deleteProductFromIndex } from "@/lib/actions/algolia"
+import { addItemToRestockList, getActiveRestockList, createRestockList } from "@/lib/actions/restock-lists"
 import type { Product } from "@/lib/types"
 import type { AlgoliaProduct } from "@/lib/algolia"
 import { InstantSearch, Configure } from "react-instantsearch"
@@ -24,7 +25,17 @@ import { toast } from "sonner"
 
 type ViewMode = "grid" | "list"
 
+/** Ensures an active restock list exists and returns its id. */
+async function ensureActiveList(): Promise<string> {
+  const { list } = await getActiveRestockList()
+  if (list) return list.id
+  const { list: newList, error } = await createRestockList()
+  if (error || !newList) throw new Error(error ?? "Failed to create restock list")
+  return newList.id
+}
+
 export function ProductsContent() {
+  const router = useRouter()
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -39,10 +50,8 @@ export function ProductsContent() {
   const [productToDelete, setProductToDelete] = useState<Product | AlgoliaProduct | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Restock sheet
-  const [restockOpen, setRestockOpen] = useState(false)
-  const [restockProduct, setRestockProduct] = useState<Product | null>(null)
-  const [bulkRestockItems, setBulkRestockItems] = useState<{ product_id: string; product_name: string; sku: string; quantity: number; unit_cost: number }[] | undefined>(undefined)
+  // Restock
+  const [addingToRestock, setAddingToRestock] = useState(false)
 
   // Print labels
   const [bulkPrintOpen, setBulkPrintOpen] = useState(false)
@@ -72,11 +81,28 @@ export function ProductsContent() {
     else toast.error("Could not load product", { description: result.error ?? "Unknown error" })
   }, [])
 
-  const handleRestock = useCallback((product: Product) => {
-    setBulkRestockItems(undefined)
-    setRestockProduct(product)
-    setRestockOpen(true)
-  }, [])
+  /** Add a single product to restock list, then navigate */
+  const handleRestock = useCallback(async (product: Product) => {
+    setAddingToRestock(true)
+    try {
+      const listId = await ensureActiveList()
+      await addItemToRestockList(listId, {
+        product_id: product.id,
+        product_name: product.name,
+        sku: product.sku ?? "",
+        supplier_id: (product as any).supplier_id ?? null,
+        supplier_name: (product as any).supplier?.name ?? null,
+        qty_requested: product.low_stock_threshold || 10,
+        unit_cost: product.cost_price,
+      })
+      toast.success(`${product.name} added to restock list`)
+      router.push("/restock")
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to add to restock list")
+    } finally {
+      setAddingToRestock(false)
+    }
+  }, [router])
 
   const handleDelete = useCallback((product: AlgoliaProduct) => {
     setProductToDelete(product); setDeleteDialogOpen(true)
@@ -147,36 +173,38 @@ export function ProductsContent() {
           }
         }
       }
-      if (items.length === 0) {
-        toast.error("No printable labels found for the selected products")
-        return
-      }
+      if (items.length === 0) { toast.error("No printable labels found"); return }
       setBulkPrintItems(items)
       setBulkPrintOpen(true)
-    } catch {
-      toast.error("Failed to build label list")
+    } catch { toast.error("Failed to build label list") }
+    finally { setIsBuildingLabels(false) }
+  }, [selectedProducts])
+
+  // ── Bulk restock — add selected products to list, then navigate ───────────────
+  const handleBulkRestock = useCallback(async () => {
+    setAddingToRestock(true)
+    try {
+      const listId = await ensureActiveList()
+      let added = 0
+      for (const p of selectedProducts.values()) {
+        const { error } = await addItemToRestockList(listId, {
+          product_id: p.objectID,
+          product_name: p.name,
+          sku: p.sku ?? "",
+          qty_requested: 10,
+          unit_cost: p.cost_price,
+        })
+        if (!error) added++
+      }
+      toast.success(`${added} product${added !== 1 ? "s" : ""} added to restock list`)
+      clearSelection()
+      router.push("/restock")
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed")
     } finally {
-      setIsBuildingLabels(false)
+      setAddingToRestock(false)
     }
-  }, [selectedProducts])
-
-  // ── Bulk restock ──────────────────────────────────────────────────────────────
-  const handleBulkRestock = useCallback(() => {
-    const items = Array.from(selectedProducts.values()).map(p => ({
-      product_id: p.objectID,
-      product_name: p.name,
-      sku: p.sku,
-      quantity: 10,
-      unit_cost: p.cost_price,
-    }))
-    setBulkRestockItems(items)
-    setRestockProduct(null)
-    setRestockOpen(true)
-  }, [selectedProducts])
-
-  const restockInitialItems = bulkRestockItems ?? (restockProduct
-    ? [{ product_id: restockProduct.id, product_name: restockProduct.name, sku: restockProduct.sku, quantity: restockProduct.low_stock_threshold || 10, unit_cost: restockProduct.cost_price }]
-    : undefined)
+  }, [selectedProducts, clearSelection, router])
 
   const selectedCount = selectedProducts.size
 
@@ -192,7 +220,6 @@ export function ProductsContent() {
 
         {/* Toolbar */}
         <div className="mb-6 space-y-3">
-          {/* Row 1: search + view toggle + add */}
           <div className="flex items-center gap-2">
             <AlgoliaSearchBox placeholder="Search products..." className="flex-1" />
             <div className="flex items-center rounded-lg border border-border p-1 shrink-0">
@@ -204,7 +231,6 @@ export function ProductsContent() {
               <span className="hidden sm:inline">Add Product</span>
             </Button>
           </div>
-          {/* Row 2: filters */}
           <div className="flex items-center gap-2">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="flex-1 sm:w-48 sm:flex-none"><SelectValue placeholder="All Categories" /></SelectTrigger>
@@ -235,26 +261,20 @@ export function ProductsContent() {
         <AlgoliaPagination />
       </InstantSearch>
 
-      {/* ── Bulk-selection action bar ─────────────────────────────────────────── */}
+      {/* ── Bulk-selection action bar ── */}
       {selectedCount > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-xl border border-border bg-background/95 backdrop-blur-sm shadow-lg px-4 py-2.5">
-          <span className="text-sm font-medium text-muted-foreground mr-1">
-            {selectedCount} selected
-          </span>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleBulkPrint}
-            disabled={isBuildingLabels}
-          >
+          <span className="text-sm font-medium text-muted-foreground mr-1">{selectedCount} selected</span>
+          <Button size="sm" variant="outline" onClick={handleBulkPrint} disabled={isBuildingLabels}>
             {isBuildingLabels
               ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Building…</>
-              : <><Printer className="h-3.5 w-3.5 mr-1.5" />Print Labels</>
-            }
+              : <><Printer className="h-3.5 w-3.5 mr-1.5" />Print Labels</>}
           </Button>
-          <Button size="sm" variant="outline" onClick={handleBulkRestock}>
-            <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-            Restock
+          <Button size="sm" variant="outline" onClick={handleBulkRestock} disabled={addingToRestock}>
+            {addingToRestock
+              ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              : <ListChecks className="h-3.5 w-3.5 mr-1.5" />}
+            Add to Restock
           </Button>
           <Button size="sm" variant="ghost" onClick={clearSelection} className="h-7 w-7 p-0">
             <X className="h-3.5 w-3.5" />
@@ -262,7 +282,6 @@ export function ProductsContent() {
         </div>
       )}
 
-      {/* Product detail sheet — handles both create and edit + variants */}
       <ProductDetailSheet
         open={sheetOpen}
         onOpenChange={(v) => { setSheetOpen(v); if (!v) setEditingProduct(null) }}
@@ -274,18 +293,8 @@ export function ProductsContent() {
         onDelete={handleDeleteFromSheet}
       />
 
-      {/* Restock sheet */}
-      <RestockSheet
-        open={restockOpen}
-        onOpenChange={setRestockOpen}
-        onSuccess={() => { setRestockOpen(false) }}
-        initialItems={restockInitialItems}
-      />
-
-      {/* Bulk label print */}
       <PrintLabelsDialog open={bulkPrintOpen} onOpenChange={setBulkPrintOpen} items={bulkPrintItems} />
 
-      {/* Delete */}
       <DeleteProductDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}

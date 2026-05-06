@@ -23,6 +23,7 @@ import {
   Sparkles,
   RefreshCw,
   Warehouse,
+  ListChecks,
 } from "lucide-react"
 
 import {
@@ -82,6 +83,7 @@ const navGroups = [
   {
     label: "Purchasing",
     items: [
+      { title: "Restock List", href: "/restock", icon: ListChecks },
       { title: "Suppliers", href: "/suppliers", icon: Truck },
       { title: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
       { title: "Smart Reorder", href: "/reorder", icon: RefreshCw },
