@@ -197,8 +197,8 @@ export function InventoryContent() {
           </p>
         </div>
       ) : (
-        <div className="rounded-lg border">
-          <table className="w-full">
+        <div className="rounded-lg border overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="p-3 text-left text-sm font-medium">Product</th>

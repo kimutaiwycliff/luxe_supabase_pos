@@ -278,7 +278,7 @@ export function LayawaysContent() {
                 )}
 
                 {paymentMethod === "mpesa" && (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label>Phone Number</Label>
                       <Input
@@ -344,8 +344,8 @@ function LayawayCard({
   return (
     <Card className={isOverdue ? "border-destructive/50" : ""}>
       <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1 min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="font-semibold">{order.layaway_customer_name}</span>
               <Badge variant="outline">{order.order_number}</Badge>

@@ -13,13 +13,13 @@ import {
 import {
   Circle, Clock, CheckCircle2, Plus, Search, Loader2,
   ListChecks, MoreVertical, ShoppingBag, PackageCheck,
-  RefreshCw, PencilLine, X, ChevronDown, RotateCcw, History,
+  RefreshCw, PencilLine, X, ChevronDown, RotateCcw, History, Trash2,
 } from "lucide-react"
 import {
   getActiveRestockList, createRestockList, seedListFromLowStock,
   addItemToRestockList, updateRestockItem, removeRestockItem,
   setItemStatus, bulkSetStatus, bulkSetStatusForItems,
-  completeRestockList, renameRestockList,
+  completeRestockList, renameRestockList, deleteRestockList,
   getArchivedRestockLists, getRestockListById,
   type RestockList, type RestockListItem, type RestockItemStatus,
 } from "@/lib/actions/restock-lists"
@@ -101,7 +101,7 @@ function AddItemsSheet({
       sku: product.sku ?? "",
       supplier_id: supplier?.id ?? null,
       supplier_name: supplier?.name ?? null,
-      qty_requested: product.reorder_quantity || product.low_stock_threshold || 10,
+      qty_requested: product.reorder_quantity || product.low_stock_threshold || 2,
       unit_cost: product.cost_price || 0,
     })
     if (error) toast.error(error)
@@ -482,14 +482,28 @@ function ArchivedListItems({ list }: { list: RestockList }) {
 // ── History tab ───────────────────────────────────────────────────────────────
 
 function HistoryTab() {
-  const { data, isLoading } = useSWR("archived-restock-lists", getArchivedRestockLists)
+  const { data, isLoading, mutate } = useSWR("archived-restock-lists", getArchivedRestockLists)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const { data: expandedData, isLoading: expandedLoading } = useSWR(
     expandedId ? ["restock-list-detail", expandedId] : null,
     () => getRestockListById(expandedId!),
   )
 
   const lists = data?.lists ?? []
+
+  const handleDelete = async (listId: string, listName: string) => {
+    if (!confirm(`Delete "${listName}"? This cannot be undone.`)) return
+    setDeletingId(listId)
+    const { error } = await deleteRestockList(listId)
+    if (error) toast.error(error)
+    else {
+      toast.success("List deleted")
+      if (expandedId === listId) setExpandedId(null)
+      mutate()
+    }
+    setDeletingId(null)
+  }
 
   if (isLoading) {
     return (
@@ -522,33 +536,47 @@ function HistoryTab() {
           0,
         )
         const isExpanded = expandedId === list.id
+        const isDeleting = deletingId === list.id
 
         return (
           <div key={list.id} className="rounded-xl border border-border overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setExpandedId(isExpanded ? null : list.id)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/30 active:bg-muted/50 text-left"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">{list.name}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {list.completed_at
-                    ? new Date(list.completed_at).toLocaleDateString("en-KE", {
-                        day: "numeric", month: "short", year: "numeric",
-                      })
-                    : new Date(list.created_at).toLocaleDateString("en-KE", {
-                        day: "numeric", month: "short", year: "numeric",
-                      })}
-                  {total > 0 && <> · {received}/{total} received</>}
-                  {totalCost > 0 && <> · {formatCurrency(totalCost)}</>}
-                </p>
-              </div>
-              <ChevronDown className={cn(
-                "h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-200",
-                isExpanded && "rotate-180",
-              )} />
-            </button>
+            <div className="flex items-center gap-1 px-4 py-3.5">
+              <button
+                type="button"
+                onClick={() => setExpandedId(isExpanded ? null : list.id)}
+                className="flex-1 flex items-center gap-3 text-left min-w-0"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate">{list.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {list.completed_at
+                      ? new Date(list.completed_at).toLocaleDateString("en-KE", {
+                          day: "numeric", month: "short", year: "numeric",
+                        })
+                      : new Date(list.created_at).toLocaleDateString("en-KE", {
+                          day: "numeric", month: "short", year: "numeric",
+                        })}
+                    {total > 0 && <> · {received}/{total} received</>}
+                    {totalCost > 0 && <> · {formatCurrency(totalCost)}</>}
+                  </p>
+                </div>
+                <ChevronDown className={cn(
+                  "h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-200",
+                  isExpanded && "rotate-180",
+                )} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDelete(list.id, list.name)}
+                disabled={isDeleting}
+                className="flex-shrink-0 p-1.5 text-muted-foreground/50 hover:text-destructive active:text-destructive transition-colors ml-1"
+              >
+                {isDeleting
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <Trash2 className="h-4 w-4" />}
+              </button>
+            </div>
 
             {isExpanded && (
               expandedLoading ? (

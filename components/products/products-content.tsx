@@ -92,7 +92,7 @@ export function ProductsContent() {
         sku: product.sku ?? "",
         supplier_id: (product as any).supplier_id ?? null,
         supplier_name: (product as any).supplier?.name ?? null,
-        qty_requested: product.low_stock_threshold || 10,
+        qty_requested: product.low_stock_threshold || 2,
         unit_cost: product.cost_price,
       })
       toast.success(`${product.name} added to restock list`)
@@ -191,7 +191,7 @@ export function ProductsContent() {
           product_id: p.objectID,
           product_name: p.name,
           sku: p.sku ?? "",
-          qty_requested: 10,
+          qty_requested: 2,
           unit_cost: p.cost_price,
         })
         if (!error) added++

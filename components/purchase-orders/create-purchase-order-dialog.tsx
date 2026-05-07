@@ -220,64 +220,65 @@ export function CreatePurchaseOrderDialog({ open, onOpenChange, onSuccess, initi
               <Label>Order Items</Label>
               {items.map((item) => (
                 <Card key={item.product_id}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{item.product_name}</p>
-                        <p className="text-sm text-muted-foreground">{item.sku}</p>
+                  <CardContent className="p-3 space-y-2">
+                    {/* Row 1: name + delete */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{item.product_name}</p>
+                        <p className="text-xs text-muted-foreground">{item.sku}</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8 bg-transparent"
-                            onClick={() => updateQuantity(item.product_id, -1)}
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <Input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => {
-                              const qty = Number.parseInt(e.target.value) || 1
-                              setItems(
-                                items.map((i) =>
-                                  i.product_id === item.product_id ? { ...i, quantity: Math.max(1, qty) } : i,
-                                ),
-                              )
-                            }}
-                            className="w-16 h-8 text-center"
-                          />
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8 bg-transparent"
-                            onClick={() => updateQuantity(item.product_id, 1)}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <div className="w-24">
-                          <Input
-                            type="number"
-                            value={item.unit_cost}
-                            onChange={(e) => updateCost(item.product_id, Number.parseFloat(e.target.value) || 0)}
-                            className="h-8"
-                          />
-                        </div>
-                        <span className="w-20 text-right font-medium">
-                          {formatCurrency(item.quantity * item.unit_cost)}
-                        </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive flex-shrink-0"
+                        onClick={() => removeItem(item.product_id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {/* Row 2: qty + cost + total */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1">
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => removeItem(item.product_id)}
+                          className="h-8 w-8 bg-transparent"
+                          onClick={() => updateQuantity(item.product_id, -1)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const qty = Number.parseInt(e.target.value) || 1
+                            setItems(items.map((i) =>
+                              i.product_id === item.product_id ? { ...i, quantity: Math.max(1, qty) } : i,
+                            ))
+                          }}
+                          className="w-14 h-8 text-center"
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 bg-transparent"
+                          onClick={() => updateQuantity(item.product_id, 1)}
+                        >
+                          <Plus className="h-3 w-3" />
                         </Button>
                       </div>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        value={item.unit_cost}
+                        onChange={(e) => updateCost(item.product_id, Number.parseFloat(e.target.value) || 0)}
+                        className="w-28 h-8"
+                        placeholder="Unit cost"
+                      />
+                      <span className="ml-auto text-sm font-semibold">
+                        {formatCurrency(item.quantity * item.unit_cost)}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>

@@ -106,6 +106,14 @@ export async function getRestockListById(listId: string): Promise<{ list: Restoc
   return { list: list as RestockList, error: null }
 }
 
+export async function deleteRestockList(listId: string): Promise<{ error: string | null }> {
+  const supabase = getSupabaseAdmin()
+  await supabase.from("restock_list_items").delete().eq("list_id", listId)
+  const { error } = await supabase.from("restock_lists").delete().eq("id", listId)
+  if (error) return { error: error.message }
+  return { error: null }
+}
+
 export async function bulkSetStatusForItems(
   itemIds: string[],
   status: RestockItemStatus,
@@ -172,7 +180,7 @@ export async function seedListFromLowStock(listId: string): Promise<{ added: num
       sku: p.sku || "",
       supplier_id: supplier?.id ?? null,
       supplier_name: supplier?.name ?? null,
-      qty_requested: (p as any).reorder_quantity || threshold || 10,
+      qty_requested: (p as any).reorder_quantity || threshold || 2,
       unit_cost: (p as any).cost_price || 0,
       status: "pending",
     })

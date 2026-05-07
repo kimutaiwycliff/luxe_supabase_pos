@@ -148,7 +148,7 @@ export function DataTable<TData, TValue>({
           <Skeleton className="h-10 w-[250px]" />
           <Skeleton className="h-10 w-[100px]" />
         </div>
-        <div className="rounded-xl border border-border">
+        <div className="rounded-xl border border-border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -232,7 +232,7 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-border">
+      <div className="rounded-xl border border-border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

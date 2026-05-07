@@ -188,7 +188,7 @@ export function CustomersContent() {
                     <DialogDescription>Create a new customer record for your store.</DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="first_name">First Name *</Label>
                         <Input id="first_name" name="first_name" required />
