@@ -200,3 +200,37 @@
   animation-delay: 0.4s;
   animation-fill-mode: both;
 }
+
+/* Sonner toast progress bar */
+@keyframes sonner-progress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+[data-sonner-toast][data-mounted="true"] {
+  overflow: hidden;
+}
+
+[data-sonner-toast][data-mounted="true"]::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 0 0 var(--radius) var(--radius);
+  transform-origin: left center;
+  animation: sonner-progress 4s linear forwards;
+  pointer-events: none;
+  background: currentColor;
+  opacity: 0.35;
+}
+
+[data-sonner-toast]:hover::before {
+  animation-play-state: paused;
+}
+
+[data-sonner-toast][data-type="loading"]::before,
+[data-sonner-toast][data-promise="true"]::before {
+  display: none;
+}
