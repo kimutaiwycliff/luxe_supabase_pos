@@ -75,6 +75,48 @@ export async function getRestockLists(): Promise<{ lists: RestockList[]; error: 
   return { lists: (data as RestockList[]) ?? [], error: null }
 }
 
+export async function getArchivedRestockLists(): Promise<{ lists: RestockList[]; error: string | null }> {
+  const supabase = getSupabaseAdmin()
+  const { data, error } = await supabase
+    .from("restock_lists")
+    .select(`*, items:restock_list_items(id, status, qty_requested, qty_received, unit_cost)`)
+    .in("status", ["completed", "cancelled"])
+    .order("completed_at", { ascending: false })
+    .limit(30)
+
+  if (error) return { lists: [], error: error.message }
+  return { lists: (data as RestockList[]) ?? [], error: null }
+}
+
+export async function getRestockListById(listId: string): Promise<{ list: RestockList | null; error: string | null }> {
+  const supabase = getSupabaseAdmin()
+  const { data, error } = await supabase
+    .from("restock_lists")
+    .select(`*, items:restock_list_items(*)`)
+    .eq("id", listId)
+    .single()
+
+  if (error) return { list: null, error: error.message }
+  const list = {
+    ...data,
+    items: ((data as any).items as RestockListItem[]).sort((a, b) =>
+      (a.supplier_name ?? "").localeCompare(b.supplier_name ?? ""),
+    ),
+  }
+  return { list: list as RestockList, error: null }
+}
+
+export async function bulkSetStatusForItems(
+  itemIds: string[],
+  status: RestockItemStatus,
+): Promise<{ error: string | null }> {
+  for (const id of itemIds) {
+    const { error } = await setItemStatus(id, status)
+    if (error) return { error }
+  }
+  return { error: null }
+}
+
 // ── Mutations ──────────────────────────────────────────────────────────────
 
 export async function createRestockList(name = "Restock List"): Promise<{ list: RestockList | null; error: string | null }> {

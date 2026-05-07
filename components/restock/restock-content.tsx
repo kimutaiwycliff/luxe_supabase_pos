@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback } from "react"
+import useSWR from "swr"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -11,12 +13,14 @@ import {
 import {
   Circle, Clock, CheckCircle2, Plus, Search, Loader2,
   ListChecks, MoreVertical, ShoppingBag, PackageCheck,
-  RefreshCw, PencilLine, X,
+  RefreshCw, PencilLine, X, ChevronDown, RotateCcw, History,
 } from "lucide-react"
 import {
   getActiveRestockList, createRestockList, seedListFromLowStock,
   addItemToRestockList, updateRestockItem, removeRestockItem,
-  setItemStatus, bulkSetStatus, completeRestockList, renameRestockList,
+  setItemStatus, bulkSetStatus, bulkSetStatusForItems,
+  completeRestockList, renameRestockList,
+  getArchivedRestockLists, getRestockListById,
   type RestockList, type RestockListItem, type RestockItemStatus,
 } from "@/lib/actions/restock-lists"
 import { getProducts } from "@/lib/actions/products"
@@ -24,7 +28,7 @@ import { formatCurrency } from "@/lib/format"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
-// ── Status config ───────────────────────────────────────────────────────────
+// ── Status config ────────────────────────────────────────────────────────────
 
 const STATUS_META: Record<RestockItemStatus, {
   next: RestockItemStatus
@@ -48,7 +52,7 @@ const STATUS_META: Record<RestockItemStatus, {
     pillClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
   },
   received: {
-    next: "pending",
+    next: "received",
     icon: CheckCircle2,
     color: "text-green-500",
     rowBg: "bg-green-50/60 dark:bg-green-950/20",
@@ -56,7 +60,7 @@ const STATUS_META: Record<RestockItemStatus, {
   },
 }
 
-// ── Add-items sheet ─────────────────────────────────────────────────────────
+// ── Add-items sheet ──────────────────────────────────────────────────────────
 
 function AddItemsSheet({
   open, onOpenChange, listId, existingProductIds, onAdded,
@@ -155,7 +159,7 @@ function AddItemsSheet({
   )
 }
 
-// ── Item row (mobile-first) ─────────────────────────────────────────────────
+// ── Item row ─────────────────────────────────────────────────────────────────
 
 function ItemRow({
   item, onStatusChange, onQtyChange, onCostChange, onRemove, saving,
@@ -170,21 +174,20 @@ function ItemRow({
   const meta = STATUS_META[item.status]
   const StatusIcon = meta.icon
   const isReceived = item.status === "received"
+  const isOrdered = item.status === "ordered"
 
   return (
     <div className={cn(
-      "px-4 py-3 border-b border-border/50 transition-colors",
+      "px-4 py-3 border-b border-border/50 last:border-0 transition-colors",
       meta.rowBg,
       isReceived && "opacity-70",
     )}>
-      {/* Row 1 — status tap target + name + remove */}
+      {/* Row 1 — status button + name + context menu */}
       <div className="flex items-start gap-3">
-        {/* Big tap target for mobile */}
         <button
           type="button"
-          onClick={() => onStatusChange(item.id, meta.next)}
+          onClick={() => !isReceived && onStatusChange(item.id, meta.next)}
           disabled={saving || isReceived}
-          title={isReceived ? "Received" : `Tap to mark as ${STATUS_META[meta.next].icon}`}
           className={cn(
             "mt-0.5 flex-shrink-0 rounded-full transition-transform active:scale-95",
             meta.color,
@@ -200,24 +203,42 @@ function ItemRow({
           <p className={cn("text-sm font-semibold leading-snug", isReceived && "line-through text-muted-foreground")}>
             {item.product_name}
           </p>
-          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-0.5">
-            {item.supplier_name
-              ? <span className="text-xs text-muted-foreground">{item.supplier_name}</span>
-              : <span className="text-xs text-amber-500 font-medium">No supplier</span>}
-            {item.sku && <span className="text-xs text-muted-foreground/60 font-mono">{item.sku}</span>}
-          </div>
+          {item.sku && (
+            <span className="text-xs text-muted-foreground/60 font-mono">{item.sku}</span>
+          )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => onRemove(item.id)}
-          className="flex-shrink-0 p-1.5 -mr-1 text-muted-foreground/50 hover:text-destructive active:text-destructive transition-colors"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="flex-shrink-0 p-1.5 -mr-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {isOrdered && (
+              <>
+                <DropdownMenuItem onClick={() => onStatusChange(item.id, "pending")}>
+                  <RotateCcw className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Revert to Pending
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem
+              onClick={() => onRemove(item.id)}
+              className="text-destructive focus:text-destructive"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Remove
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {/* Row 2 — inputs (below on all screen sizes) */}
+      {/* Row 2 — inputs or received summary */}
       {isReceived ? (
         <div className="mt-2 ml-9 flex items-center gap-2">
           <span className="text-xs text-green-600 font-medium">
@@ -259,7 +280,98 @@ function ItemRow({
   )
 }
 
-// ── Filter pill strip ───────────────────────────────────────────────────────
+// ── Supplier group ────────────────────────────────────────────────────────────
+
+function SupplierGroup({
+  supplierName, items,
+  onStatusChange, onQtyChange, onCostChange, onRemove,
+  savingItemId, onBulkOrdered, bulkWorking,
+}: {
+  supplierName: string
+  items: RestockListItem[]
+  onStatusChange: (id: string, next: RestockItemStatus) => void
+  onQtyChange: (id: string, qty: number) => void
+  onCostChange: (id: string, cost: number) => void
+  onRemove: (id: string) => void
+  savingItemId: string | null
+  onBulkOrdered: (itemIds: string[]) => void
+  bulkWorking: boolean
+}) {
+  const [collapsed, setCollapsed] = useState(false)
+
+  const pending = items.filter((i) => i.status === "pending").length
+  const ordered = items.filter((i) => i.status === "ordered").length
+  const received = items.filter((i) => i.status === "received").length
+  const pendingIds = items.filter((i) => i.status === "pending").map((i) => i.id)
+
+  return (
+    <div className="border-b border-border last:border-0">
+      {/* Supplier header */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40 sticky top-0 z-10">
+        <button
+          type="button"
+          onClick={() => setCollapsed(!collapsed)}
+          className="flex items-center gap-2 flex-1 min-w-0 text-left"
+        >
+          <ChevronDown className={cn(
+            "h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-200",
+            collapsed && "-rotate-90",
+          )} />
+          <span className="font-semibold text-sm truncate">
+            {supplierName || "No Supplier"}
+          </span>
+          <div className="flex items-center gap-2 ml-1 flex-shrink-0">
+            {pending > 0 && (
+              <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground font-medium">
+                <Circle className="h-2.5 w-2.5" />{pending}
+              </span>
+            )}
+            {ordered > 0 && (
+              <span className="flex items-center gap-0.5 text-[10px] text-amber-500 font-medium">
+                <Clock className="h-2.5 w-2.5" />{ordered}
+              </span>
+            )}
+            {received > 0 && (
+              <span className="flex items-center gap-0.5 text-[10px] text-green-500 font-medium">
+                <CheckCircle2 className="h-2.5 w-2.5" />{received}
+              </span>
+            )}
+          </div>
+        </button>
+
+        {pending > 0 && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs px-2.5 flex-shrink-0 bg-background"
+            onClick={() => onBulkOrdered(pendingIds)}
+            disabled={bulkWorking}
+          >
+            {bulkWorking
+              ? <Loader2 className="h-3 w-3 animate-spin" />
+              : <Clock className="h-3 w-3 mr-1 text-amber-500" />}
+            Order all
+          </Button>
+        )}
+      </div>
+
+      {/* Items */}
+      {!collapsed && items.map((item) => (
+        <ItemRow
+          key={item.id}
+          item={item}
+          onStatusChange={onStatusChange}
+          onQtyChange={onQtyChange}
+          onCostChange={onCostChange}
+          onRemove={onRemove}
+          saving={savingItemId === item.id}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ── Filter pill strip ─────────────────────────────────────────────────────────
 
 type FilterStatus = "all" | RestockItemStatus
 
@@ -304,7 +416,157 @@ function FilterStrip({
   )
 }
 
-// ── Main component ──────────────────────────────────────────────────────────
+// ── Archived list items (read-only, grouped by supplier) ─────────────────────
+
+function ArchivedListItems({ list }: { list: RestockList }) {
+  const items = (list.items ?? []) as RestockListItem[]
+
+  const groups = useMemo(() => {
+    const map = new Map<string, RestockListItem[]>()
+    for (const item of items) {
+      const key = item.supplier_name || ""
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(item)
+    }
+    return Array.from(map.entries()).sort(([a], [b]) => {
+      if (!a) return 1
+      if (!b) return -1
+      return a.localeCompare(b)
+    })
+  }, [items])
+
+  return (
+    <div className="border-t border-border">
+      {groups.map(([supplierName, groupItems]) => (
+        <div key={supplierName || "__none__"}>
+          <div className="px-4 py-1.5 bg-muted/20">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              {supplierName || "No Supplier"}
+            </span>
+          </div>
+          {groupItems.map((item) => (
+            <div
+              key={item.id}
+              className={cn(
+                "px-4 py-2.5 border-b border-border/40 last:border-0 flex items-center gap-3",
+                item.status === "received" && "bg-green-50/30 dark:bg-green-950/10",
+              )}
+            >
+              {item.status === "received"
+                ? <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                : <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+              <div className="flex-1 min-w-0">
+                <p className={cn("text-sm", item.status !== "received" && "text-muted-foreground")}>
+                  {item.product_name}
+                </p>
+                {item.sku && <p className="text-xs font-mono text-muted-foreground/50">{item.sku}</p>}
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className="text-xs font-medium">
+                  {item.status === "received" ? item.qty_received : item.qty_requested} units
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatCurrency(
+                    (item.status === "received" ? item.qty_received : item.qty_requested) * item.unit_cost,
+                  )}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── History tab ───────────────────────────────────────────────────────────────
+
+function HistoryTab() {
+  const { data, isLoading } = useSWR("archived-restock-lists", getArchivedRestockLists)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const { data: expandedData, isLoading: expandedLoading } = useSWR(
+    expandedId ? ["restock-list-detail", expandedId] : null,
+    () => getRestockListById(expandedId!),
+  )
+
+  const lists = data?.lists ?? []
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (lists.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center px-6 gap-3">
+        <History className="h-10 w-10 text-muted-foreground" />
+        <p className="text-sm font-medium">No completed lists yet</p>
+        <p className="text-xs text-muted-foreground max-w-xs">
+          Completed restock lists will appear here for reference.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {lists.map((list) => {
+        const summaryItems = (list.items ?? []) as any[]
+        const total = summaryItems.length
+        const received = summaryItems.filter((i) => i.status === "received").length
+        const totalCost = summaryItems.reduce(
+          (s: number, i: any) => s + (i.qty_received ?? i.qty_requested) * i.unit_cost,
+          0,
+        )
+        const isExpanded = expandedId === list.id
+
+        return (
+          <div key={list.id} className="rounded-xl border border-border overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setExpandedId(isExpanded ? null : list.id)}
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/30 active:bg-muted/50 text-left"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">{list.name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {list.completed_at
+                    ? new Date(list.completed_at).toLocaleDateString("en-KE", {
+                        day: "numeric", month: "short", year: "numeric",
+                      })
+                    : new Date(list.created_at).toLocaleDateString("en-KE", {
+                        day: "numeric", month: "short", year: "numeric",
+                      })}
+                  {total > 0 && <> · {received}/{total} received</>}
+                  {totalCost > 0 && <> · {formatCurrency(totalCost)}</>}
+                </p>
+              </div>
+              <ChevronDown className={cn(
+                "h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-200",
+                isExpanded && "rotate-180",
+              )} />
+            </button>
+
+            {isExpanded && (
+              expandedLoading ? (
+                <div className="flex justify-center py-6 border-t border-border">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : expandedData?.list ? (
+                <ArchivedListItems list={expandedData.list} />
+              ) : null
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function RestockContent() {
   const [list, setList] = useState<RestockList | null>(null)
@@ -352,7 +614,22 @@ export function RestockContent() {
     return result
   }, [items, filter, search])
 
-  // ── Actions ──
+  // Group filtered items by supplier
+  const groupedItems = useMemo(() => {
+    const map = new Map<string, RestockListItem[]>()
+    for (const item of filteredItems) {
+      const key = item.supplier_name || ""
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(item)
+    }
+    return Array.from(map.entries()).sort(([a], [b]) => {
+      if (!a) return 1
+      if (!b) return -1
+      return a.localeCompare(b)
+    })
+  }, [filteredItems])
+
+  // ── Actions ──────────────────────────────────────────────────────────────────
 
   const handleCreateList = async () => {
     setLoading(true)
@@ -420,6 +697,15 @@ export function RestockContent() {
     setBulkWorking(false)
   }
 
+  const handleBulkOrderedForSupplier = useCallback(async (itemIds: string[]) => {
+    setBulkWorking(true)
+    const { error } = await bulkSetStatusForItems(itemIds, "ordered")
+    if (error) toast.error(error)
+    else toast.success(`${itemIds.length} item${itemIds.length !== 1 ? "s" : ""} marked as ordered`)
+    await load()
+    setBulkWorking(false)
+  }, [load])
+
   const handleComplete = async () => {
     if (!list) return
     if (!confirm("Complete this restock list? It will be archived.")) return
@@ -436,9 +722,10 @@ export function RestockContent() {
   }
 
   const existingProductIds = useMemo(() => new Set(items.map((i) => i.product_id)), [items])
-  const grandTotal = items.filter((i) => i.status !== "received").reduce((s, i) => s + i.qty_requested * i.unit_cost, 0)
+  const grandTotal = items
+    .filter((i) => i.status !== "received")
+    .reduce((s, i) => s + i.qty_requested * i.unit_cost, 0)
 
-  // ── Loading ──
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -447,198 +734,221 @@ export function RestockContent() {
     )
   }
 
-  // ── Empty state (no active list) ──
-  if (!list) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-5 text-center px-6">
-        <div className="rounded-2xl bg-muted p-6">
-          <ListChecks className="h-12 w-12 text-muted-foreground" />
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold">No active restock list</h2>
-          <p className="text-muted-foreground mt-2 text-sm max-w-xs leading-relaxed">
-            Start a new list — it'll auto-fill with everything running low so you know exactly what to buy.
-          </p>
-        </div>
-        <Button size="lg" className="w-full max-w-xs h-12 text-base" onClick={handleCreateList}>
-          <Plus className="h-5 w-5 mr-2" />
-          Start Restock List
-        </Button>
-      </div>
-    )
-  }
-
   return (
-    <div className="flex flex-col min-h-[calc(100dvh-5rem)] max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto">
+      <Tabs defaultValue="active">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="active" className="flex items-center gap-1.5">
+            <ListChecks className="h-4 w-4" />
+            Active List
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-1.5">
+            <History className="h-4 w-4" />
+            History
+          </TabsTrigger>
+        </TabsList>
 
-      {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="flex-1 min-w-0">
-          {editingName ? (
-            <div className="flex items-center gap-2">
-              <Input
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                className="h-9 font-semibold flex-1"
-                onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); if (e.key === "Escape") setEditingName(false) }}
-                autoFocus
-              />
-              <Button size="sm" onClick={handleSaveName}>Save</Button>
-              <Button size="sm" variant="ghost" className="px-2" onClick={() => setEditingName(false)}>
-                <X className="h-4 w-4" />
+        {/* ── Active tab ── */}
+        <TabsContent value="active" className="mt-0">
+          {!list ? (
+            <div className="flex flex-col items-center justify-center min-h-[55vh] gap-5 text-center px-6">
+              <div className="rounded-2xl bg-muted p-6">
+                <ListChecks className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">No active restock list</h2>
+                <p className="text-muted-foreground mt-2 text-sm max-w-xs leading-relaxed">
+                  Start a new list — it'll auto-fill with everything running low.
+                </p>
+              </div>
+              <Button size="lg" className="w-full max-w-xs h-12 text-base" onClick={handleCreateList}>
+                <Plus className="h-5 w-5 mr-2" />
+                Start Restock List
               </Button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => { setNameInput(list.name); setEditingName(true) }}
-              className="flex items-center gap-1.5 group text-left"
-            >
-              <h1 className="text-lg font-bold leading-tight">{list.name}</h1>
-              <PencilLine className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-            </button>
-          )}
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Started {new Date(list.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
-          </p>
-        </div>
+            <div className="flex flex-col min-h-[calc(100dvh-9rem)]">
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem
-              onClick={() => handleBulkStatus("pending", "ordered")}
-              disabled={bulkWorking || counts.pending === 0}
-            >
-              <Clock className="h-4 w-4 mr-2 text-amber-500" />
-              Mark all pending → ordered
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => handleBulkStatus("ordered", "received")}
-              disabled={bulkWorking || counts.ordered === 0}
-            >
-              <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-              Mark all ordered → received
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSeedLowStock} disabled={seeding}>
-              <RefreshCw className={cn("h-4 w-4 mr-2", seeding && "animate-spin")} />
-              Sync low-stock items
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleComplete} className="text-muted-foreground">
-              <PackageCheck className="h-4 w-4 mr-2" />
-              Complete &amp; archive list
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+              {/* Header */}
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className="flex-1 min-w-0">
+                  {editingName ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        className="h-9 font-semibold flex-1"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveName()
+                          if (e.key === "Escape") setEditingName(false)
+                        }}
+                        autoFocus
+                      />
+                      <Button size="sm" onClick={handleSaveName}>Save</Button>
+                      <Button size="sm" variant="ghost" className="px-2" onClick={() => setEditingName(false)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { setNameInput(list.name); setEditingName(true) }}
+                      className="flex items-center gap-1.5 group text-left"
+                    >
+                      <h1 className="text-lg font-bold leading-tight">{list.name}</h1>
+                      <PencilLine className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                    </button>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Started {new Date(list.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
+                  </p>
+                </div>
 
-      {/* ── Progress bar ── */}
-      {counts.all > 0 && (
-        <div className="mb-3 space-y-1.5">
-          <div className="h-2.5 bg-muted rounded-full overflow-hidden">
-            <div
-              className={cn(
-                "h-full rounded-full transition-all duration-700",
-                progress === 100 ? "bg-green-500" : "bg-primary",
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem
+                      onClick={() => handleBulkStatus("pending", "ordered")}
+                      disabled={bulkWorking || counts.pending === 0}
+                    >
+                      <Clock className="h-4 w-4 mr-2 text-amber-500" />
+                      Mark all pending → ordered
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleBulkStatus("ordered", "received")}
+                      disabled={bulkWorking || counts.ordered === 0}
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                      Mark all ordered → received
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSeedLowStock} disabled={seeding}>
+                      <RefreshCw className={cn("h-4 w-4 mr-2", seeding && "animate-spin")} />
+                      Sync low-stock items
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleComplete} className="text-muted-foreground">
+                      <PackageCheck className="h-4 w-4 mr-2" />
+                      Complete &amp; archive list
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Progress bar */}
+              {counts.all > 0 && (
+                <div className="mb-3 space-y-1.5">
+                  <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-700",
+                        progress === 100 ? "bg-green-500" : "bg-primary",
+                      )}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1">
+                        <Circle className="h-3 w-3" />{counts.pending}
+                      </span>
+                      <span className="flex items-center gap-1 text-amber-500">
+                        <Clock className="h-3 w-3" />{counts.ordered}
+                      </span>
+                      <span className="flex items-center gap-1 text-green-500">
+                        <CheckCircle2 className="h-3 w-3" />{counts.received}
+                      </span>
+                    </div>
+                    <span className="font-medium">{progress}% done</span>
+                  </div>
+                </div>
               )}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1">
-                <Circle className="h-3 w-3" />{counts.pending}
-              </span>
-              <span className="flex items-center gap-1 text-amber-500">
-                <Clock className="h-3 w-3" />{counts.ordered}
-              </span>
-              <span className="flex items-center gap-1 text-green-500">
-                <CheckCircle2 className="h-3 w-3" />{counts.received}
-              </span>
+
+              {/* Toolbar */}
+              <div className="space-y-2 mb-3">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search items…"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="pl-9 h-10"
+                    />
+                  </div>
+                  <Button onClick={() => setAddSheetOpen(true)} className="h-10 px-4 flex-shrink-0">
+                    <Plus className="h-4 w-4 sm:mr-1.5" />
+                    <span className="hidden sm:inline">Add</span>
+                  </Button>
+                </div>
+                <FilterStrip filter={filter} setFilter={setFilter} counts={counts} />
+              </div>
+
+              {/* Grouped list */}
+              <div className="flex-1 rounded-xl border border-border overflow-hidden">
+                {counts.all === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-48 text-center px-6">
+                    <ShoppingBag className="h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-sm font-medium">List is empty</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Tap Add, or use "Sync low-stock items" from the ⋮ menu.
+                    </p>
+                  </div>
+                ) : groupedItems.length === 0 ? (
+                  <div className="flex items-center justify-center h-20 text-sm text-muted-foreground">
+                    No items match this filter
+                  </div>
+                ) : (
+                  groupedItems.map(([supplierName, groupItems]) => (
+                    <SupplierGroup
+                      key={supplierName || "__none__"}
+                      supplierName={supplierName}
+                      items={groupItems}
+                      onStatusChange={handleStatusChange}
+                      onQtyChange={handleQtyChange}
+                      onCostChange={handleCostChange}
+                      onRemove={handleRemove}
+                      savingItemId={savingItemId}
+                      onBulkOrdered={handleBulkOrderedForSupplier}
+                      bulkWorking={bulkWorking}
+                    />
+                  ))
+                )}
+              </div>
+
+              {/* Footer */}
+              {counts.all > 0 && (
+                <div className="mt-3 flex items-center justify-between gap-3 pt-3 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">{formatCurrency(grandTotal)}</span>
+                    {" "}left to spend
+                  </p>
+                  {counts.pending + counts.ordered === 0 && (
+                    <Button size="sm" onClick={handleComplete} className="bg-green-600 hover:bg-green-700 text-white">
+                      <PackageCheck className="h-3.5 w-3.5 mr-1.5" />
+                      Complete
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
-            <span className="font-medium">{progress}% done</span>
-          </div>
-        </div>
-      )}
-
-      {/* ── Toolbar ── */}
-      <div className="space-y-2 mb-3">
-        {/* Search + Add */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search items…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-10"
-            />
-          </div>
-          <Button onClick={() => setAddSheetOpen(true)} className="h-10 px-4 flex-shrink-0">
-            <Plus className="h-4 w-4 sm:mr-1.5" />
-            <span className="hidden sm:inline">Add</span>
-          </Button>
-        </div>
-
-        {/* Filter pills — horizontally scrollable on mobile */}
-        <FilterStrip filter={filter} setFilter={setFilter} counts={counts} />
-      </div>
-
-      {/* ── List ── */}
-      <div className="flex-1 rounded-xl border border-border overflow-hidden">
-        {counts.all === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-center px-6">
-            <ShoppingBag className="h-8 w-8 text-muted-foreground mb-2" />
-            <p className="text-sm font-medium">List is empty</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Tap Add, or use "Sync low-stock items" from the ⋮ menu.
-            </p>
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="flex items-center justify-center h-20 text-sm text-muted-foreground">
-            No items match this filter
-          </div>
-        ) : (
-          filteredItems.map((item) => (
-            <ItemRow
-              key={item.id}
-              item={item}
-              onStatusChange={handleStatusChange}
-              onQtyChange={handleQtyChange}
-              onCostChange={handleCostChange}
-              onRemove={handleRemove}
-              saving={savingItemId === item.id}
-            />
-          ))
-        )}
-      </div>
-
-      {/* ── Footer ── */}
-      {counts.all > 0 && (
-        <div className="mt-3 flex items-center justify-between gap-3 pt-3 border-t">
-          <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground">{formatCurrency(grandTotal)}</span>
-            {" "}left to spend
-          </p>
-          {counts.pending + counts.ordered === 0 && (
-            <Button size="sm" onClick={handleComplete} className="bg-green-600 hover:bg-green-700 text-white">
-              <PackageCheck className="h-3.5 w-3.5 mr-1.5" />
-              Complete
-            </Button>
           )}
-        </div>
-      )}
+        </TabsContent>
+
+        {/* ── History tab ── */}
+        <TabsContent value="history" className="mt-0">
+          <HistoryTab />
+        </TabsContent>
+      </Tabs>
 
       <AddItemsSheet
         open={addSheetOpen}
         onOpenChange={setAddSheetOpen}
-        listId={list.id}
+        listId={list?.id ?? ""}
         existingProductIds={existingProductIds}
         onAdded={load}
       />
