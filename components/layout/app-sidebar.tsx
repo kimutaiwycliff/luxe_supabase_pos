@@ -38,6 +38,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import {
   DropdownMenu,
@@ -114,6 +115,8 @@ function NavItem({
   item: { title: string; href: string; icon: React.ComponentType<{ className?: string }> }
   isActive: boolean
 }) {
+  const { isMobile, setOpenMobile } = useSidebar()
+
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -122,7 +125,7 @@ function NavItem({
         tooltip={item.title}
         className={cn("relative", isActive && "bg-sidebar-accent text-sidebar-accent-foreground font-medium")}
       >
-        <Link href={item.href}>
+        <Link href={item.href} onClick={() => { if (isMobile) setOpenMobile(false) }}>
           {isActive && (
             <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full" />
           )}
