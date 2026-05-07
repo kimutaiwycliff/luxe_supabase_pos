@@ -7,6 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
@@ -485,6 +490,7 @@ function HistoryTab() {
   const { data, isLoading, mutate } = useSWR("archived-restock-lists", getArchivedRestockLists)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
   const { data: expandedData, isLoading: expandedLoading } = useSWR(
     expandedId ? ["restock-list-detail", expandedId] : null,
     () => getRestockListById(expandedId!),
@@ -492,14 +498,15 @@ function HistoryTab() {
 
   const lists = data?.lists ?? []
 
-  const handleDelete = async (listId: string, listName: string) => {
-    if (!confirm(`Delete "${listName}"? This cannot be undone.`)) return
-    setDeletingId(listId)
-    const { error } = await deleteRestockList(listId)
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeletingId(deleteTarget.id)
+    setDeleteTarget(null)
+    const { error } = await deleteRestockList(deleteTarget.id)
     if (error) toast.error(error)
     else {
       toast.success("List deleted")
-      if (expandedId === listId) setExpandedId(null)
+      if (expandedId === deleteTarget.id) setExpandedId(null)
       mutate()
     }
     setDeletingId(null)
@@ -568,7 +575,7 @@ function HistoryTab() {
 
               <button
                 type="button"
-                onClick={() => handleDelete(list.id, list.name)}
+                onClick={() => setDeleteTarget({ id: list.id, name: list.name })}
                 disabled={isDeleting}
                 className="flex-shrink-0 p-1.5 text-muted-foreground/50 hover:text-destructive active:text-destructive transition-colors ml-1"
               >
@@ -590,6 +597,25 @@ function HistoryTab() {
           </div>
         )
       })}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deleteTarget?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This list and all its items will be permanently removed. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
