@@ -14,6 +14,8 @@ import { Switch } from "@/components/ui/switch"
 import { Combobox } from "@/components/ui/combobox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createProduct, updateProduct } from "@/lib/actions/products"
+import { updateProductInventory } from "@/lib/actions/inventory"
+import { getDefaultLocation } from "@/lib/actions/locations"
 import type { Product, Category, Supplier } from "@/lib/types"
 import { Loader2, X, Star, ImagePlus } from "lucide-react"
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/dropzone"
@@ -33,6 +35,8 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
   const [error, setError] = useState<string | null>(null)
   // allImages[0] = primary/hero, rest = gallery. Flat array is the source of truth.
   const [allImages, setAllImages] = useState<string[]>([])
+  const [initialStock, setInitialStock] = useState(0)
+  const [locationId, setLocationId] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -64,6 +68,10 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
   })
 
   const { reset: resetUpload } = uploadProps
+
+  useEffect(() => {
+    if (open) getDefaultLocation().then((r) => r.location && setLocationId(r.location.id))
+  }, [open])
 
   useEffect(() => {
     if (product) {
@@ -104,8 +112,8 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
         low_stock_threshold: 5,
       })
       setAllImages([])
+      setInitialStock(0)
     }
-    setError(null)
     setError(null)
     resetUpload()
   }, [product, open, resetUpload])
@@ -126,6 +134,9 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
       if (result.error) {
         setError(result.error)
       } else {
+        if (!product && result.product && initialStock > 0 && locationId && formData.track_inventory && !formData.has_variants) {
+          await updateProductInventory(result.product.id, locationId, initialStock)
+        }
         onSuccess()
       }
     } catch {
@@ -441,6 +452,26 @@ export function ProductDialog({ open, onOpenChange, product, categories, supplie
                 />
                 <p className="text-xs text-muted-foreground">Alert when stock falls below this number</p>
               </div>
+
+              {!product && formData.track_inventory && !formData.has_variants && (
+                <div className="rounded-lg border border-border p-4 space-y-3">
+                  <div>
+                    <p className="font-medium">Initial Stock</p>
+                    <p className="text-sm text-muted-foreground">Starting quantity when this product is created</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      id="initial_stock"
+                      type="number"
+                      min="0"
+                      value={initialStock}
+                      onChange={(e) => setInitialStock(Number.parseInt(e.target.value) || 0)}
+                      className="w-28"
+                    />
+                    <span className="text-sm text-muted-foreground">units</span>
+                  </div>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
 
