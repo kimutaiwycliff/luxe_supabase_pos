@@ -161,6 +161,7 @@ export function ProductDetailSheet({
         track_inventory: true, allow_backorder: false, low_stock_threshold: 5,
       })
       setAllImages([])
+      setProductStockForm(0)
     }
     setFormError(null)
     uploadProps.reset()
@@ -175,7 +176,13 @@ export function ProductDetailSheet({
       const payload = { ...formData, image_url: allImages[0] ?? undefined, gallery_paths: allImages.slice(1) }
       const result = product ? await updateProduct(product.id, payload) : await createProduct(payload)
       if (result.error) { setFormError(result.error) }
-      else { toast.success(product ? "Product updated" : "Product created"); onSuccess() }
+      else {
+        if (!product && result.product && productStockForm > 0 && locationId && payload.track_inventory && !payload.has_variants) {
+          await updateProductInventory(result.product.id, locationId, productStockForm)
+        }
+        toast.success(product ? "Product updated" : "Product created")
+        onSuccess()
+      }
     } catch { setFormError("An unexpected error occurred") }
     finally { setIsSaving(false) }
   }
@@ -458,6 +465,28 @@ export function ProductDetailSheet({
               </div>
 
               {/* ── Inventory (simple products only) ── */}
+              {!product && formData.track_inventory && !formData.has_variants && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Inventory</p>
+                  <div className="rounded-lg border border-border p-4 space-y-3">
+                    <div>
+                      <p className="text-sm font-medium">Initial Stock</p>
+                      <p className="text-xs text-muted-foreground">Starting quantity when this product is created</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={productStockForm}
+                        onChange={(e) => setProductStockForm(parseInt(e.target.value) || 0)}
+                        className="w-28 h-8"
+                      />
+                      <span className="text-sm text-muted-foreground">units</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {product && !formData.has_variants && (
                 <div className="space-y-3">
                   <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Inventory</p>
