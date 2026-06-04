@@ -248,6 +248,7 @@ export async function getTopProducts(
       quantity,
       unit_price,
       cost_price,
+      discount_amount,
       total_amount,
       order:orders!inner(status, created_at, total_amount, paid_amount)
     `)
@@ -269,18 +270,24 @@ export async function getTopProducts(
     // Supabase returns joined relations as arrays, get the first element
     const order = Array.isArray(item.order) ? item.order[0] : item.order
 
+    // Net revenue = selling price minus the discount (consistent with
+    // orders.total_amount and the category/supplier breakdowns). Profit then
+    // compares that net revenue against the buying (cost) price.
+    const netRevenue = item.unit_price * item.quantity - (item.discount_amount ?? 0)
+    const itemCost = item.cost_price * item.quantity
+
     // Calculate revenue and profit based on order status
     let revenue = 0
     let profit = 0
 
     if (order?.status === "completed") {
-      revenue = item.unit_price * item.quantity
-      profit = (item.unit_price - item.cost_price) * item.quantity
+      revenue = netRevenue
+      profit = netRevenue - itemCost
     } else if (order?.status === "layaway" && order.total_amount > 0) {
       // Calculate proportional revenue and profit for layaway orders
       const paymentRatio = (order.paid_amount || 0) / order.total_amount
-      revenue = item.unit_price * item.quantity * paymentRatio
-      profit = (item.unit_price - item.cost_price) * item.quantity * paymentRatio
+      revenue = netRevenue * paymentRatio
+      profit = (netRevenue - itemCost) * paymentRatio
     }
 
     if (existing) {

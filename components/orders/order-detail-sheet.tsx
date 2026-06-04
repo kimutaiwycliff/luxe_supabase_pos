@@ -165,11 +165,14 @@ export function OrderDetailSheet({ order, open, onOpenChange }: OrderDetailSheet
             )}
           </div>
 
-          {/* Order totals */}
+          {/* Order totals.
+              order.subtotal is stored net of the discount, so show the gross
+              subtotal (subtotal + discount) for the math to read correctly:
+              gross − discount (+ tax) = total. */}
           <div className="px-5 py-4 border-b space-y-1.5 text-sm">
             <div className="flex justify-between text-muted-foreground">
               <span>Subtotal</span>
-              <span>{formatCurrency(order.subtotal)}</span>
+              <span>{formatCurrency(order.subtotal + (order.discount_amount ?? 0))}</span>
             </div>
             {order.discount_amount > 0 && (
               <div className="flex justify-between text-destructive">
