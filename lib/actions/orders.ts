@@ -115,7 +115,11 @@ export async function getOrders(options?: {
       `
       *,
       customer:customers(id, first_name, last_name, email, phone),
-      items:order_items(*),
+      items:order_items(
+        *,
+        product:products(id, name, image_url),
+        variant:product_variants(id, name, image_path)
+      ),
       payments(*)
     `,
       { count: "exact" },
@@ -172,7 +176,11 @@ export async function getOrderById(id: string) {
     .select(`
       *,
       customer:customers(id, first_name, last_name, email, phone),
-      items:order_items(*),
+      items:order_items(
+        *,
+        product:products(id, name, image_url),
+        variant:product_variants(id, name, image_path)
+      ),
       payments(*)
     `)
     .eq("id", id)
@@ -190,6 +198,12 @@ export async function createOrder(data: CreateOrderData) {
 
   if (!data.location_id) {
     return { order: null, error: "Location ID is required. Please run the seed scripts to create a default location." }
+  }
+
+  // Never create an order with no line items — this is what produced the
+  // historical "0 items sold" orders when item inserts silently failed.
+  if (!data.items || data.items.length === 0) {
+    return { order: null, error: "Cannot create an order with no items." }
   }
 
   // Verify location exists in database
@@ -396,6 +410,10 @@ export async function createLayawayOrder(data: CreateLayawayOrderData) {
     return { order: null, error: "Location ID is required." }
   }
 
+  if (!data.items || data.items.length === 0) {
+    return { order: null, error: "Cannot create a layaway order with no items." }
+  }
+
   // Calculate totals
   const subtotal = data.items.reduce(
     (sum, item) => sum + item.unit_price * item.quantity - (item.discount_amount || 0),
@@ -460,7 +478,14 @@ export async function createLayawayOrder(data: CreateLayawayOrderData) {
     }
   })
 
-  await supabase.from("order_items").insert(orderItems)
+  const { error: layawayItemsError } = await supabase.from("order_items").insert(orderItems)
+
+  if (layawayItemsError) {
+    console.error("Error creating layaway order items:", layawayItemsError)
+    // Delete the orphaned order so it never shows up with 0 items
+    await supabase.from("orders").delete().eq("id", order.id)
+    return { order: null, error: `Failed to record order items: ${layawayItemsError.message}` }
+  }
 
   // Create deposit payment
   await supabase.from("payments").insert({

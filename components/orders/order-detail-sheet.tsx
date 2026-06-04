@@ -11,7 +11,8 @@ import { Separator } from "@/components/ui/separator"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { formatCurrency, formatRelativeTime } from "@/lib/format"
 import type { Order } from "@/lib/types"
-import { Package, User, CreditCard, TrendingUp } from "lucide-react"
+import { Package, User, CreditCard, TrendingUp, ImageIcon } from "lucide-react"
+import Image from "next/image"
 
 interface OrderDetailSheetProps {
   order: Order | null
@@ -94,14 +95,38 @@ export function OrderDetailSheet({ order, open, onOpenChange }: OrderDetailSheet
                   const itemProfit = itemRevenue - itemCost
                   const margin = itemRevenue > 0 ? (itemProfit / itemRevenue) * 100 : 0
 
+                  // Prefer the variant image, fall back to the product image
+                  const imageSrc = item.variant?.image_path || item.product?.image_url || null
+                  // Full name: product name plus the variant label when this is a variant
+                  const baseName = item.product?.name || item.product_name
+                  const variantLabel = item.variant_name || item.variant?.name || null
+                  const fullName = variantLabel ? `${baseName} — ${variantLabel}` : baseName
+
                   return (
                     <div key={item.id} className="rounded-lg border bg-card p-3 space-y-2">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium leading-tight">{item.product_name}</p>
-                          {item.variant_name && (
-                            <p className="text-xs text-muted-foreground">{item.variant_name}</p>
-                          )}
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border bg-secondary">
+                            {imageSrc ? (
+                              <Image
+                                src={imageSrc}
+                                alt={fullName}
+                                fill
+                                sizes="48px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
+                                <ImageIcon className="h-4 w-4" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium leading-tight">{fullName}</p>
+                            {item.sku && (
+                              <p className="text-xs text-muted-foreground mt-0.5 font-mono">{item.sku}</p>
+                            )}
+                          </div>
                         </div>
                         <span className="text-sm font-semibold shrink-0">
                           {formatCurrency(item.total_amount)}
