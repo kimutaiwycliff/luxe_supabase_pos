@@ -58,7 +58,7 @@ export default function SettingsPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="vat_rate">VAT Rate (%)</Label>
-                <Input id="vat_rate" type="number" defaultValue="16" />
+                <Input id="vat_rate" type="number" defaultValue="0" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tax_pin">KRA PIN</Label>

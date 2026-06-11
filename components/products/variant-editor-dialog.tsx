@@ -52,7 +52,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
     cost_price: product.cost_price,
     selling_price: product.selling_price,
     compare_at_price: product.compare_at_price || 0,
-    tax_rate: product.tax_rate || 16,
+    tax_rate: product.tax_rate ?? 0,
   })
   const [locationId, setLocationId] = useState<string | null>(null)
   // Images tab: which variant is being edited
@@ -170,7 +170,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
         cost_price: product.cost_price,
         selling_price: product.selling_price,
         compare_at_price: product.compare_at_price || 0,
-        tax_rate: product.tax_rate || 16,
+        tax_rate: product.tax_rate ?? 0,
       })
       toast.success("Variant added", { description: "New variant has been created." })
     } else {
@@ -226,7 +226,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
   }
 
   const getEffectiveTaxRate = (variant: ProductVariant) => {
-    return variant.tax_rate ?? product.tax_rate ?? 16
+    return variant.tax_rate ?? product.tax_rate ?? 0
   }
 
   return (
@@ -247,7 +247,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
             <div className="flex justify-between items-center mb-4">
               <p className="text-sm text-muted-foreground">
                 Edit pricing and tax rates for each variant. Leave blank to inherit from product (Tax:{" "}
-                {product.tax_rate || 16}%).
+                {product.tax_rate ?? 0}%).
               </p>
               <Button size="sm" onClick={() => setShowAddForm(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -384,7 +384,7 @@ export function VariantEditorDialog({ open, onOpenChange, product, onSuccess }: 
                             type="number"
                             step="0.01"
                             className="w-20 text-right"
-                            placeholder={`${product.tax_rate || 16}`}
+                            placeholder={`${product.tax_rate ?? 0}`}
                             value={editForm?.tax_rate ?? ""}
                             onChange={(e) =>
                               setEditForm({

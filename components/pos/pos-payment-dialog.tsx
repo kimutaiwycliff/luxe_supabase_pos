@@ -108,7 +108,7 @@ export function POSPaymentDialog({
         unit_price: item.price,
         cost_price: item.variant?.cost_price || item.product.cost_price,
         discount_amount: item.discount,
-        tax_rate: item.product.tax_rate ?? 0.16,
+        tax_rate: item.product.tax_rate ?? 0,
       }))
 
       if (paymentMode === "layaway") {

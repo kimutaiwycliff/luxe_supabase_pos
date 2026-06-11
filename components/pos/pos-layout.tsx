@@ -95,7 +95,7 @@ export function POSLayout() {
             quantity: 1,
             price,
             discount: 0,
-            tax_rate: variant?.tax_rate ?? product.tax_rate ?? 16,
+            tax_rate: variant?.tax_rate ?? product.tax_rate ?? 0,
             available_stock: stock,
           },
         ]

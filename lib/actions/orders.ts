@@ -422,7 +422,7 @@ export async function createLayawayOrder(data: CreateLayawayOrderData) {
   const discountAmount = data.discount_amount || 0
   const taxAmount = data.items.reduce((sum, item) => {
     const itemSubtotal = item.unit_price * item.quantity - (item.discount_amount || 0)
-    const itemTaxRate = item.tax_rate ?? 0.16
+    const itemTaxRate = item.tax_rate ?? 0
     return sum + itemSubtotal * itemTaxRate
   }, 0)
   const discountRatio = subtotal > 0 ? (subtotal - discountAmount) / subtotal : 1
@@ -459,7 +459,7 @@ export async function createLayawayOrder(data: CreateLayawayOrderData) {
   // Create order items
   const orderItems = data.items.map((item) => {
     const itemSubtotal = item.unit_price * item.quantity - (item.discount_amount || 0)
-    const itemTaxRate = item.tax_rate ?? 0.16
+    const itemTaxRate = item.tax_rate ?? 0
     const itemTax = itemSubtotal * itemTaxRate * discountRatio
 
     return {

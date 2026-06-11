@@ -115,7 +115,7 @@ export function ProductDetailSheet({
     cost_price: 0,
     selling_price: 0,
     compare_at_price: 0,
-    tax_rate: 16,
+    tax_rate: 0,
     is_active: true,
     is_featured: false,
     has_variants: false,
@@ -144,7 +144,7 @@ export function ProductDetailSheet({
         cost_price: product.cost_price,
         selling_price: product.selling_price,
         compare_at_price: product.compare_at_price || 0,
-        tax_rate: product.tax_rate || 16,
+        tax_rate: product.tax_rate ?? 0,
         is_active: product.is_active,
         is_featured: product.is_featured,
         has_variants: product.has_variants,
@@ -156,7 +156,7 @@ export function ProductDetailSheet({
     } else {
       setFormData({
         name: "", description: "", category_id: "", supplier_id: "", brand: "",
-        cost_price: 0, selling_price: 0, compare_at_price: 0, tax_rate: 16,
+        cost_price: 0, selling_price: 0, compare_at_price: 0, tax_rate: 0,
         is_active: true, is_featured: false, has_variants: false,
         track_inventory: true, allow_backorder: false, low_stock_threshold: 5,
       })
@@ -227,7 +227,7 @@ export function ProductDetailSheet({
   const [savingVariantId, setSavingVariantId] = useState<string | null>(null)
   const [savingInventoryId, setSavingInventoryId] = useState<string | null>(null)
   const [showAddVariant, setShowAddVariant] = useState(false)
-  const [newVariant, setNewVariant] = useState({ name: "", cost_price: 0, selling_price: 0, compare_at_price: 0, tax_rate: 16 })
+  const [newVariant, setNewVariant] = useState({ name: "", cost_price: 0, selling_price: 0, compare_at_price: 0, tax_rate: 0 })
 
   // Per-variant images
   const [variantImages, setVariantImages] = useState<Record<string, string[]>>({})
